@@ -75,7 +75,7 @@ namespace cycfi
       #endif
       
       #ifdef TEST_PROGRAM_CHANGE
-      _midi_controls.program_change.out();
+      _midi_controls.program_change.out(0, 45, 67, 80, 100);
       #endif
       
       #ifdef TEST_BANK

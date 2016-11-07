@@ -5,6 +5,12 @@
 #include <energia.h>
 
 #define TEST_VOLUME
+#define TEST_PITCH
+#define TEST_MODULATION
+#define TEST_FX1
+#define TEST_BANK
+#define TEST_PROGRAM_CHANGE
+
 
 namespace cycfi
 {
