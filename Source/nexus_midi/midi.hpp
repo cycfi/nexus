@@ -269,7 +269,7 @@ namespace cycfi { namespace midi
          data[2] = value >> 7;
       }
 
-      pitch_bend(uint8_t channel, uint8_t lsb, uint8_t msb)
+      pitch_bend(uint8_t channel, uint16_t lsb, uint8_t msb)
       {
          data[0] = channel | status::pitch_bend;
          data[1] = lsb;

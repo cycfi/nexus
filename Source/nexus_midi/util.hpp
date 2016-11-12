@@ -78,7 +78,7 @@ namespace cycfi
    ////////////////////////////////////////////////////////////////////////////
    // Basic leaky-integrator filter. k will determine the effect of the
    // filter. Choose k to be a power of 2 for efficiency (the compiler
-   // will optimize the comutation using shifts). k = 16 is a good starting
+   // will optimize the computation using shifts). k = 16 is a good starting
    // point.
    //
    // This simulates the RC filter in digital form. The equation is:
