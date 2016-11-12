@@ -110,6 +110,32 @@ namespace cycfi
 
       T y;
    };
+
+   ////////////////////////////////////////////////////////////////////////////
+   // Noise gate. Returns true if the signal, s, is above or below the given
+   // window. For example, if window is 5, the previous signal is 20 and the
+   // current signal, s, is within 15 to 25, the function returns false,
+   // otherwise true.
+   ////////////////////////////////////////////////////////////////////////////
+   template <unsigned window, typename T = int>
+   struct gate
+   {
+      gate()
+       : val(0)
+      {}
+
+      bool operator()(T s)
+      {
+         if ((s < (val-window)) || (s > (val+window)))
+         {
+            val = s;
+            return true;
+         }
+         return false;
+      }
+
+      T val;
+   };
 }
 
 #endif

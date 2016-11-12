@@ -7,8 +7,8 @@
 #include "util.hpp"
 
 #define NEXUS_TEST
-//#define NEXUS_TEST_VOLUME
-#define NEXUS_TEST_PITCH_BEND
+#define NEXUS_TEST_VOLUME
+//#define NEXUS_TEST_PITCH_BEND
 
 using namespace cycfi;
 
@@ -20,6 +20,14 @@ int const ch12 = P1_4;
 int const ch13 = P1_5;
 int const ch14 = P1_6;
 int const ch15 = P1_7;
+
+#ifdef NEXUS_TEST
+int const control_gate_window = 1;
+int const pitch_bend_gate_window = 4;
+#else
+int const control_gate_window = 0;
+int const pitch_bend_gate_window = 0;
+#endif
 
 midi::midi_stream midi_out;
 
@@ -44,35 +52,30 @@ note _note;
 template <midi::cc::controller ctrl>
 struct controller
 {
-   void operator()(int val_)
+   void operator()(uint16_t val_)
    {
-      int val = lp(val_);
-      if (val != prev)
-      {
-         midi_out << midi::control_change{0, ctrl, val_};
-         prev = val;
-      }
+      uint16_t val = lp(val_);
+      if (gt(val))
+         midi_out << midi::control_change{0, ctrl, uint8_t(val)};
    }
 
-   lowpass<256> lp;
-   int prev;
+   lowpass<64> lp;
+   gate<control_gate_window> gt;
 };
 
 controller<midi::cc::channel_volume> volume_control;
 
 struct pitch_bend_controller
 {
-   void operator()(int val_)
+   void operator()(uint32_t val_)
    {
-      int val = lp(val_);
-      if (val != prev)
-      {
-         midi_out << midi::pitch_bend{0, val_};
-         prev = val;
-      }
+      uint32_t val = lp(val_);
+      if (gt(val))
+         midi_out << midi::pitch_bend{0, uint16_t(val)};
    }
 
-   lowpass<256> lp;
+   lowpass<256, int32_t> lp;
+   gate<pitch_bend_gate_window, int32_t> gt;
    int prev;
 };
 
@@ -91,9 +94,13 @@ void setup()
    midi_out.start();
 }
 
-uint8_t get_control(int ch)
+template <int bits>
+int read(int ch)
 {
-   return uint8_t(map(analogRead(ch), 0, 1023, 0, 127));
+   if (bits > 10)
+      return analogRead(ch) << (bits-10);
+   else
+      return analogRead(ch) >> (10-bits);
 }
 
 void loop()
@@ -107,14 +114,16 @@ void loop()
 #ifdef NEXUS_TEST
 
 #ifdef NEXUS_TEST_VOLUME
-   volume_control(get_control(ch11));
+   volume_control(read<7>(ch11));
 #endif
 
 #ifdef NEXUS_TEST_PITCH_BEND
-   pitch_bend(map(analogRead(ch11), 0, 1023, 0, 16383));
+   pitch_bend(read<14>(ch11));
 #endif
 
 #endif
+
+
 
    //unsigned long delta = millis() - start;
    //if (delta < 10)
