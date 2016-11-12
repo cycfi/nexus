@@ -7,6 +7,7 @@
 #include "util.hpp"
 
 #define NEXUS_TEST
+//#define NEXUS_TEST_NOTE
 //#define NEXUS_TEST_VOLUME
 //#define NEXUS_TEST_PITCH_BEND
 #define NEXUS_TEST_PROGRAM_CHANGE
@@ -122,17 +123,51 @@ struct pitch_bend_controller
 ///////////////////////////////////////////////////////////////////////////////
 struct program_change_controller
 {
+   program_change_controller()
+    : curr{0}
+    , base{0}
+   {}
+
    void operator()(uint32_t val_)
    {
       uint8_t val = (val_ * 5) / 1024;
-      if (val != prev)
+      if (val != curr)
       {
-         midi_out << midi::program_change{0, val};
-         prev = val;
+         curr = val;
+         midi_out << midi::program_change{0, uint8_t{curr+base}};
       }
    }
 
-   int prev;
+   void up(bool sw)
+   {
+      if (base < (127 - 5))
+      {
+         int state = edge_up(sw);
+         if (state == 1)
+         {
+            ++base;
+            midi_out << midi::program_change{0, uint8_t{curr+base}};
+         }
+      }
+   }
+
+   void down(bool sw)
+   {
+      if (base != 0)
+      {
+         int state = edge_down(sw);
+         if (state == 1)
+         {
+            --base;
+            midi_out << midi::program_change{0, uint8_t{curr+base}};
+         }
+      }
+   }
+
+   uint8_t curr;
+   uint8_t base;
+   edge_detector<> edge_up;
+   edge_detector<> edge_down;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -164,7 +199,9 @@ void setup()
 #ifdef NEXUS_TEST
 void loop()
 {
+#ifdef NEXUS_TEST_NOTE
    _note(digitalRead(ch12));
+#endif
 
 #ifdef NEXUS_TEST_VOLUME
    volume_control(analogRead(ch11));
@@ -176,6 +213,8 @@ void loop()
 
 #ifdef NEXUS_TEST_PROGRAM_CHANGE
    program_change(analogRead(ch11));
+   program_change.up(digitalRead(ch12));
+   program_change.down(digitalRead(ch13));
 #endif
 }
 
