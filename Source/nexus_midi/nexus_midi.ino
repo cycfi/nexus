@@ -8,9 +8,34 @@
 
 #define NEXUS_TEST
 //#define NEXUS_TEST_VOLUME
-#define NEXUS_TEST_PITCH_BEND
+//#define NEXUS_TEST_PITCH_BEND
+#define NEXUS_TEST_PROGRAM_CHANGE
 
 using namespace cycfi;
+
+///////////////////////////////////////////////////////////////////////////////
+// Control Mapping:
+//
+// Main:
+//
+//    program_change       5-way switch
+//    channel_volume       analog
+//    expression           analog
+//    pitch_change         analog
+//    modulation           analog
+//    effect_1             analog
+//    sustain              momentary switch
+//
+// Aux:
+//
+//    program_change +5    momentary switch
+//    program_change -5    momentary switch
+//    program_change +1    momentary switch
+//    program_change -1    momentary switch
+//    bank_select +1       momentary switch
+//    bank_select -1       momentary switch
+//
+///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
 // Constants
@@ -85,32 +110,50 @@ struct pitch_bend_controller
    {
       uint32_t val = lp(val_);
       if (gt(val))
-         midi_out << midi::pitch_bend{0, uint16_t(val << 4)};
+         midi_out << midi::pitch_bend{0, uint16_t{val << 4}};
    }
 
    lowpass<256, int32_t> lp;
    gate<noise_window, int32_t> gt;
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// Program change controller
+///////////////////////////////////////////////////////////////////////////////
+struct program_change_controller
+{
+   void operator()(uint32_t val_)
+   {
+      uint8_t val = (val_ * 5) / 1024;
+      if (val != prev)
+      {
+         midi_out << midi::program_change{0, val};
+         prev = val;
+      }
+   }
+
    int prev;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // The controls
 ///////////////////////////////////////////////////////////////////////////////
-controller<midi::cc::channel_volume> volume_control;
-pitch_bend_controller pitch_bend;
+controller<midi::cc::channel_volume>   volume_control;
+pitch_bend_controller                  pitch_bend;
+program_change_controller              program_change;
 
 ///////////////////////////////////////////////////////////////////////////////
 // setup
 ///////////////////////////////////////////////////////////////////////////////
 void setup()
 {
-   pinMode(ch9 , INPUT);   // digital
-   pinMode(ch10, INPUT);   // analog
-   pinMode(ch11, INPUT);   // analog
-   pinMode(ch12, INPUT);   // analog
-   pinMode(ch13, INPUT);   // analog
-   pinMode(ch14, INPUT);   // analog
-   pinMode(ch15, INPUT);   // analog
+   pinMode(ch9 , INPUT);
+   pinMode(ch10, INPUT);
+   pinMode(ch11, INPUT);
+   pinMode(ch12, INPUT);
+   pinMode(ch13, INPUT);
+   pinMode(ch14, INPUT);
+   pinMode(ch15, INPUT);
 
    midi_out.start();
 }
@@ -129,6 +172,10 @@ void loop()
 
 #ifdef NEXUS_TEST_PITCH_BEND
    pitch_bend(analogRead(ch11));
+#endif
+
+#ifdef NEXUS_TEST_PROGRAM_CHANGE
+   program_change(analogRead(ch11));
 #endif
 }
 
