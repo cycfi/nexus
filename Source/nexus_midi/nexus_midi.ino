@@ -12,7 +12,9 @@
 
 using namespace cycfi;
 
-// Hard-wired channels to analog and digital pins
+///////////////////////////////////////////////////////////////////////////////
+// Constants
+///////////////////////////////////////////////////////////////////////////////
 int const ch9  = P2_0;
 int const ch10 = P1_0;
 int const ch11 = P1_3;
@@ -29,6 +31,9 @@ int const noise_window = 0;
 
 midi::midi_stream midi_out;
 
+///////////////////////////////////////////////////////////////////////////////
+// Play notes (for testing only)
+///////////////////////////////////////////////////////////////////////////////
 #ifdef NEXUS_TEST
 struct note
 {
@@ -47,6 +52,9 @@ struct note
 note _note;
 #endif
 
+///////////////////////////////////////////////////////////////////////////////
+// Generic controller handling (with course and fine controls)
+///////////////////////////////////////////////////////////////////////////////
 template <midi::cc::controller ctrl>
 struct controller
 {
@@ -57,15 +65,20 @@ struct controller
       uint32_t val = lp(val_);
       if (gt(val))
       {
-         midi_out << midi::control_change{0, ctrl, uint8_t(val >> 3)};
-         midi_out << midi::control_change{0, ctrl_lsb, uint8_t((val << 4) & 0x7F)};
+         uint8_t const msb = val >> 3;
+         uint8_t const lsb = (val << 4) & 0x7F;
+         midi_out << midi::control_change{0, ctrl, msb};
+         midi_out << midi::control_change{0, ctrl_lsb, lsb};
       }
    }
 
-   lowpass<64, int32_t> lp;
+   lowpass<256, int32_t> lp;
    gate<noise_window, int32_t> gt;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// Pitch bend controller
+///////////////////////////////////////////////////////////////////////////////
 struct pitch_bend_controller
 {
    void operator()(uint32_t val_)
@@ -80,9 +93,15 @@ struct pitch_bend_controller
    int prev;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+// The controls
+///////////////////////////////////////////////////////////////////////////////
 controller<midi::cc::channel_volume> volume_control;
 pitch_bend_controller pitch_bend;
 
+///////////////////////////////////////////////////////////////////////////////
+// setup
+///////////////////////////////////////////////////////////////////////////////
 void setup()
 {
    pinMode(ch9 , INPUT);   // digital
@@ -96,13 +115,13 @@ void setup()
    midi_out.start();
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// loop
+///////////////////////////////////////////////////////////////////////////////
+#ifdef NEXUS_TEST
 void loop()
 {
-#ifdef NEXUS_TEST
    _note(digitalRead(ch12));
-#endif
-
-#ifdef NEXUS_TEST
 
 #ifdef NEXUS_TEST_VOLUME
    volume_control(analogRead(ch11));
@@ -111,6 +130,14 @@ void loop()
 #ifdef NEXUS_TEST_PITCH_BEND
    pitch_bend(analogRead(ch11));
 #endif
-
-#endif
 }
+
+#else // !NEXUS_TEST
+
+void loop()
+{
+   volume_control(analogRead(ch11));
+   pitch_bend(analogRead(ch11));
+}
+
+#endif // NEXUS_TEST
