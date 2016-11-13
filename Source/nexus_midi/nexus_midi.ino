@@ -143,12 +143,12 @@ private:
 flash flash_b(SEGMENT_B);
 flash flash_c(SEGMENT_C);
 
-// Save delay. We lazily save data to flash to minimize writes to flash
+// Save delay: We lazily save data to flash to minimize writes to flash
 // and thus conserve erase cycles. To do this, we avoid eagerly saving
 // data when the user is actively changing states (e.g. buttons are pushed).
 // We delay the actual save N milliseconds after the last state change.
 
-uint32_t const save_delay = 10000;  // 10 seconds delay
+uint32_t const save_delay = 3000;  // 3 seconds delay
 int32_t save_delay_start_time = -1;
 
 void reset_save_delay()
@@ -476,6 +476,7 @@ void loop()
    bank_select_control.down(digitalRead(ch13));
 #endif
 
+   // Save the program_change and bank_select_control if needed
    if ((save_delay_start_time != -1)
       && (millis() > (save_delay_start_time + save_delay)))
    {
