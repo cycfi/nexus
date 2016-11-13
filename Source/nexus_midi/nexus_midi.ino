@@ -11,7 +11,8 @@
 //#define NEXUS_TEST_VOLUME
 //#define NEXUS_TEST_PITCH_BEND
 #define NEXUS_TEST_PROGRAM_CHANGE
-#define NEXUS_TEST_PROGRAM_CHANGE_UP_DOWN
+//#define NEXUS_TEST_PROGRAM_CHANGE_UP_DOWN
+#define NEXUS_TEST_PROGRAM_CHANGE_GROUP_UP_DOWN
 
 using namespace cycfi;
 
@@ -129,44 +130,63 @@ struct program_change_controller
     , base{0}
    {}
 
+   uint8_t get() const
+   {
+      return uint8_t{max(min(curr+base, 127), 0)};
+   }
+
    void operator()(uint32_t val_)
    {
       uint8_t val = (val_ * 5) / 1024;
       if (val != curr)
       {
          curr = val;
-         midi_out << midi::program_change{0, uint8_t{curr+base}};
+         midi_out << midi::program_change{0, get()};
       }
    }
 
    void up(bool sw)
    {
-      if (base < (127 - 5))
+      if (btn_up(sw) && (base < 127))
       {
-         if (btn_up(sw))
-         {
-            ++base;
-            midi_out << midi::program_change{0, uint8_t{curr+base}};
-         }
+         ++base;
+         midi_out << midi::program_change{0, get()};
       }
    }
 
    void down(bool sw)
    {
-      if (base != 0)
+      if (btn_down(sw) && (base > 0))
       {
-         if (btn_down(sw))
-         {
-            --base;
-            midi_out << midi::program_change{0, uint8_t{curr+base}};
-         }
+         --base;
+         midi_out << midi::program_change{0, get()};
       }
    }
 
-   uint8_t curr;
-   uint8_t base;
+   void group_up(bool sw)
+   {
+      if (grp_btn_up(sw) && (base < 127))
+      {
+         base += 5;
+         midi_out << midi::program_change{0, get()};
+      }
+   }
+
+   void group_down(bool sw)
+   {
+      if (grp_btn_down(sw) && (base > 0))
+      {
+         base -= 5;
+         midi_out << midi::program_change{0, get()};
+      }
+   }
+
+   int16_t curr;
+   int16_t base;
    repeat_button<> btn_up;
    repeat_button<> btn_down;
+   repeat_button<> grp_btn_up;
+   repeat_button<> grp_btn_down;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -218,6 +238,11 @@ void loop()
    program_change.up(digitalRead(ch12));
    program_change.down(digitalRead(ch13));
 #endif
+
+#ifdef NEXUS_TEST_PROGRAM_CHANGE_GROUP_UP_DOWN
+   program_change.group_up(digitalRead(ch12));
+   program_change.group_down(digitalRead(ch13));
+#endif
 }
 
 #else // !NEXUS_TEST
@@ -225,7 +250,7 @@ void loop()
 void loop()
 {
    volume_control(analogRead(ch11));
-   pitch_bend(analogRead(ch11));
+   pitch_bend(analogRead(ch12));
 }
 
 #endif // NEXUS_TEST

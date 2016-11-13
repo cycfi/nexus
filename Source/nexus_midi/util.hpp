@@ -90,26 +90,32 @@ namespace cycfi
       bool operator()(bool sw)
       {
          int state = base_type::operator()(sw);
-         if (state == 1)            // rising edge
+
+         // rising edge
+         if (state == 1)
          {
             start_time = millis();
-            delay = delay_;
+            delay = delay_; // initial delay
             return true;
          }
-         else if (state == -1)      // falling edge
+
+         // falling edge
+         else if (state == -1)
          {
-            start_time = -1;        // reset
+            // reset
+            start_time = -1;
             return false;
          }
 
          if (start_time == -1)
             return 0;
 
+         // repeat button handling
          int now = millis();
          if (now > (start_time + delay))
          {
             start_time = now;
-            delay = rate;
+            delay = rate; // repeat delay
             return true;
          }
          return 0;
