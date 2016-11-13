@@ -12,13 +12,13 @@
 //#define NEXUS_TEST_VOLUME
 //#define NEXUS_TEST_PITCH_BEND
 #define NEXUS_TEST_PROGRAM_CHANGE
-//#define NEXUS_TEST_PROGRAM_CHANGE_UP_DOWN
+#define NEXUS_TEST_PROGRAM_CHANGE_UP_DOWN
 //#define NEXUS_TEST_PROGRAM_CHANGE_GROUP_UP_DOWN
 //#define NEXUS_TEST_EFFECTS_1
 //#define NEXUS_TEST_EFFECTS_2
 //#define NEXUS_TEST_MODULATION
 //#define NEXUS_TEST_SUSTAIN
-#define NEXUS_TEST_BANK_SELECT
+//#define NEXUS_TEST_BANK_SELECT
 #define NEXUS_DUMP_FLASH
 
 using namespace cycfi;
@@ -414,12 +414,16 @@ void setup()
 
 #ifdef NEXUS_DUMP_FLASH
    unsigned char* seg_b = SEGMENT_B;
-   for (int i = 0; i < 64; ++i)
-      midi_out << midi::control_change{0, midi::cc::data_entry, seg_b[i]};
+   midi_out << midi::sysex<16>{0x5555, seg_b};
+   midi_out << midi::sysex<16>{0x5555, seg_b + 16};
+   midi_out << midi::sysex<16>{0x5555, seg_b + 32};
+   midi_out << midi::sysex<16>{0x5555, seg_b + 48};
 
    unsigned char* seg_c = SEGMENT_C;
-   for (int i = 0; i < 64; ++i)
-      midi_out << midi::control_change{0, midi::cc::data_entry, seg_c[i]};
+   midi_out << midi::sysex<16>{0x5555, seg_c};
+   midi_out << midi::sysex<16>{0x5555, seg_c + 16};
+   midi_out << midi::sysex<16>{0x5555, seg_c + 32};
+   midi_out << midi::sysex<16>{0x5555, seg_c + 48};
 #endif
 }
 

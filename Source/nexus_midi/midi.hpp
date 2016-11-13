@@ -392,6 +392,26 @@ namespace cycfi { namespace midi
          data[0] = status::reset;
       }
    };
+
+   ////////////////////////////////////////////////////////////////////////////
+   // sysex
+   ////////////////////////////////////////////////////////////////////////////
+   template <int size_>
+   struct sysex : message<size_ + 5>
+   {
+      sysex(uint16_t id, uint8_t const* data_in)
+      {
+         this->data[0] = status::sysex;
+         this->data[1] = 0;
+         this->data[2] = id >> 8;
+         this->data[3] = id & 0x7f;
+         this->data[size_ + 4] = status::sysex_end;
+         for (int i = 0; i != size_; ++i)
+            this->data[i+4] = data_in[i] & 0x7f;
+      }
+
+      uint16_t id() const { return (this->data[2] << 8) | this->data[3]; }
+   };
 }}
 
 #endif
