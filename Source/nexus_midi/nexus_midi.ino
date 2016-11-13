@@ -76,20 +76,21 @@ midi::midi_stream midi_out;
 // where each segment has 64 bytes. When erased, data in the flash is
 // read as 0xff. You can only write once to a data slot, per segment,
 // per erase cycle (actually you can write more than once but once a bit
-// is reset, you cannot set it with a subsequent write). MSP430 is spec'd
-// to allow a minimum guaranteed 10,000 erase cycles (100,000 erase cycles
-// typical)
+// is reset, you cannot set it with a subsequent write).
 //
-// We store 7-bits data into flash memory in a ring buffer fashion to
-// minimize erase cycles and increase the possible write cycles. See
-// link below:
+// MSP430 is spec'd to allow a minimum guaranteed 10,000 erase cycles
+// (100,000 erase cycles typical). We store 7-bits data into flash memory
+// in a ring buffer fashion to minimize erase cycles and increase the
+// possible write cycles. See link below:
 //
 // http://processors.wiki.ti.com/index.php/Emulating_EEPROM_in_MSP430_Flash)
 //
 ///////////////////////////////////////////////////////////////////////////////
 struct flash
 {
-   flash(unsigned char* segment_)
+   typedef unsigned char byte;
+
+   flash(byte* segment_)
     : _segment(segment_)
    {}
 
@@ -103,18 +104,18 @@ struct flash
       return (*_segment == 0xff);
    }
 
-   unsigned char read() const
+   byte read() const
    {
       if (empty())
          return 0xff;
-      if (unsigned char* p = find_free())
+      if (byte* p = find_free())
          return *(p-1);
       return _segment[63];
    }
 
-   void write(unsigned char val)
+   void write(byte val)
    {
-      unsigned char* p = find_free();
+      byte* p = find_free();
       if (p == 0)
       {
          erase();
@@ -128,7 +129,7 @@ struct flash
 
 private:
 
-   unsigned char* find_free() const
+   byte* find_free() const
    {
       for (int i = 0; i != 64; ++i)
          if (_segment[i] == 0xff)
@@ -136,7 +137,7 @@ private:
       return 0;
    }
 
-   unsigned char* _segment;
+   byte* _segment;
 };
 
 // We use SEGMENT_B and SEGMENT_C to store program change and bank select data
