@@ -76,6 +76,49 @@ namespace cycfi
    };
 
    ////////////////////////////////////////////////////////////////////////////
+   // repeat_button: A key detector with delay and repeat rate
+   ////////////////////////////////////////////////////////////////////////////
+   template <int delay_ = 1000, int rate = 100, int samples = 10>
+   struct repeat_button : edge_detector<samples>
+   {
+      typedef edge_detector<samples> base_type;
+
+      repeat_button()
+       : start_time(-1)
+      {}
+
+      bool operator()(bool sw)
+      {
+         int state = base_type::operator()(sw);
+         if (state == 1)            // rising edge
+         {
+            start_time = millis();
+            delay = delay_;
+            return true;
+         }
+         else if (state == -1)      // falling edge
+         {
+            start_time = -1;        // reset
+            return false;
+         }
+
+         if (start_time == -1)
+            return 0;
+
+         int now = millis();
+         if (now > (start_time + delay))
+         {
+            start_time = now;
+            delay = rate;
+            return true;
+         }
+         return 0;
+      }
+      int start_time;
+      int delay;
+   };
+
+   ////////////////////////////////////////////////////////////////////////////
    // Basic leaky-integrator filter. k will determine the effect of the
    // filter. Choose k to be a power of 2 for efficiency (the compiler
    // will optimize the computation using shifts). k = 16 is a good starting

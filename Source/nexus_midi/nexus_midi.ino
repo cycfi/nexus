@@ -11,6 +11,7 @@
 //#define NEXUS_TEST_VOLUME
 //#define NEXUS_TEST_PITCH_BEND
 #define NEXUS_TEST_PROGRAM_CHANGE
+#define NEXUS_TEST_PROGRAM_CHANGE_UP_DOWN
 
 using namespace cycfi;
 
@@ -142,8 +143,7 @@ struct program_change_controller
    {
       if (base < (127 - 5))
       {
-         int state = edge_up(sw);
-         if (state == 1)
+         if (btn_up(sw))
          {
             ++base;
             midi_out << midi::program_change{0, uint8_t{curr+base}};
@@ -155,8 +155,7 @@ struct program_change_controller
    {
       if (base != 0)
       {
-         int state = edge_down(sw);
-         if (state == 1)
+         if (btn_down(sw))
          {
             --base;
             midi_out << midi::program_change{0, uint8_t{curr+base}};
@@ -166,8 +165,8 @@ struct program_change_controller
 
    uint8_t curr;
    uint8_t base;
-   edge_detector<> edge_up;
-   edge_detector<> edge_down;
+   repeat_button<> btn_up;
+   repeat_button<> btn_down;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -213,6 +212,9 @@ void loop()
 
 #ifdef NEXUS_TEST_PROGRAM_CHANGE
    program_change(analogRead(ch11));
+#endif
+
+#ifdef NEXUS_TEST_PROGRAM_CHANGE_UP_DOWN
    program_change.up(digitalRead(ch12));
    program_change.down(digitalRead(ch13));
 #endif
