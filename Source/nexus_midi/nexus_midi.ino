@@ -143,6 +143,19 @@ private:
 flash flash_b(SEGMENT_B);
 flash flash_c(SEGMENT_C);
 
+// Save delay. We lazily save data to flash to minimize writes to flash
+// and thus conserve erase cycles. To do this, we avoid eagerly saving
+// data when the user is actively changing states (e.g. buttons are pushed).
+// We delay the actual save N milliseconds after the last state change.
+
+uint32_t const save_delay = 10000;  // 10 seconds delay
+int32_t save_delay_start_time = -1;
+
+void reset_save_delay()
+{
+   save_delay_start_time = millis();
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Play notes (for testing only)
 ///////////////////////////////////////////////////////////////////////////////
@@ -229,7 +242,6 @@ struct program_change_controller
 
    uint8_t get()
    {
-      save();
       return uint8_t{max(min(curr+base, 127), 0)};
    }
 
@@ -253,6 +265,7 @@ struct program_change_controller
       if (btn_up(sw) && (base < 127))
       {
          ++base;
+         reset_save_delay();
          transmit();
       }
    }
@@ -262,6 +275,7 @@ struct program_change_controller
       if (btn_down(sw) && (base > 0))
       {
          --base;
+         reset_save_delay();
          transmit();
       }
    }
@@ -271,6 +285,7 @@ struct program_change_controller
       if (grp_btn_up(sw) && (base < 127))
       {
          base += 5;
+         reset_save_delay();
          transmit();
       }
    }
@@ -280,6 +295,7 @@ struct program_change_controller
       if (grp_btn_down(sw) && (base > 0))
       {
          base -= 5;
+         reset_save_delay();
          transmit();
       }
    }
@@ -341,7 +357,7 @@ struct bank_select_controller
       if (btn_up(sw) && (curr < 127))
       {
          ++curr;
-         save();
+         reset_save_delay();
          transmit();
       }
    }
@@ -351,7 +367,7 @@ struct bank_select_controller
       if (btn_down(sw) && (curr > 0))
       {
          --curr;
-         save();
+         reset_save_delay();
          transmit();
       }
    }
@@ -459,6 +475,14 @@ void loop()
    bank_select_control.up(digitalRead(ch12));
    bank_select_control.down(digitalRead(ch13));
 #endif
+
+   if ((save_delay_start_time != -1)
+      && (millis() > (save_delay_start_time + save_delay)))
+   {
+      program_change.save();
+      bank_select_control.save();
+      save_delay_start_time = -1;
+   }
 }
 
 #else // !NEXUS_TEST
