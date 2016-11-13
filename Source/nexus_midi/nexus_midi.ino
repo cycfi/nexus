@@ -10,9 +10,13 @@
 //#define NEXUS_TEST_NOTE
 //#define NEXUS_TEST_VOLUME
 //#define NEXUS_TEST_PITCH_BEND
-#define NEXUS_TEST_PROGRAM_CHANGE
+//#define NEXUS_TEST_PROGRAM_CHANGE
 //#define NEXUS_TEST_PROGRAM_CHANGE_UP_DOWN
-#define NEXUS_TEST_PROGRAM_CHANGE_GROUP_UP_DOWN
+//#define NEXUS_TEST_PROGRAM_CHANGE_GROUP_UP_DOWN
+//#define NEXUS_TEST_EFFECTS_1
+//#define NEXUS_TEST_EFFECTS_2
+#define NEXUS_TEST_MODULATION
+#define NEXUS_TEST_SUSTAIN
 
 using namespace cycfi;
 
@@ -23,10 +27,10 @@ using namespace cycfi;
 //
 //    program_change       5-way switch
 //    channel_volume       analog
-//    expression           analog
 //    pitch_change         analog
 //    modulation           analog
 //    effect_1             analog
+//    effect_2             analog
 //    sustain              momentary switch
 //
 // Aux:
@@ -190,11 +194,32 @@ struct program_change_controller
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// Sustain control
+///////////////////////////////////////////////////////////////////////////////
+struct sustain_controller
+{
+   void operator()(bool sw)
+   {
+      int state = edge(sw);
+      if (state == 1)
+         midi_out << midi::control_change{0, midi::cc::sustain, 127};
+      else if (state == -1)
+         midi_out << midi::control_change{0, midi::cc::sustain, 0};
+   }
+
+   edge_detector<> edge;
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // The controls
 ///////////////////////////////////////////////////////////////////////////////
 controller<midi::cc::channel_volume>   volume_control;
+controller<midi::cc::effect_1>         fx1_control;
+controller<midi::cc::effect_2>         fx2_control;
+controller<midi::cc::modulation>       modulation_control;
 pitch_bend_controller                  pitch_bend;
 program_change_controller              program_change;
+sustain_controller                     sustain_control;
 
 ///////////////////////////////////////////////////////////////////////////////
 // setup
@@ -242,6 +267,22 @@ void loop()
 #ifdef NEXUS_TEST_PROGRAM_CHANGE_GROUP_UP_DOWN
    program_change.group_up(digitalRead(ch12));
    program_change.group_down(digitalRead(ch13));
+#endif
+
+#ifdef NEXUS_TEST_EFFECTS_1
+   fx1_control(analogRead(ch11));
+#endif
+
+#ifdef NEXUS_TEST_EFFECTS_2
+   fx2_control(analogRead(ch11));
+#endif
+
+#ifdef NEXUS_TEST_MODULATION
+   modulation_control(analogRead(ch11));
+#endif
+
+#ifdef NEXUS_TEST_SUSTAIN
+   sustain_control(digitalRead(ch12));
 #endif
 }
 
