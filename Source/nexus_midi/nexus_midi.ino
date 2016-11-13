@@ -16,7 +16,8 @@
 //#define NEXUS_TEST_EFFECTS_1
 //#define NEXUS_TEST_EFFECTS_2
 #define NEXUS_TEST_MODULATION
-#define NEXUS_TEST_SUSTAIN
+//#define NEXUS_TEST_SUSTAIN
+#define NEXUS_TEST_BANK_SELECT
 
 using namespace cycfi;
 
@@ -211,6 +212,32 @@ struct sustain_controller
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// Bank Select controller
+///////////////////////////////////////////////////////////////////////////////
+struct bank_select_controller
+{
+   bank_select_controller()
+    : curr{0}
+   {}
+
+   void up(bool sw)
+   {
+      if (btn_up(sw) && (curr < 127))
+         midi_out << midi::control_change{0, midi::cc::bank_select, ++curr};
+   }
+
+   void down(bool sw)
+   {
+      if (btn_down(sw) && (curr > 0))
+         midi_out << midi::control_change{0, midi::cc::bank_select, --curr};
+   }
+
+   uint8_t curr;
+   repeat_button<> btn_up;
+   repeat_button<> btn_down;
+};
+
+///////////////////////////////////////////////////////////////////////////////
 // The controls
 ///////////////////////////////////////////////////////////////////////////////
 controller<midi::cc::channel_volume>   volume_control;
@@ -220,6 +247,7 @@ controller<midi::cc::modulation>       modulation_control;
 pitch_bend_controller                  pitch_bend;
 program_change_controller              program_change;
 sustain_controller                     sustain_control;
+bank_select_controller                 bank_select_control;
 
 ///////////////////////////////////////////////////////////////////////////////
 // setup
@@ -283,6 +311,11 @@ void loop()
 
 #ifdef NEXUS_TEST_SUSTAIN
    sustain_control(digitalRead(ch12));
+#endif
+
+#ifdef NEXUS_TEST_BANK_SELECT
+   bank_select_control.up(digitalRead(ch12));
+   bank_select_control.down(digitalRead(ch13));
 #endif
 }
 
