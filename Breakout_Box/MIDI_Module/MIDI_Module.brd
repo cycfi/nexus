@@ -154,10 +154,10 @@
 </layers>
 <board>
 <plain>
-<wire x1="0" y1="0" x2="55" y2="0" width="0" layer="20"/>
-<wire x1="55" y1="0" x2="55" y2="80" width="0" layer="20"/>
-<wire x1="55" y1="80" x2="0" y2="80" width="0" layer="20"/>
-<wire x1="0" y1="80" x2="0" y2="0" width="0" layer="20"/>
+<wire x1="0" y1="0" x2="55" y2="0" width="0.1" layer="20"/>
+<wire x1="55" y1="0" x2="55" y2="80" width="0.1" layer="20"/>
+<wire x1="55" y1="80" x2="0" y2="80" width="0.1" layer="20"/>
+<wire x1="0" y1="80" x2="0" y2="0" width="0.1" layer="20"/>
 <text x="7.62" y="43.4975" size="0.8128" layer="25" ratio="13">CH9_CV</text>
 <text x="7.62" y="40.9575" size="0.8128" layer="25" ratio="13">CH10_CV</text>
 <text x="7.62" y="38.4175" size="0.8128" layer="25" ratio="13">CH11_CV</text>

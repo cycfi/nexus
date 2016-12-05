@@ -14126,6 +14126,20 @@ Source: www.kingbright.com</description>
 <pad name="P$19" x="0" y="0" drill="0.7"/>
 <wire x1="5.08" y1="-5.08" x2="5.08" y2="5.08" width="0.127" layer="21"/>
 </package>
+<package name="TH-PAD-1.6/0.8">
+<wire x1="-0.762" y1="0.762" x2="-0.508" y2="0.762" width="0.1524" layer="21"/>
+<wire x1="-0.762" y1="0.762" x2="-0.762" y2="0.508" width="0.1524" layer="21"/>
+<wire x1="0.762" y1="0.762" x2="0.762" y2="0.508" width="0.1524" layer="21"/>
+<wire x1="0.762" y1="0.762" x2="0.508" y2="0.762" width="0.1524" layer="21"/>
+<wire x1="0.762" y1="-0.508" x2="0.762" y2="-0.762" width="0.1524" layer="21"/>
+<wire x1="0.762" y1="-0.762" x2="0.508" y2="-0.762" width="0.1524" layer="21"/>
+<wire x1="-0.508" y1="-0.762" x2="-0.762" y2="-0.762" width="0.1524" layer="21"/>
+<wire x1="-0.762" y1="-0.762" x2="-0.762" y2="-0.508" width="0.1524" layer="21"/>
+<circle x="0" y="0" radius="0.635" width="0.1524" layer="51"/>
+<pad name="1" x="0" y="0" drill="0.8128" diameter="1.6002" shape="octagon"/>
+<text x="-0.762" y="1.016" size="1.27" layer="25" ratio="10">&gt;NAME</text>
+<text x="0" y="0.6" size="0.0254" layer="27">&gt;VALUE</text>
+</package>
 </packages>
 <symbols>
 <symbol name="19PIN">
@@ -14175,6 +14189,12 @@ Source: www.kingbright.com</description>
 <pin name="19" x="7.62" y="21.59" visible="off" length="middle" direction="pas" swaplevel="1" rot="R180"/>
 <circle x="0" y="-24.13" radius="0.635" width="0.254" layer="94"/>
 </symbol>
+<symbol name="1PIN">
+<text x="-1.143" y="1.8542" size="1.778" layer="95">&gt;NAME</text>
+<text x="-1.143" y="-3.302" size="1.778" layer="96">&gt;VALUE</text>
+<pin name="P" x="2.54" y="0" visible="off" length="short" direction="pas" rot="R180"/>
+<wire x1="0" y1="0" x2="-1.27" y2="0" width="0.4064" layer="94"/>
+</symbol>
 </symbols>
 <devicesets>
 <deviceset name="19PIN_LEMO">
@@ -14203,6 +14223,21 @@ Source: www.kingbright.com</description>
 <connect gate="G$1" pin="7" pad="P$7"/>
 <connect gate="G$1" pin="8" pad="P$8"/>
 <connect gate="G$1" pin="9" pad="P$9"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="TH-PAD-1.6/0.8">
+<gates>
+<gate name="G$1" symbol="1PIN" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="TH-PAD-1.6/0.8">
+<connects>
+<connect gate="G$1" pin="P" pad="1"/>
 </connects>
 <technologies>
 <technology name=""/>
@@ -14299,6 +14334,7 @@ Source: www.kingbright.com</description>
 <part name="L1" library="resistor" deviceset="L-EU" device="" value="100uH"/>
 <part name="CN1" library="CYCFI_Con" deviceset="19PIN_LEMO" device=""/>
 <part name="D1" library="CYCFI_diode" deviceset="FM4007W" device=""/>
+<part name="U$1" library="CYCFI_Con" deviceset="TH-PAD-1.6/0.8" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -14529,10 +14565,8 @@ Source: www.kingbright.com</description>
 <text x="175.26" y="88.9" size="1.778" layer="95">NC</text>
 <text x="175.26" y="86.36" size="1.778" layer="95">NC</text>
 <text x="104.14" y="86.36" size="1.778" layer="95">NC</text>
-<text x="19.05" y="10.16" size="2.54" layer="95">Nexus Project by Cycfi Research is licensed under a 
-Creative Commons Attribution-NonCommercial 4.0 
-International License. 
-http://creativecommons.org/licenses/by-nc/4.0/
+<text x="19.05" y="10.16" size="2.54" layer="95">Main Board for Nexus Project by Cycfi Research is licensed under a Creative
+Commons Attribution-ShareAlike 4.0 International License.
 
 Copyright CYCFI Research Inc. 2013-2016</text>
 <text x="30.48" y="149.86" size="1.778" layer="95" rot="MR0">CH1</text>
@@ -14579,6 +14613,7 @@ Copyright CYCFI Research Inc. 2013-2016</text>
 <instance part="H12" gate="G$1" x="85.09" y="99.06" rot="R180"/>
 <instance part="H13" gate="G$1" x="85.09" y="83.82" rot="R180"/>
 <instance part="CN1" gate="G$1" x="33.02" y="125.73" rot="MR180"/>
+<instance part="U$1" gate="G$1" x="33.02" y="93.98"/>
 </instances>
 <busses>
 </busses>
@@ -14813,6 +14848,9 @@ Copyright CYCFI Research Inc. 2013-2016</text>
 <pinref part="CN1" gate="G$1" pin="19"/>
 <junction x="40.64" y="104.14"/>
 <label x="30.48" y="104.14" size="1.778" layer="95" rot="MR0"/>
+<wire x1="40.64" y1="104.14" x2="40.64" y2="93.98" width="0.1524" layer="91"/>
+<pinref part="U$1" gate="G$1" pin="P"/>
+<wire x1="40.64" y1="93.98" x2="35.56" y2="93.98" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="DGND" class="0">
@@ -15269,10 +15307,8 @@ Copyright CYCFI Research Inc. 2013-2016</text>
 <text x="252.73" y="6.985" size="2.54" layer="95">v0.92</text>
 <text x="80.01" y="125.095" size="1.778" layer="95">+12V IN</text>
 <text x="86.36" y="122.555" size="1.778" layer="95">GND</text>
-<text x="12.7" y="12.7" size="2.54" layer="95">Nexus Project by Cycfi Research is licensed under a 
-Creative Commons Attribution-NonCommercial 4.0 
-International License. 
-http://creativecommons.org/licenses/by-nc/4.0/
+<text x="12.7" y="12.7" size="2.54" layer="95">MIDI Module for Nexus Project by Cycfi Research is licensed under a 
+Creative Commons Attribution-ShareAlike 4.0 International License. 
 
 Copyright CYCFI Research Inc. 2013-2016</text>
 <text x="200.025" y="11.43" size="2.54" layer="95">2016050</text>

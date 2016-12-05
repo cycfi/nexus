@@ -5744,9 +5744,10 @@ In this library the device names are the same as the pin names of the symbols, t
 <part name="SUPPLY1" library="supply2" deviceset="GND" device=""/>
 <part name="SUPPLY2" library="supply2" deviceset="GND" device=""/>
 <part name="SUPPLY3" library="supply2" deviceset="GND" device=""/>
-<part name="U$1" library="CYCFI_switch" deviceset="5WAY_SW_1" device="_"/>
-<part name="C1" library="resistor" deviceset="C-EU" device="C0805" value="0.1uF"/>
+<part name="U$1" library="CYCFI_switch" deviceset="5WAY_SW_1" device="" value="5WAY_SW_1"/>
+<part name="C1" library="resistor" deviceset="C-EU" device="C0805" value="10uF"/>
 <part name="SUPPLY4" library="supply2" deviceset="GND" device=""/>
+<part name="C2" library="resistor" deviceset="C-EU" device="C0805" value="10uF"/>
 </parts>
 <sheets>
 <sheet>
@@ -5907,10 +5908,8 @@ In this library the device names are the same as the pin names of the symbols, t
 <text x="168.275" y="17.78" size="2.54" layer="96">5Way Switch - Control Voltage</text>
 <text x="168.275" y="17.78" size="2.54" layer="95">5Way Switch - Control Voltage</text>
 <text x="238.125" y="6.985" size="2.1844" layer="95">v0.92</text>
-<text x="10.16" y="7.62" size="2.54" layer="95">Nexus Project by Cycfi Research is licensed under a 
-Creative Commons Attribution-NonCommercial 4.0 
-International License. 
-http://creativecommons.org/licenses/by-nc/4.0/
+<text x="10.16" y="7.62" size="2.54" layer="95">CV Switch for Nexus Project by Cycfi Research is licensed under a 
+Creative Commons Attribution-ShareAlike 4.0 International License. 
 
 Copyright CYCFI Research Inc. 2013-2016</text>
 <text x="111.76" y="64.77" size="1.778" layer="95">POSITION</text>
@@ -5965,6 +5964,7 @@ Copyright CYCFI Research Inc. 2013-2016</text>
 <instance part="U$1" gate="G$1" x="133.985" y="96.52"/>
 <instance part="C1" gate="G$1" x="159.385" y="92.71"/>
 <instance part="SUPPLY4" gate="GND" x="159.385" y="80.645"/>
+<instance part="C2" gate="G$1" x="151.765" y="128.905"/>
 </instances>
 <busses>
 </busses>
@@ -5986,7 +5986,11 @@ Copyright CYCFI Research Inc. 2013-2016</text>
 <segment>
 <pinref part="H1" gate="G$1" pin="3"/>
 <pinref part="R1" gate="G$1" pin="2"/>
-<wire x1="165.735" y1="133.985" x2="78.105" y2="133.985" width="0.1524" layer="91"/>
+<wire x1="165.735" y1="133.985" x2="151.765" y2="133.985" width="0.1524" layer="91"/>
+<pinref part="C2" gate="G$1" pin="1"/>
+<wire x1="151.765" y1="133.985" x2="78.105" y2="133.985" width="0.1524" layer="91"/>
+<wire x1="151.765" y1="131.445" x2="151.765" y2="133.985" width="0.1524" layer="91"/>
+<junction x="151.765" y="133.985"/>
 </segment>
 </net>
 <net name="N$2" class="0">
@@ -6013,6 +6017,10 @@ Copyright CYCFI Research Inc. 2013-2016</text>
 <pinref part="SUPPLY3" gate="GND" pin="GND"/>
 <wire x1="165.735" y1="136.525" x2="161.925" y2="136.525" width="0.1524" layer="91"/>
 <wire x1="161.925" y1="136.525" x2="161.925" y2="121.285" width="0.1524" layer="91"/>
+<pinref part="C2" gate="G$1" pin="2"/>
+<wire x1="151.765" y1="123.825" x2="151.765" y2="121.285" width="0.1524" layer="91"/>
+<wire x1="151.765" y1="121.285" x2="161.925" y2="121.285" width="0.1524" layer="91"/>
+<junction x="161.925" y="121.285"/>
 </segment>
 <segment>
 <pinref part="R4" gate="G$1" pin="1"/>

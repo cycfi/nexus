@@ -600,8 +600,8 @@ W = angled&lt;p&gt;
 <wire x1="235.93605625" y1="25.186403125" x2="233.45903125" y2="25.186403125" width="0" layer="94"/>
 <wire x1="233.45903125" y1="25.186403125" x2="233.45903125" y2="33.142509375" width="0" layer="94"/>
 <text x="252.73" y="6.985" size="2.54" layer="95">v0.9</text>
-<text x="12.7" y="7.62" size="2.54" layer="95">Nu Project by Cycfi Research is licensed under a Creative 
-Commons Attribution-ShareAlike 4.0 International License.
+<text x="12.7" y="7.62" size="2.54" layer="95">IO Module for Nexus Project by Cycfi Research is licensed under a 
+Creative Commons Attribution-ShareAlike 4.0 International License. 
 
 Copyright CYCFI Research Inc. 2013-2016</text>
 <text x="200.025" y="11.43" size="2.54" layer="95">2016050</text>
