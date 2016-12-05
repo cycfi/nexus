@@ -5,7 +5,7 @@
 =============================================================================*/
 #if !defined(CYCFI_UTIL_HPP_NOVEMBER_11_2016)
 #define CYCFI_UTIL_HPP_NOVEMBER_11_2016
-
+//
 #include <stdint.h>
 #include <energia.h>
 

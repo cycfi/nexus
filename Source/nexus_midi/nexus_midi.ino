@@ -8,11 +8,11 @@
 #include "MspFlash.h"
 
 #define NEXUS_TEST
-//#define NEXUS_TEST_NOTE
-//#define NEXUS_TEST_VOLUME
+#define NEXUS_TEST_NOTE
+#define NEXUS_TEST_VOLUME
 //#define NEXUS_TEST_PITCH_BEND
 #define NEXUS_TEST_PROGRAM_CHANGE
-#define NEXUS_TEST_PROGRAM_CHANGE_UP_DOWN
+//#define NEXUS_TEST_PROGRAM_CHANGE_UP_DOWN
 //#define NEXUS_TEST_PROGRAM_CHANGE_GROUP_UP_DOWN
 //#define NEXUS_TEST_EFFECTS_1
 //#define NEXUS_TEST_EFFECTS_2
@@ -57,6 +57,13 @@ int const ch12 = P1_4;
 int const ch13 = P1_5;
 int const ch14 = P1_6;
 int const ch15 = P1_7;
+
+int const aux1 = P2_1;
+int const aux2 = P2_2;
+int const aux3 = P2_3;
+int const aux4 = P2_4;
+int const aux5 = P2_5;
+int const aux6 = P2_6;
 
 #ifdef NEXUS_TEST
 int const noise_window = 4;
@@ -402,6 +409,13 @@ void setup()
    pinMode(ch13, INPUT);
    pinMode(ch14, INPUT);
    pinMode(ch15, INPUT);
+   
+   pinMode(aux1, INPUT_PULLUP);
+   pinMode(aux2, INPUT_PULLUP);
+   pinMode(aux3, INPUT);
+   pinMode(aux4, INPUT);
+   pinMode(aux5, INPUT);
+   pinMode(aux6, INPUT);
 
    midi_out.start();
 
@@ -435,19 +449,19 @@ void setup()
 void loop()
 {
 #ifdef NEXUS_TEST_NOTE
-   _note(digitalRead(ch12));
+   _note(digitalRead(aux1));
 #endif
 
 #ifdef NEXUS_TEST_VOLUME
-   volume_control(analogRead(ch11));
+   volume_control(analogRead(ch10));
 #endif
 
 #ifdef NEXUS_TEST_PITCH_BEND
-   pitch_bend(analogRead(ch11));
+   pitch_bend(analogRead(ch10));
 #endif
 
 #ifdef NEXUS_TEST_PROGRAM_CHANGE
-   program_change(analogRead(ch11));
+   program_change(analogRead(ch15));
 #endif
 
 #ifdef NEXUS_TEST_PROGRAM_CHANGE_UP_DOWN
@@ -477,8 +491,8 @@ void loop()
 #endif
 
 #ifdef NEXUS_TEST_BANK_SELECT
-   bank_select_control.up(digitalRead(ch12));
-   bank_select_control.down(digitalRead(ch13));
+   bank_select_control.up(digitalRead(aux1));
+   bank_select_control.down(digitalRead(aux2));
 #endif
 
    // Save the program_change and bank_select_control if needed
