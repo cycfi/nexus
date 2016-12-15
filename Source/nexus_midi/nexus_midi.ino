@@ -68,7 +68,7 @@ int const aux6 = P2_6;
 #ifdef NEXUS_TEST
 int const noise_window = 4;
 #else
-int const noise_window = 0;
+int const noise_window = 1;
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -205,7 +205,7 @@ struct controller
       }
    }
 
-   lowpass<256, int32_t> lp;
+   lowpass<64, int32_t> lp;
    gate<noise_window, int32_t> gt;
 };
 
@@ -221,7 +221,7 @@ struct pitch_bend_controller
          midi_out << midi::pitch_bend{0, uint16_t{val << 4}};
    }
 
-   lowpass<256, int32_t> lp;
+   lowpass<64, int32_t> lp;
    gate<noise_window, int32_t> gt;
 };
 
@@ -510,7 +510,7 @@ void loop()
 void loop()
 {
    volume_control(analogRead(ch13));
-  // pitch_bend(analogRead(ch14));
+   pitch_bend(analogRead(ch14));
 }
 
 #endif // NEXUS_TEST
