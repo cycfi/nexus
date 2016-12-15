@@ -200,8 +200,8 @@ struct controller
       {
          uint8_t const msb = val >> 3;
          uint8_t const lsb = (val << 4) & 0x7F;
-         midi_out << midi::control_change{0, ctrl, msb};
          midi_out << midi::control_change{0, ctrl_lsb, lsb};
+         midi_out << midi::control_change{0, ctrl, msb};
       }
    }
 
@@ -409,7 +409,7 @@ void setup()
    pinMode(ch13, INPUT);
    pinMode(ch14, INPUT);
    pinMode(ch15, INPUT);
-   
+
    pinMode(aux1, INPUT_PULLUP);
    pinMode(aux2, INPUT_PULLUP);
    pinMode(aux3, INPUT);
