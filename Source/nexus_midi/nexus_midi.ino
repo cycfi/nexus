@@ -7,7 +7,7 @@
 #include "util.hpp"
 #include "MspFlash.h"
 
-#define NEXUS_TEST
+//#define NEXUS_TEST
 #define NEXUS_TEST_NOTE
 #define NEXUS_TEST_VOLUME
 //#define NEXUS_TEST_PITCH_BEND
@@ -509,8 +509,8 @@ void loop()
 
 void loop()
 {
-   volume_control(analogRead(ch11));
-   pitch_bend(analogRead(ch12));
+   volume_control(analogRead(ch13));
+  // pitch_bend(analogRead(ch14));
 }
 
 #endif // NEXUS_TEST
