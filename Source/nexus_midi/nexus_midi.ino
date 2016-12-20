@@ -7,7 +7,7 @@
 #include "util.hpp"
 #include "MspFlash.h"
 
-#define NEXUS_TEST
+//#define NEXUS_TEST
 #define NEXUS_TEST_NOTE
 #define NEXUS_TEST_VOLUME
 //#define NEXUS_TEST_PITCH_BEND
@@ -68,7 +68,7 @@ int const aux6 = P2_6;
 #ifdef NEXUS_TEST
 int const noise_window = 4;
 #else
-int const noise_window = 0;
+int const noise_window = 1;
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -200,12 +200,12 @@ struct controller
       {
          uint8_t const msb = val >> 3;
          uint8_t const lsb = (val << 4) & 0x7F;
-         midi_out << midi::control_change{0, ctrl, msb};
          midi_out << midi::control_change{0, ctrl_lsb, lsb};
+         midi_out << midi::control_change{0, ctrl, msb};
       }
    }
 
-   lowpass<256, int32_t> lp;
+   lowpass<64, int32_t> lp;
    gate<noise_window, int32_t> gt;
 };
 
@@ -221,7 +221,7 @@ struct pitch_bend_controller
          midi_out << midi::pitch_bend{0, uint16_t{val << 4}};
    }
 
-   lowpass<256, int32_t> lp;
+   lowpass<64, int32_t> lp;
    gate<noise_window, int32_t> gt;
 };
 
@@ -409,7 +409,7 @@ void setup()
    pinMode(ch13, INPUT);
    pinMode(ch14, INPUT);
    pinMode(ch15, INPUT);
-   
+
    pinMode(aux1, INPUT_PULLUP);
    pinMode(aux2, INPUT_PULLUP);
    pinMode(aux3, INPUT);
@@ -509,8 +509,8 @@ void loop()
 
 void loop()
 {
-   volume_control(analogRead(ch11));
-   pitch_bend(analogRead(ch12));
+   volume_control(analogRead(ch13));
+   pitch_bend(analogRead(ch14));
 }
 
 #endif // NEXUS_TEST
