@@ -8,10 +8,10 @@
 #include "MspFlash.h"
 
 //#define NEXUS_TEST
-#define NEXUS_TEST_NOTE
-#define NEXUS_TEST_VOLUME
+//#define NEXUS_TEST_NOTE
+//#define NEXUS_TEST_VOLUME
 //#define NEXUS_TEST_PITCH_BEND
-#define NEXUS_TEST_PROGRAM_CHANGE
+//#define NEXUS_TEST_PROGRAM_CHANGE
 //#define NEXUS_TEST_PROGRAM_CHANGE_UP_DOWN
 //#define NEXUS_TEST_PROGRAM_CHANGE_GROUP_UP_DOWN
 //#define NEXUS_TEST_EFFECTS_1
@@ -19,7 +19,7 @@
 //#define NEXUS_TEST_MODULATION
 //#define NEXUS_TEST_SUSTAIN
 //#define NEXUS_TEST_BANK_SELECT
-#define NEXUS_DUMP_FLASH
+//#define NEXUS_DUMP_FLASH
 
 using namespace cycfi;
 
@@ -50,20 +50,20 @@ using namespace cycfi;
 ///////////////////////////////////////////////////////////////////////////////
 // Constants
 ///////////////////////////////////////////////////////////////////////////////
-int const ch9  = P2_0;
-int const ch10 = P1_0;
-int const ch11 = P1_3;
-int const ch12 = P1_4;
-int const ch13 = P1_5;
-int const ch14 = P1_6;
-int const ch15 = P1_7;
+int const ch9  = P2_0; //digital
+int const ch10 = P1_0; //analog and digital
+int const ch11 = P1_3; //analog and digital
+int const ch12 = P1_4; //analog and digital
+int const ch13 = P1_5; //analog and digital
+int const ch14 = P1_6; //analog and digital
+int const ch15 = P1_7; //analog and digital
 
-int const aux1 = P2_1;
-int const aux2 = P2_2;
-int const aux3 = P2_3;
-int const aux4 = P2_4;
-int const aux5 = P2_5;
-int const aux6 = P2_6;
+int const aux1 = P2_1; //digital
+int const aux2 = P2_2; //digital
+int const aux3 = P2_3; //digital
+int const aux4 = P2_4; //digital
+int const aux5 = P2_5; //digital
+int const aux6 = P2_6; //digital
 
 #ifdef NEXUS_TEST
 int const noise_window = 4;
@@ -412,10 +412,10 @@ void setup()
 
    pinMode(aux1, INPUT_PULLUP);
    pinMode(aux2, INPUT_PULLUP);
-   pinMode(aux3, INPUT);
-   pinMode(aux4, INPUT);
-   pinMode(aux5, INPUT);
-   pinMode(aux6, INPUT);
+   pinMode(aux3, INPUT_PULLUP);
+   pinMode(aux4, INPUT_PULLUP);
+   pinMode(aux5, INPUT_PULLUP);
+   pinMode(aux6, INPUT_PULLUP);
 
    midi_out.start();
 
@@ -509,8 +509,29 @@ void loop()
 
 void loop()
 {
-   volume_control(analogRead(ch13));
-   pitch_bend(analogRead(ch14));
+   sustain_control(digitalRead(ch9));
+   modulation_control(analogRead(ch10));
+   pitch_bend(analogRead(ch11));
+   fx2_control(analogRead(ch12));
+   fx1_control(analogRead(ch13));
+   program_change(analogRead(ch14));
+   volume_control(analogRead(ch15));
+
+   program_change.up(!digitalRead(aux1));
+   program_change.down(!digitalRead(aux2));
+   program_change.group_up(!digitalRead(aux3));
+   program_change.group_down(!digitalRead(aux4));
+   bank_select_control.up(!digitalRead(aux5));
+   bank_select_control.down(!digitalRead(aux6));
+
+   // Save the program_change and bank_select_control if needed
+   if ((save_delay_start_time != -1)
+      && (millis() > (save_delay_start_time + save_delay)))
+   {
+      program_change.save();
+      bank_select_control.save();
+      save_delay_start_time = -1;
+   }
 }
 
 #endif // NEXUS_TEST
