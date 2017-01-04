@@ -19,7 +19,7 @@
 //#define NEXUS_TEST_MODULATION
 //#define NEXUS_TEST_SUSTAIN
 //#define NEXUS_TEST_BANK_SELECT
-#define NEXUS_DUMP_FLASH
+//#define NEXUS_DUMP_FLASH
 
 using namespace cycfi;
 
@@ -410,7 +410,7 @@ void setup()
    pinMode(ch14, INPUT);
    pinMode(ch15, INPUT);
 
-   pinMode(aux1, INPUT_PULLUP); 
+   pinMode(aux1, INPUT_PULLUP);
    pinMode(aux2, INPUT_PULLUP);
    pinMode(aux3, INPUT_PULLUP);
    pinMode(aux4, INPUT_PULLUP);
@@ -523,7 +523,7 @@ void loop()
    program_change.group_down(!digitalRead(aux4));
    bank_select_control.up(!digitalRead(aux5));
    bank_select_control.down(!digitalRead(aux6));
-   
+
    // Save the program_change and bank_select_control if needed
    if ((save_delay_start_time != -1)
       && (millis() > (save_delay_start_time + save_delay)))
