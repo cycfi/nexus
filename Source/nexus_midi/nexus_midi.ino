@@ -510,7 +510,7 @@ void loop()
 
 uint16_t analog_read(uint16_t pin)
 {
-  return map(analogRead(pin), 0, 913, 0, 1024);
+  return map(analogRead(pin), 0, 900, 0, 1023);
 }
 
 void loop()
