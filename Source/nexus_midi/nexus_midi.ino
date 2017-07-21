@@ -445,6 +445,7 @@ void setup()
 ///////////////////////////////////////////////////////////////////////////////
 // loop
 ///////////////////////////////////////////////////////////////////////////////
+
 #ifdef NEXUS_TEST
 void loop()
 {
@@ -453,15 +454,15 @@ void loop()
 #endif
 
 #ifdef NEXUS_TEST_VOLUME
-   volume_control(analogRead(ch10));
+   volume_control(analog_read(ch10));
 #endif
 
 #ifdef NEXUS_TEST_PITCH_BEND
-   pitch_bend(analogRead(ch10));
+   pitch_bend(analog_read(ch10));
 #endif
 
 #ifdef NEXUS_TEST_PROGRAM_CHANGE
-   program_change(analogRead(ch15));
+   program_change(analog_read(ch15));
 #endif
 
 #ifdef NEXUS_TEST_PROGRAM_CHANGE_UP_DOWN
@@ -475,15 +476,15 @@ void loop()
 #endif
 
 #ifdef NEXUS_TEST_EFFECTS_1
-   fx1_control(analogRead(ch11));
+   fx1_control(analog_read(ch11));
 #endif
 
 #ifdef NEXUS_TEST_EFFECTS_2
-   fx2_control(analogRead(ch11));
+   fx2_control(analog_read(ch11));
 #endif
 
 #ifdef NEXUS_TEST_MODULATION
-   modulation_control(analogRead(ch11));
+   modulation_control(analog_read(ch11));
 #endif
 
 #ifdef NEXUS_TEST_SUSTAIN
@@ -507,15 +508,20 @@ void loop()
 
 #else // !NEXUS_TEST
 
+uint16_t analog_read(uint16_t pin)
+{
+  return map(analogRead(pin), 0, 900, 0, 1023);
+}
+
 void loop()
 {
    sustain_control(digitalRead(ch9));
-   modulation_control(analogRead(ch10));
-   pitch_bend(analogRead(ch11));
-   fx2_control(analogRead(ch12));
-   fx1_control(analogRead(ch13));
-   program_change(analogRead(ch14));
-   volume_control(analogRead(ch15));
+   modulation_control(analog_read(ch10));
+   pitch_bend(analog_read(ch11));
+   fx2_control(analog_read(ch12));
+   fx1_control(analog_read(ch13));
+   program_change(analog_read(ch14));
+   volume_control(analog_read(ch15));
 
    program_change.up(!digitalRead(aux1));
    program_change.down(!digitalRead(aux2));
