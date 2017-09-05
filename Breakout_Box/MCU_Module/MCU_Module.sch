@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.3">
+<eagle version="7.6.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="yes"/>
@@ -6404,11 +6404,11 @@ DIN A4, landscape with extra doc field</description>
 <text x="38.1" y="160.655" size="1.778" layer="125">VCC</text>
 <text x="87.63" y="156.21" size="1.778" layer="95">3.3V</text>
 <text x="177.8" y="19.05" size="2.54" layer="95">MCU Module</text>
-<text x="254" y="6.985" size="2.1844" layer="95">v1.0</text>
+<text x="254" y="6.985" size="2.54" layer="95">v1.0</text>
 <text x="12.7" y="12.7" size="2.54" layer="95">MCU Module for Nexus Project by Cycfi Research is licensed under a 
 Creative Commons Attribution-ShareAlike 4.0 International License. 
 
-Copyright CYCFI Research Inc. 2013-2016</text>
+Copyright CYCFI Research Inc. 2013-2017</text>
 <rectangle x1="179.80469375" y1="24.29065625" x2="193.0330125" y2="24.29954375" layer="94"/>
 <rectangle x1="203.283184375" y1="24.29065625" x2="207.683734375" y2="24.29954375" layer="94"/>
 <rectangle x1="216.92044375" y1="24.29065625" x2="230.1487625" y2="24.29954375" layer="94"/>
@@ -11099,6 +11099,7 @@ Copyright CYCFI Research Inc. 2013-2016</text>
 <rectangle x1="217.062684375" y1="32.176084375" x2="230.148759375" y2="32.184971875" layer="94"/>
 <rectangle x1="231.251125" y1="32.176084375" x2="247.86653125" y2="32.184971875" layer="94"/>
 <rectangle x1="248.915553125" y1="32.176084375" x2="251.271403125" y2="32.184971875" layer="94"/>
+<text x="200.66" y="11.43" size="2.54" layer="95">2017027</text>
 </plain>
 <instances>
 <instance part="U1" gate="G1" x="61.595" y="149.86" smashed="yes">

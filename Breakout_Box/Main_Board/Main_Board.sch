@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.3">
+<eagle version="7.6.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -14341,7 +14341,7 @@ Source: www.kingbright.com</description>
 <plain>
 <text x="177.8" y="19.05" size="2.54" layer="95">Channel Distribution</text>
 <text x="252.73" y="6.985" size="2.54" layer="95">v0.9</text>
-<text x="200.025" y="11.43" size="2.54" layer="95">2016050</text>
+<text x="200.025" y="11.43" size="2.54" layer="95">2017026</text>
 <text x="226.06" y="160.02" size="1.778" layer="95">CH1</text>
 <text x="226.06" y="157.48" size="1.778" layer="95">CH2</text>
 <text x="226.06" y="154.94" size="1.778" layer="95">CH3</text>
@@ -14418,7 +14418,7 @@ Source: www.kingbright.com</description>
 <text x="19.05" y="10.16" size="2.54" layer="95">Main Board for Nexus Project by Cycfi Research is licensed under a Creative
 Commons Attribution-ShareAlike 4.0 International License.
 
-Copyright CYCFI Research Inc. 2013-2016</text>
+Copyright CYCFI Research Inc. 2013-2017</text>
 <text x="30.48" y="149.86" size="1.778" layer="95" rot="MR0">CH1</text>
 <text x="30.48" y="147.32" size="1.778" layer="95" rot="MR0">CH2</text>
 <text x="30.48" y="144.78" size="1.778" layer="95" rot="MR0">CH3</text>
@@ -19703,8 +19703,8 @@ Copyright CYCFI Research Inc. 2013-2016</text>
 <text x="12.7" y="12.7" size="2.54" layer="95">Main Board for Nexus Project by Cycfi Research is licensed under a 
 Creative Commons Attribution-ShareAlike 4.0 International License. 
 
-Copyright CYCFI Research Inc. 2013-2016</text>
-<text x="200.025" y="11.43" size="2.54" layer="95">2016050</text>
+Copyright CYCFI Research Inc. 2013-2017</text>
+<text x="200.025" y="11.43" size="2.54" layer="95">2017026</text>
 <wire x1="173.99" y1="127" x2="173.99" y2="124.46" width="0.1524" layer="95"/>
 <wire x1="173.99" y1="124.46" x2="188.595" y2="124.46" width="0.1524" layer="95"/>
 <wire x1="188.595" y1="124.46" x2="189.865" y2="125.73" width="0.1524" layer="95"/>

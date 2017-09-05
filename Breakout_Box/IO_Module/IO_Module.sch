@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.3">
+<eagle version="7.6.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="yes"/>
@@ -448,13 +448,13 @@ W = angled&lt;p&gt;
 <sheet>
 <description>MAIN</description>
 <plain>
-<text x="177.8" y="19.05" size="2.54" layer="95">Stereo Jack</text>
+<text x="177.8" y="19.05" size="2.54" layer="95">I/O Module</text>
 <text x="252.73" y="6.985" size="2.54" layer="95">v0.9</text>
-<text x="12.7" y="7.62" size="2.54" layer="95">IO Module for Nexus Project by Cycfi Research is licensed under a 
+<text x="12.7" y="7.62" size="2.54" layer="95">I/O Module for Nexus Project by Cycfi Research is licensed under a 
 Creative Commons Attribution-ShareAlike 4.0 International License. 
 
-Copyright CYCFI Research Inc. 2013-2016</text>
-<text x="200.025" y="11.43" size="2.54" layer="95">2016050</text>
+Copyright CYCFI Research Inc. 2013-2017</text>
+<text x="200.025" y="11.43" size="2.54" layer="95">2017025</text>
 <text x="66.04" y="121.92" size="1.778" layer="95">CH1</text>
 <text x="66.04" y="119.38" size="1.778" layer="95">CH2</text>
 <text x="66.04" y="116.84" size="1.778" layer="95">CH3</text>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.3">
+<eagle version="7.6.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="yes"/>
@@ -12758,13 +12758,13 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <sheets>
 <sheet>
 <plain>
-<text x="177.8" y="19.05" size="2.54" layer="95">Mixer Module</text>
+<text x="177.8" y="19.05" size="2.54" layer="95">CH1-CH2 Buffer</text>
 <text x="252.73" y="6.985" size="2.54" layer="95">v0.9</text>
-<text x="12.7" y="7.62" size="2.54" layer="95">Mixer Module for Nexus Project by Cycfi Research is licensed under a 
+<text x="10.16" y="7.62" size="2.54" layer="95">Mixer Module for Nexus Project by Cycfi Research is licensed under a 
 Creative Commons Attribution-ShareAlike 4.0 International License. 
 
-Copyright CYCFI Research Inc. 2013-2016</text>
-<text x="200.025" y="11.43" size="2.54" layer="95">2016050</text>
+Copyright CYCFI Research Inc. 2013-2017</text>
+<text x="200.025" y="11.43" size="2.54" layer="95">2017029</text>
 <wire x1="124.46" y1="152.4" x2="124.46" y2="142.24" width="0.1524" layer="94" style="shortdash"/>
 <wire x1="124.46" y1="142.24" x2="119.38" y2="142.24" width="0.1524" layer="94" style="shortdash"/>
 <wire x1="119.38" y1="142.24" x2="119.38" y2="152.4" width="0.1524" layer="94" style="shortdash"/>
@@ -17975,7 +17975,7 @@ AGND = Analog Ground</text>
 <plain>
 <text x="177.8" y="19.05" size="2.54" layer="95">CH3-CH7 Buffer</text>
 <text x="252.73" y="6.985" size="2.54" layer="95">v0.9</text>
-<text x="200.025" y="11.43" size="2.54" layer="95">2016050</text>
+<text x="200.025" y="11.43" size="2.54" layer="95">2017029</text>
 <wire x1="45.72" y1="161.6075" x2="45.72" y2="158.4325" width="0.1524" layer="95"/>
 <wire x1="45.72" y1="158.4325" x2="52.07" y2="158.4325" width="0.1524" layer="95"/>
 <wire x1="52.07" y1="158.4325" x2="53.34" y2="160.02" width="0.1524" layer="95"/>
@@ -18023,7 +18023,7 @@ AGND = Analog Ground</text>
 <wire x1="200.66" y1="160.02" x2="205.74" y2="160.02" width="0.1524" layer="94" style="shortdash"/>
 <text x="457.2" y="19.05" size="2.54" layer="95">CH8-CH12_A Buffer</text>
 <text x="532.13" y="6.985" size="2.54" layer="95">v0.9</text>
-<text x="479.425" y="11.43" size="2.54" layer="95">2016050</text>
+<text x="479.425" y="11.43" size="2.54" layer="95">2017029</text>
 <wire x1="327.66" y1="161.6075" x2="327.66" y2="158.4325" width="0.1524" layer="95"/>
 <wire x1="327.66" y1="158.4325" x2="334.01" y2="158.4325" width="0.1524" layer="95"/>
 <wire x1="334.01" y1="158.4325" x2="335.28" y2="160.02" width="0.1524" layer="95"/>
@@ -18108,11 +18108,11 @@ AGND = Analog Ground</text>
 <text x="285.75" y="6.35" size="2.54" layer="95">Mixer Module for Nexus Project by Cycfi Research is licensed under a 
 Creative Commons Attribution-ShareAlike 4.0 International License. 
 
-Copyright CYCFI Research Inc. 2013-2016</text>
+Copyright CYCFI Research Inc. 2013-2017</text>
 <text x="7.62" y="7.62" size="2.54" layer="95">Mixer Module for Nexus Project by Cycfi Research is licensed under a 
 Creative Commons Attribution-ShareAlike 4.0 International License. 
 
-Copyright CYCFI Research Inc. 2013-2016</text>
+Copyright CYCFI Research Inc. 2013-2017</text>
 <rectangle x1="179.80469375" y1="24.29065625" x2="193.0330125" y2="24.29954375" layer="94"/>
 <rectangle x1="203.283184375" y1="24.29065625" x2="207.683734375" y2="24.29954375" layer="94"/>
 <rectangle x1="216.92044375" y1="24.29065625" x2="230.1487625" y2="24.29954375" layer="94"/>
@@ -28757,11 +28757,11 @@ Copyright CYCFI Research Inc. 2013-2016</text>
 AVCC = 9.3V Analog Power Source for Mixer Module
 AGND = Analog Ground</text>
 <text x="252.73" y="6.985" size="2.54" layer="95">v0.92</text>
-<text x="12.7" y="12.7" size="2.54" layer="95">Mixer Module for Nexus Project by Cycfi Research is licensed under a 
+<text x="7.62" y="12.7" size="2.54" layer="95">Mixer Module for Nexus Project by Cycfi Research is licensed under a 
 Creative Commons Attribution-ShareAlike 4.0 International License. 
 
-Copyright CYCFI Research Inc. 2013-2016</text>
-<text x="200.025" y="11.43" size="2.54" layer="95">2016050</text>
+Copyright CYCFI Research Inc. 2013-201</text>
+<text x="200.025" y="11.43" size="2.54" layer="95">2017029</text>
 <wire x1="185.42" y1="116.205" x2="183.8325" y2="117.7925" width="0.254" layer="95"/>
 <wire x1="183.8325" y1="117.7925" x2="173.99" y2="117.7925" width="0.254" layer="95"/>
 <wire x1="173.99" y1="117.7925" x2="173.99" y2="114.6175" width="0.254" layer="95"/>
@@ -33606,7 +33606,7 @@ Copyright CYCFI Research Inc. 2013-2016</text>
 <plain>
 <text x="35.56" y="53.34" size="2.54" layer="95">Expansion Headers</text>
 <text x="252.73" y="6.985" size="2.54" layer="95">v0.9</text>
-<text x="200.025" y="8.89" size="2.54" layer="95">2016050</text>
+<text x="202.565" y="11.43" size="2.54" layer="95">2017029</text>
 <text x="8.89" y="125.73" size="1.778" layer="95">CH9_CV</text>
 <text x="8.89" y="123.19" size="1.778" layer="95">CH10_CV</text>
 <text x="8.89" y="120.65" size="1.778" layer="95">CH11_CV</text>
@@ -33625,7 +33625,7 @@ Copyright CYCFI Research Inc. 2013-2016</text>
 <text x="10.16" y="6.35" size="2.54" layer="95">Mixer Module for Nexus Project by Cycfi Research is licensed under a 
 Creative Commons Attribution-ShareAlike 4.0 International License. 
 
-Copyright CYCFI Research Inc. 2013-2016</text>
+Copyright CYCFI Research Inc. 2013-2017</text>
 <wire x1="162.56" y1="35.56" x2="113.03" y2="35.56" width="0.1524" layer="94" style="longdash"/>
 <wire x1="113.03" y1="35.56" x2="0" y2="35.56" width="0.1524" layer="94" style="longdash"/>
 <wire x1="113.03" y1="35.56" x2="113.03" y2="180.34" width="0.1524" layer="94" style="longdash"/>

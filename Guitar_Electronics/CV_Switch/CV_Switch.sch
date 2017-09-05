@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.3">
+<eagle version="7.6.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="yes"/>
@@ -5755,14 +5755,14 @@ In this library the device names are the same as the pin names of the symbols, t
 <text x="186.055" y="134.62" size="1.778" layer="95" rot="R180">VCC(9V)</text>
 <text x="180.34" y="137.16" size="1.778" layer="95" rot="R180">GND</text>
 <text x="180.34" y="139.7" size="1.778" layer="95" rot="R180">OUT</text>
-<text x="168.275" y="17.78" size="2.54" layer="96">5Way Switch - Control Voltage</text>
-<text x="168.275" y="17.78" size="2.54" layer="95">5Way Switch - Control Voltage</text>
+<text x="165.735" y="17.78" size="2.54" layer="96">5Way Switch - Control Voltage</text>
+<text x="186.055" y="10.16" size="2.54" layer="95">201031</text>
 <text x="238.125" y="6.985" size="2.1844" layer="95">v0.92</text>
 <text x="10.16" y="7.62" size="2.54" layer="95">CV Switch for Nexus Project by Cycfi Research is licensed 
 under a Creative Commons Attribution-ShareAlike 4.0 
 International License. 
 
-Copyright CYCFI Research Inc. 2013-2016</text>
+Copyright CYCFI Research Inc. 2013-2017</text>
 <text x="111.76" y="64.77" size="1.778" layer="95">POSITION</text>
 <text x="125.73" y="64.77" size="1.778" layer="95">OUTPUT</text>
 <wire x1="110.49" y1="67.31" x2="124.46" y2="67.31" width="0.1524" layer="95"/>

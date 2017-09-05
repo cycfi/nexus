@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.3">
+<eagle version="7.6.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -5814,11 +5814,11 @@ type RDH, grid 15 mm</description>
 <text x="149.225" y="123.19" size="1.778" layer="95">VCC(9V)</text>
 <text x="149.225" y="120.65" size="1.778" layer="95">GND</text>
 <text x="149.225" y="118.11" size="1.778" layer="95">OUT</text>
-<text x="237.49" y="6.985" size="2.1844" layer="95">v0.96</text>
-<text x="10.16" y="7.62" size="2.54" layer="95">CV_Pot for Nexus Project by Cycfi Research is licensed under a 
-Creative Commons Attribution-ShareAlike 4.0 International License. 
+<text x="237.49" y="6.985" size="2.54" layer="95">v0.96</text>
+<text x="10.16" y="7.62" size="2.54" layer="95">CV_Pot for Nexus Project by Cycfi Research is licensed under a Creative
+Commons Attribution-ShareAlike 4.0 International License. 
 
-Copyright CYCFI Research Inc. 2013-2016</text>
+Copyright CYCFI Research Inc. 2013-2017</text>
 <rectangle x1="164.56469375" y1="24.29065625" x2="177.7930125" y2="24.29954375" layer="94"/>
 <rectangle x1="188.043184375" y1="24.29065625" x2="192.443734375" y2="24.29954375" layer="94"/>
 <rectangle x1="201.68044375" y1="24.29065625" x2="214.9087625" y2="24.29954375" layer="94"/>
@@ -10509,6 +10509,7 @@ Copyright CYCFI Research Inc. 2013-2016</text>
 <rectangle x1="201.822684375" y1="32.176084375" x2="214.908759375" y2="32.184971875" layer="94"/>
 <rectangle x1="216.011125" y1="32.176084375" x2="232.62653125" y2="32.184971875" layer="94"/>
 <rectangle x1="233.675553125" y1="32.176084375" x2="236.031403125" y2="32.184971875" layer="94"/>
+<text x="185.42" y="11.43" size="2.54" layer="95">2017030</text>
 </plain>
 <instances>
 <instance part="FRAME1" gate="G$1" x="0" y="0"/>
