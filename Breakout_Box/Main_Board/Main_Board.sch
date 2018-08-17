@@ -14509,11 +14509,7 @@ Based on the previous library ind-a.lbr&lt;p&gt;
 <sheet>
 <plain>
 <text x="177.8" y="19.05" size="2.54" layer="95">Channel Distribution</text>
-<<<<<<< HEAD
-<text x="252.73" y="6.985" size="2.54" layer="95">v1.1</text>
-=======
 <text x="252.73" y="6.985" size="2.54" layer="95">v2.1</text>
->>>>>>> version_2.1
 <text x="200.025" y="11.43" size="2.54" layer="95">2018001</text>
 <text x="241.3" y="165.1" size="1.778" layer="95">CH1</text>
 <text x="241.3" y="162.56" size="1.778" layer="95">CH2</text>
@@ -19917,11 +19913,7 @@ Copyright CYCFI Research Inc. 2013-2018</text>
 * +12_VREGD = 12V Regulater Power Supply for Digital
 *AGND = Analog Ground
 *DGND= Digital Ground</text>
-<<<<<<< HEAD
-<text x="252.73" y="6.985" size="2.54" layer="95">v1.1</text>
-=======
 <text x="252.73" y="6.985" size="2.54" layer="95">v2.1</text>
->>>>>>> version_2.1
 <text x="38.1" y="125.095" size="1.778" layer="95">+12V IN</text>
 <text x="38.1" y="122.555" size="1.778" layer="95">GND</text>
 <text x="12.7" y="12.7" size="2.54" layer="95">Main Board for Nexus Project by Cycfi Research is licensed under a 
