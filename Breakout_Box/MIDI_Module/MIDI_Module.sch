@@ -16507,7 +16507,11 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <sheet>
 <plain>
 <text x="177.8" y="19.05" size="2.54" layer="95">MIDI Module B</text>
+<<<<<<< HEAD
 <text x="252.73" y="6.985" size="2.54" layer="95">v1.0</text>
+=======
+<text x="252.73" y="6.985" size="2.54" layer="95">v2.0</text>
+>>>>>>> version_2.1
 <text x="200.025" y="11.43" size="2.54" layer="95">2018002</text>
 <wire x1="150.8125" y1="82.8675" x2="150.8125" y2="79.6925" width="0.254" layer="95"/>
 <wire x1="150.8125" y1="79.6925" x2="163.5125" y2="79.6925" width="0.254" layer="95"/>
@@ -21832,7 +21836,11 @@ Copyright CYCFI Research Inc. 2013-2018</text>
 <sheet>
 <plain>
 <text x="177.8" y="19.05" size="2.54" layer="95">MIDI Module A</text>
+<<<<<<< HEAD
 <text x="252.73" y="6.985" size="2.54" layer="95">v1.0</text>
+=======
+<text x="252.73" y="6.985" size="2.54" layer="95">v2.0</text>
+>>>>>>> version_2.1
 <text x="200.025" y="11.43" size="2.54" layer="95">2018002</text>
 <text x="142.24" y="122.555" size="1.778" layer="95" rot="MR0">P3.3</text>
 <text x="142.24" y="120.015" size="1.778" layer="95" rot="MR0">P3.2</text>
@@ -27334,7 +27342,11 @@ Copyright CYCFI Research Inc. 2013-2018</text>
 *MCU_VCC = 5V MCU power supply
 *+12V_REG = 12V Regulated power supply
 *DVCC= 3.3V Digital supply for expansion</text>
+<<<<<<< HEAD
 <text x="252.73" y="6.985" size="2.54" layer="95">v1.0</text>
+=======
+<text x="252.73" y="6.985" size="2.54" layer="95">v2.0</text>
+>>>>>>> version_2.1
 <wire x1="175.895" y1="145.0975" x2="174.3075" y2="146.685" width="0.254" layer="95"/>
 <wire x1="174.3075" y1="146.685" x2="161.925" y2="146.685" width="0.254" layer="95"/>
 <wire x1="161.925" y1="146.685" x2="161.925" y2="143.51" width="0.254" layer="95"/>
