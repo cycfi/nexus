@@ -7,7 +7,7 @@
 <setting keepoldvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.05" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
 <layer number="2" name="Route2" color="1" fill="3" visible="no" active="no"/>
@@ -16508,7 +16508,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <plain>
 <text x="177.8" y="19.05" size="2.54" layer="95">MIDI Module B</text>
 <text x="252.73" y="6.985" size="2.54" layer="95">v2.0</text>
-<text x="200.025" y="11.43" size="2.54" layer="95">2018002</text>
+<text x="200.025" y="11.43" size="2.54" layer="95">2016050</text>
 <wire x1="150.8125" y1="82.8675" x2="150.8125" y2="79.6925" width="0.254" layer="95"/>
 <wire x1="150.8125" y1="79.6925" x2="163.5125" y2="79.6925" width="0.254" layer="95"/>
 <wire x1="163.5125" y1="79.6925" x2="165.1" y2="81.28" width="0.254" layer="95"/>
@@ -16521,7 +16521,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <text x="25.4" y="121.92" size="1.778" layer="95">CH13_CV</text>
 <text x="25.4" y="119.38" size="1.778" layer="95">CH14_CV</text>
 <text x="25.4" y="116.84" size="1.778" layer="95">CH15_CV</text>
-<text x="30.48" y="91.44" size="1.778" layer="95">DGND</text>
+<text x="27.94" y="91.44" size="1.778" layer="95">DGND</text>
 <text x="33.655" y="114.3" size="1.778" layer="95">NC</text>
 <wire x1="114.3" y1="154.94" x2="115.57" y2="153.67" width="0.1524" layer="95"/>
 <wire x1="115.57" y1="153.67" x2="125.73" y2="153.67" width="0.1524" layer="95"/>
@@ -16559,10 +16559,12 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <wire x1="228.6" y1="156.21" x2="217.17" y2="156.21" width="0.1524" layer="95"/>
 <wire x1="217.17" y1="156.21" x2="215.9" y2="154.94" width="0.1524" layer="95"/>
 <text x="91.44" y="170.18" size="3.81" layer="95">CONTROL VOLTAGE: INPUT BUFFERS</text>
-<text x="30.48" y="93.98" size="1.778" layer="95">DGND</text>
-<text x="30.48" y="96.52" size="1.778" layer="95">DGND</text>
-<text x="11.43" y="10.16" size="2.54" layer="95">MIDI Module for Nexus Project by Cycfi Research is licensed under a 
+<text x="27.94" y="93.98" size="1.778" layer="95">DGND</text>
+<text x="27.94" y="96.52" size="1.778" layer="95">DGND</text>
+<text x="11.43" y="10.16" size="2.54" layer="95">Nexus Project by Cycfi Research is licensed under a 
 Creative Commons Attribution-ShareAlike 4.0 International License.
+http://creativecommons.org/licenses/by-nc/4.0/
+
 
 Copyright CYCFI Research Inc. 2013-2018</text>
 <rectangle x1="179.80469375" y1="24.29065625" x2="193.0330125" y2="24.29954375" layer="94"/>
@@ -21255,6 +21257,8 @@ Copyright CYCFI Research Inc. 2013-2018</text>
 <rectangle x1="217.062684375" y1="32.176084375" x2="230.148759375" y2="32.184971875" layer="94"/>
 <rectangle x1="231.251125" y1="32.176084375" x2="247.86653125" y2="32.184971875" layer="94"/>
 <rectangle x1="248.915553125" y1="32.176084375" x2="251.271403125" y2="32.184971875" layer="94"/>
+<text x="236.22" y="111.76" size="1.778" layer="95">Note:
+*TP_XX = Test Point</text>
 </plain>
 <instances>
 <instance part="FRAME2" gate="G$1" x="0" y="0" smashed="yes"/>
@@ -21382,8 +21386,8 @@ Copyright CYCFI Research Inc. 2013-2018</text>
 <attribute name="VALUE" x="63.5" y="151.13" size="1.778" layer="96"/>
 </instance>
 <instance part="C10" gate="G$1" x="71.12" y="125.73" smashed="yes">
-<attribute name="NAME" x="63.5" y="128.27" size="1.778" layer="95"/>
-<attribute name="VALUE" x="63.5" y="125.73" size="1.778" layer="96"/>
+<attribute name="NAME" x="63.5" y="129.54" size="1.778" layer="95"/>
+<attribute name="VALUE" x="63.5" y="127" size="1.778" layer="96"/>
 </instance>
 <instance part="C11" gate="G$1" x="71.12" y="102.87" smashed="yes">
 <attribute name="NAME" x="63.5" y="105.41" size="1.778" layer="95"/>
@@ -21798,7 +21802,7 @@ Copyright CYCFI Research Inc. 2013-2018</text>
 <junction x="45.72" y="88.9"/>
 <pinref part="H9" gate="1" pin="7"/>
 <wire x1="45.72" y1="91.44" x2="45.72" y2="88.9" width="0.1524" layer="91"/>
-<label x="30.48" y="88.9" size="1.778" layer="95"/>
+<label x="27.94" y="88.9" size="1.778" layer="95"/>
 <junction x="45.72" y="91.44"/>
 <pinref part="H9" gate="1" pin="5"/>
 <wire x1="45.72" y1="91.44" x2="45.72" y2="93.98" width="0.2032" layer="91"/>
@@ -21833,7 +21837,7 @@ Copyright CYCFI Research Inc. 2013-2018</text>
 <plain>
 <text x="177.8" y="19.05" size="2.54" layer="95">MIDI Module A</text>
 <text x="252.73" y="6.985" size="2.54" layer="95">v2.0</text>
-<text x="200.025" y="11.43" size="2.54" layer="95">2018002</text>
+<text x="200.025" y="11.43" size="2.54" layer="95">2016050</text>
 <text x="142.24" y="122.555" size="1.778" layer="95" rot="MR0">P3.3</text>
 <text x="142.24" y="120.015" size="1.778" layer="95" rot="MR0">P3.2</text>
 <text x="142.24" y="117.475" size="1.778" layer="95" rot="MR0">P2.2</text>
@@ -21924,8 +21928,10 @@ FOR EXPANSION</text>
 <wire x1="230.505" y1="96.52" x2="229.235" y2="96.52" width="0.1524" layer="94"/>
 <wire x1="230.505" y1="96.52" x2="231.775" y2="96.52" width="0.1524" layer="94"/>
 <wire x1="214.63" y1="180.34" x2="214.63" y2="35.56" width="0.1524" layer="94" style="longdash"/>
-<text x="12.7" y="5.08" size="2.54" layer="95">MIDI Module for Nexus Project by Cycfi Research is licensed under a
+<text x="12.7" y="5.08" size="2.54" layer="95">Nexus Project by Cycfi Research is licensed under a
 Creative Commons Attribution-ShareAlike 4.0 International License.
+http://creativecommons.org/licenses/by-nc/4.0/
+
 
 Copyright CYCFI Research Inc. 2013-2018</text>
 <rectangle x1="179.80469375" y1="24.29065625" x2="193.0330125" y2="24.29954375" layer="94"/>
@@ -27340,7 +27346,7 @@ Copyright CYCFI Research Inc. 2013-2018</text>
 <wire x1="161.925" y1="146.685" x2="161.925" y2="143.51" width="0.254" layer="95"/>
 <wire x1="161.925" y1="143.51" x2="174.3075" y2="143.51" width="0.254" layer="95"/>
 <wire x1="174.3075" y1="143.51" x2="175.895" y2="145.0975" width="0.254" layer="95"/>
-<text x="200.025" y="11.43" size="2.54" layer="95">2018002</text>
+<text x="200.025" y="11.43" size="2.54" layer="95">2016050</text>
 <wire x1="172.085" y1="101.2825" x2="170.4975" y2="102.87" width="0.254" layer="95"/>
 <wire x1="170.4975" y1="102.87" x2="161.925" y2="102.87" width="0.254" layer="95"/>
 <wire x1="161.925" y1="102.87" x2="161.925" y2="99.695" width="0.254" layer="95"/>
@@ -27351,8 +27357,10 @@ Copyright CYCFI Research Inc. 2013-2018</text>
 <wire x1="86.36" y1="146.685" x2="86.36" y2="142.875" width="0.2032" layer="95"/>
 <wire x1="86.36" y1="142.875" x2="101.6" y2="142.875" width="0.2032" layer="95"/>
 <wire x1="101.6" y1="142.875" x2="103.505" y2="144.78" width="0.2032" layer="95"/>
-<text x="12.7" y="16.51" size="2.54" layer="95">MIDI Module for Nexus Project by Cycfi Research is licensed under a 
+<text x="12.7" y="16.51" size="2.54" layer="95">Nexus Project by Cycfi Research is licensed under a 
 Creative Commons Attribution-ShareAlike 4.0 International License.
+http://creativecommons.org/licenses/by-nc/4.0/
+
 
 Copyright CYCFI Research Inc. 2013-2018</text>
 <rectangle x1="179.80469375" y1="24.29065625" x2="193.0330125" y2="24.29954375" layer="94"/>
