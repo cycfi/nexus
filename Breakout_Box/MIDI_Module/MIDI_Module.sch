@@ -16399,7 +16399,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 </classes>
 <parts>
 <part name="FRAME1" library="frames" library_urn="urn:adsk.eagle:library:229" deviceset="DINA4_L" device=""/>
-<part name="T1" library="Cycfi" deviceset="TRAN-MMBT2222A" device="" value="2N2222"/>
+<part name="T1" library="Cycfi" deviceset="TRAN-MMBT2222A" device="" value="MMBT2222LT1G"/>
 <part name="R3" library="resistor" library_urn="urn:adsk.eagle:library:348" deviceset="R-EU_" device="R0402" package3d_urn="urn:adsk.eagle:package:26058/1" value="1K"/>
 <part name="R2" library="resistor" library_urn="urn:adsk.eagle:library:348" deviceset="R-EU_" device="R0402" package3d_urn="urn:adsk.eagle:package:26058/1" value="220"/>
 <part name="R1" library="resistor" library_urn="urn:adsk.eagle:library:348" deviceset="R-EU_" device="R0402" package3d_urn="urn:adsk.eagle:package:26058/1" value="220"/>
@@ -16427,7 +16427,7 @@ new: Attribute TP_SIGNAL_NAME&lt;br&gt;
 <part name="C12" library="resistor" library_urn="urn:adsk.eagle:library:348" deviceset="C-EU" device="C0603" package3d_urn="urn:adsk.eagle:package:26138/1" value="0.1uF"/>
 <part name="C23" library="resistor" library_urn="urn:adsk.eagle:library:348" deviceset="C-EU" device="C0603" package3d_urn="urn:adsk.eagle:package:26138/1" value="0.1uF"/>
 <part name="C24" library="resistor" library_urn="urn:adsk.eagle:library:348" deviceset="C-EU" device="C0603" package3d_urn="urn:adsk.eagle:package:26138/1" value="0.1uF"/>
-<part name="T2" library="Cycfi" deviceset="TRAN-MMBT2222A" device="" value="2N2222"/>
+<part name="T2" library="Cycfi" deviceset="TRAN-MMBT2222A" device="" value="MMBT2222LT1G"/>
 <part name="R74" library="resistor" library_urn="urn:adsk.eagle:library:348" deviceset="R-EU_" device="R0402" package3d_urn="urn:adsk.eagle:package:26058/1" value="1K"/>
 <part name="R75" library="resistor" library_urn="urn:adsk.eagle:library:348" deviceset="R-EU_" device="R0402" package3d_urn="urn:adsk.eagle:package:26058/1" value="1K"/>
 <part name="SUPPLY1" library="supply2" library_urn="urn:adsk.eagle:library:372" deviceset="GND" device="" value="DGND"/>
@@ -26649,7 +26649,7 @@ Copyright CYCFI Research Inc. 2013-2018</text>
 </instance>
 <instance part="T1" gate="G$1" x="135.89" y="54.61" smashed="yes" rot="MR0">
 <attribute name="NAME" x="129.54" y="54.61" size="1.778" layer="95"/>
-<attribute name="VALUE" x="123.19" y="52.07" size="1.778" layer="96"/>
+<attribute name="VALUE" x="119.38" y="52.07" size="1.778" layer="96"/>
 </instance>
 <instance part="R3" gate="G$1" x="146.05" y="54.61" smashed="yes" rot="MR0">
 <attribute name="NAME" x="143.51" y="58.42" size="1.778" layer="95"/>
