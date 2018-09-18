@@ -5560,47 +5560,6 @@ http://www.micrel.com&lt;p&gt;
 </deviceset>
 </devicesets>
 </library>
-<library name="Cycfi">
-<packages>
-<package name="0603">
-<wire x1="-0.356" y1="0.432" x2="0.356" y2="0.432" width="0.1016" layer="51"/>
-<wire x1="-0.356" y1="-0.419" x2="0.356" y2="-0.419" width="0.1016" layer="51"/>
-<smd name="1" x="-0.85" y="0" dx="1.1" dy="1" layer="1"/>
-<smd name="2" x="0.85" y="0" dx="1.1" dy="1" layer="1"/>
-<text x="-0.889" y="0.762" size="1.27" layer="25">&gt;NAME</text>
-<text x="-0.889" y="-2.032" size="1.27" layer="27">&gt;VALUE</text>
-<rectangle x1="-0.8382" y1="-0.4699" x2="-0.3381" y2="0.4801" layer="51"/>
-<rectangle x1="0.3302" y1="-0.4699" x2="0.8303" y2="0.4801" layer="51"/>
-</package>
-</packages>
-<symbols>
-<symbol name="FERRITE_BEAD">
-<text x="-1.4986" y="-3.81" size="1.778" layer="95" rot="R90">&gt;NAME</text>
-<text x="3.302" y="-3.81" size="1.778" layer="96" rot="R90">&gt;VALUE</text>
-<rectangle x1="-1.016" y1="-3.556" x2="1.016" y2="3.556" layer="94"/>
-<pin name="2" x="0" y="-5.08" visible="off" length="short" direction="pas" swaplevel="1" rot="R90"/>
-<pin name="1" x="0" y="5.08" visible="off" length="short" direction="pas" swaplevel="1" rot="R270"/>
-</symbol>
-</symbols>
-<devicesets>
-<deviceset name="FERRITE_BEAD">
-<gates>
-<gate name="G$1" symbol="FERRITE_BEAD" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="0603">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-</devicesets>
-</library>
 <library name="CYCFI_IC">
 <packages>
 <package name="QFN32">
@@ -6378,7 +6337,6 @@ DIN A4, landscape with extra doc field</description>
 <part name="SUPPLY6" library="supply2" deviceset="GND" device=""/>
 <part name="P+1" library="supply1" deviceset="VCC" device=""/>
 <part name="R1" library="resistor" deviceset="R-EU_" device="R0402" value="47K"/>
-<part name="LSEL" library="Cycfi" deviceset="FERRITE_BEAD" device="" value=""/>
 <part name="C6" library="resistor" deviceset="C-EU" device="C0603" value="1nf"/>
 <part name="C1" library="resistor" deviceset="C-EU" device="C0805" value="1uf"/>
 <part name="C2" library="resistor" deviceset="C-EU" device="C0805" value="33uf"/>
@@ -11118,10 +11076,6 @@ Copyright CYCFI Research Inc. 2013-2018</text>
 <attribute name="NAME" x="179.07" y="101.6" size="1.778" layer="95"/>
 <attribute name="VALUE" x="179.07" y="99.06" size="1.778" layer="96"/>
 </instance>
-<instance part="LSEL" gate="G$1" x="79.375" y="154.94" smashed="yes" rot="R90">
-<attribute name="NAME" x="76.2" y="156.21" size="1.778" layer="95"/>
-<attribute name="VALUE" x="83.185" y="158.242" size="1.778" layer="96" rot="R180"/>
-</instance>
 <instance part="C6" gate="G$1" x="177.165" y="88.9" smashed="yes">
 <attribute name="NAME" x="180.34" y="87.63" size="1.778" layer="95"/>
 <attribute name="VALUE" x="180.34" y="85.09" size="1.778" layer="96"/>
@@ -11352,13 +11306,12 @@ Copyright CYCFI Research Inc. 2013-2018</text>
 <net name="DVCC(3.3V)" class="0">
 <segment>
 <pinref part="U2" gate="G$1" pin="DVCC"/>
-<wire x1="136.525" y1="116.84" x2="136.525" y2="153.67" width="0.1524" layer="91"/>
+<wire x1="136.525" y1="116.84" x2="136.525" y2="154.94" width="0.1524" layer="91"/>
 <pinref part="R1" gate="G$1" pin="1"/>
 <wire x1="177.165" y1="106.68" x2="177.165" y2="154.94" width="0.1524" layer="91"/>
 <wire x1="177.165" y1="154.94" x2="139.065" y2="154.94" width="0.1524" layer="91"/>
-<wire x1="139.065" y1="154.94" x2="137.795" y2="154.94" width="0.1524" layer="91"/>
 <pinref part="U2" gate="G$1" pin="AVCC"/>
-<wire x1="139.065" y1="116.84" x2="139.065" y2="153.67" width="0.1524" layer="91"/>
+<wire x1="139.065" y1="116.84" x2="139.065" y2="154.94" width="0.1524" layer="91"/>
 <pinref part="C4" gate="G$1" pin="1"/>
 <wire x1="112.395" y1="147.32" x2="112.395" y2="154.94" width="0.1524" layer="91"/>
 <pinref part="C5" gate="G$1" pin="1"/>
@@ -11367,21 +11320,21 @@ Copyright CYCFI Research Inc. 2013-2018</text>
 <junction x="112.395" y="154.94"/>
 <pinref part="C3" gate="G$1" pin="1"/>
 <wire x1="99.695" y1="147.32" x2="99.695" y2="154.94" width="0.1524" layer="91"/>
-<junction x="99.695" y="154.94"/>
-<wire x1="99.695" y1="154.94" x2="112.395" y2="154.94" width="0.1524" layer="91"/>
-<wire x1="86.995" y1="154.94" x2="99.695" y2="154.94" width="0.1524" layer="91"/>
-<pinref part="LSEL" gate="G$1" pin="2"/>
-<wire x1="84.455" y1="154.94" x2="86.995" y2="154.94" width="0.1524" layer="91"/>
-<junction x="86.995" y="154.94"/>
-<wire x1="86.995" y1="154.94" x2="86.995" y2="147.32" width="0.1524" layer="91"/>
-<pinref part="C2" gate="G$1" pin="1"/>
-<wire x1="137.795" y1="154.94" x2="136.525" y2="154.94" width="0.1524" layer="91"/>
+<wire x1="99.695" y1="154.94" x2="99.822" y2="154.94" width="0.1524" layer="91"/>
+<wire x1="99.822" y1="154.94" x2="112.395" y2="154.94" width="0.1524" layer="91"/>
+<wire x1="139.065" y1="154.94" x2="136.525" y2="154.94" width="0.1524" layer="91"/>
 <junction x="125.095" y="154.94"/>
 <wire x1="136.525" y1="154.94" x2="125.095" y2="154.94" width="0.1524" layer="91"/>
-<wire x1="136.525" y1="153.67" x2="136.525" y2="154.94" width="0.1524" layer="91"/>
-<wire x1="139.065" y1="153.67" x2="139.065" y2="154.94" width="0.1524" layer="91"/>
 <junction x="136.525" y="154.94"/>
 <junction x="139.065" y="154.94"/>
+<pinref part="U1" gate="G1" pin="OUT"/>
+<wire x1="71.755" y1="154.94" x2="86.868" y2="154.94" width="0.1524" layer="91"/>
+<pinref part="C2" gate="G$1" pin="1"/>
+<wire x1="86.995" y1="154.94" x2="99.695" y2="154.94" width="0.1524" layer="91"/>
+<wire x1="86.995" y1="147.32" x2="86.995" y2="154.94" width="0.1524" layer="91"/>
+<wire x1="86.995" y1="154.94" x2="86.868" y2="154.94" width="0.1524" layer="91"/>
+<junction x="86.868" y="154.94"/>
+<junction x="99.822" y="154.94"/>
 </segment>
 </net>
 <net name="VCC" class="0">
@@ -11398,13 +11351,6 @@ Copyright CYCFI Research Inc. 2013-2018</text>
 <pinref part="C1" gate="G$1" pin="1"/>
 <wire x1="40.005" y1="154.94" x2="40.005" y2="146.05" width="0.1524" layer="91"/>
 <junction x="40.005" y="154.94"/>
-</segment>
-</net>
-<net name="N$1" class="0">
-<segment>
-<pinref part="U1" gate="G1" pin="OUT"/>
-<wire x1="74.295" y1="154.94" x2="71.755" y2="154.94" width="0.1524" layer="91"/>
-<pinref part="LSEL" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="P2.6" class="0">
