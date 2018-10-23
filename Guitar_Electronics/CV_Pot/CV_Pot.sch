@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="7.6.0">
+<eagle version="6.3">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -5805,7 +5805,7 @@ type RDH, grid 15 mm</description>
 <part name="C1" library="resistor" deviceset="C-EU" device="C0603" value="0.1uF"/>
 <part name="R1" library="resistor" deviceset="R-EU_" device="R0402" value="20K"/>
 <part name="SJ1" library="jumper" deviceset="SJ" device=""/>
-<part name="C2" library="resistor" deviceset="C-EU" device="C0805" value="10uF"/>
+<part name="C2" library="resistor" deviceset="C-EU" device="C0805" value="1uF"/>
 </parts>
 <sheets>
 <sheet>
@@ -10541,12 +10541,12 @@ Copyright CYCFI Research Inc. 2013-2017</text>
 </instance>
 <instance part="R1" gate="G$1" x="121.92" y="113.03" smashed="yes" rot="R90">
 <attribute name="NAME" x="124.46" y="114.3" size="1.778" layer="95"/>
-<attribute name="VALUE" x="124.46" y="111.76" size="1.778" layer="96"/>
+<attribute name="VALUE" x="124.46" y="109.22" size="1.778" layer="96"/>
 </instance>
 <instance part="SJ1" gate="1" x="111.76" y="113.03" rot="R90"/>
 <instance part="C2" gate="G$1" x="90.17" y="115.57" smashed="yes">
-<attribute name="NAME" x="94.234" y="115.951" size="1.778" layer="95"/>
-<attribute name="VALUE" x="94.234" y="113.411" size="1.778" layer="96"/>
+<attribute name="NAME" x="84.074" y="115.951" size="1.778" layer="95"/>
+<attribute name="VALUE" x="84.074" y="110.871" size="1.778" layer="96"/>
 </instance>
 </instances>
 <busses>
