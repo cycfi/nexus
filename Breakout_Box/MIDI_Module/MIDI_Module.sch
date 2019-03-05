@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.025" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
 <layer number="2" name="Route2" color="1" fill="3" visible="no" active="no"/>
@@ -23914,7 +23914,7 @@ Copyright CYCFI Research Inc. 2013-2016</text>
 </sheet>
 <sheet>
 <plain>
-<text x="177.8" y="19.05" size="2.54" layer="95">Digital Power Source</text>
+<text x="177.8" y="19.05" size="2.54" layer="95">MCU and Power Section</text>
 <text x="12.7" y="34.925" size="1.778" layer="95">NOTES:
 *MCU_VCC = 5V MCU power supply
 *+12V_REG = 12V Regulated power supply
