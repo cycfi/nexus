@@ -15179,6 +15179,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <rectangle x1="340.26475" y1="31.90875" x2="349.09125" y2="31.97225" layer="95"/>
 <rectangle x1="351.94875" y1="31.90875" x2="360.07675" y2="31.97225" layer="95"/>
 <rectangle x1="360.64825" y1="31.90875" x2="362.99775" y2="31.97225" layer="95"/>
+<text x="109.22" y="58.42" size="1.6764" layer="95">H6</text>
 </plain>
 <instances>
 <instance part="U$1" gate="G$1" x="0" y="0"/>
