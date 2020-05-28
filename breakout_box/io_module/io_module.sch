@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.025" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
 <layer number="2" name="Route2" color="1" fill="3" visible="no" active="no"/>
@@ -1396,6 +1396,12 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <rectangle x1="203.10475" y1="31.90875" x2="211.93125" y2="31.97225" layer="95"/>
 <rectangle x1="214.78875" y1="31.90875" x2="222.91675" y2="31.97225" layer="95"/>
 <rectangle x1="223.48825" y1="31.90875" x2="225.83775" y2="31.97225" layer="95"/>
+<text x="196.215" y="136.525" size="1.778" layer="95">J1A</text>
+<text x="163.195" y="136.525" size="1.778" layer="95">J1B</text>
+<text x="163.195" y="98.425" size="1.778" layer="95">J2B</text>
+<text x="196.215" y="98.425" size="1.778" layer="95">J2A</text>
+<text x="196.215" y="62.865" size="1.778" layer="95">J3A</text>
+<text x="163.195" y="62.865" size="1.778" layer="95">J3B</text>
 </plain>
 <instances>
 <instance part="FRAME1" gate="G$1" x="0" y="0"/>
@@ -1408,12 +1414,12 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <instance part="AGND1" gate="GND" x="134.62" y="132.08"/>
 <instance part="AGND2" gate="GND" x="134.62" y="93.98"/>
 <instance part="AGND6" gate="GND" x="134.62" y="58.42"/>
-<instance part="J1" gate="G$1" x="177.8" y="147.32" rot="MR180"/>
-<instance part="J1" gate="G$2" x="144.78" y="147.32" rot="MR180"/>
-<instance part="J2" gate="G$1" x="177.8" y="109.22" rot="MR180"/>
-<instance part="J2" gate="G$2" x="144.78" y="109.22" rot="MR180"/>
-<instance part="J3" gate="G$1" x="177.8" y="73.66" rot="MR180"/>
-<instance part="J3" gate="G$2" x="144.78" y="73.66" rot="MR180"/>
+<instance part="J1" gate="G$1" x="177.8" y="147.32" smashed="yes" rot="MR180"/>
+<instance part="J1" gate="G$2" x="144.78" y="147.32" smashed="yes" rot="MR180"/>
+<instance part="J2" gate="G$1" x="177.8" y="109.22" smashed="yes" rot="MR180"/>
+<instance part="J2" gate="G$2" x="144.78" y="109.22" smashed="yes" rot="MR180"/>
+<instance part="J3" gate="G$1" x="177.8" y="73.66" smashed="yes" rot="MR180"/>
+<instance part="J3" gate="G$2" x="144.78" y="73.66" smashed="yes" rot="MR180"/>
 </instances>
 <busses>
 </busses>
