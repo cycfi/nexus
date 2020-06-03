@@ -14949,7 +14949,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <busses>
 </busses>
 <nets>
-<net name="CH9_CV" class="0">
+<net name="CH9_SW" class="0">
 <segment>
 <wire x1="116.205" y1="139.065" x2="136.525" y2="139.065" width="0.1524" layer="91"/>
 <pinref part="TP_1" gate="G$1" pin="TP"/>
@@ -15267,7 +15267,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <label x="39.37" y="130.175" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="CH8_CV_IN" class="0">
+<net name="CH8_SW" class="0">
 <segment>
 <pinref part="JP3" gate="A" pin="3"/>
 <wire x1="63.5" y1="141.605" x2="63.5" y2="135.89" width="0.1524" layer="91"/>
@@ -15275,7 +15275,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <label x="67.31" y="135.255" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="CH7_CV_IN" class="0">
+<net name="CH7_SW" class="0">
 <segment>
 <pinref part="JP2" gate="A" pin="3"/>
 <wire x1="63.5" y1="160.655" x2="63.5" y2="154.94" width="0.1524" layer="91"/>
@@ -18044,7 +18044,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <busses>
 </busses>
 <nets>
-<net name="CH9_CV" class="0">
+<net name="CH9_SW" class="0">
 <segment>
 <label x="189.865" y="166.6875" size="1.778" layer="95"/>
 <wire x1="172.72" y1="167.64" x2="187.96" y2="167.64" width="0.1524" layer="91"/>
@@ -18205,7 +18205,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <wire x1="152.4" y1="120.65" x2="154.94" y2="120.65" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="CH8_CV_IN" class="0">
+<net name="CH8_SW" class="0">
 <segment>
 <wire x1="152.4" y1="118.11" x2="165.735" y2="118.11" width="0.1524" layer="91"/>
 <wire x1="165.735" y1="118.11" x2="165.735" y2="140.97" width="0.1524" layer="91"/>
@@ -18213,7 +18213,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <label x="129.54" y="142.24" size="1.778" layer="95" rot="R180"/>
 </segment>
 </net>
-<net name="CH7_CV_IN" class="0">
+<net name="CH7_SW" class="0">
 <segment>
 <wire x1="152.4" y1="115.57" x2="168.275" y2="115.57" width="0.1524" layer="91"/>
 <wire x1="168.275" y1="115.57" x2="168.275" y2="153.67" width="0.1524" layer="91"/>
@@ -19723,7 +19723,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <junction x="166.37" y="86.36"/>
 </segment>
 </net>
-<net name="CH7_CV_IN" class="0">
+<net name="CH7_SW" class="0">
 <segment>
 <pinref part="U6B" gate="G$1" pin="P2.1"/>
 <wire x1="184.15" y1="43.18" x2="184.15" y2="38.735" width="0.1524" layer="91"/>
@@ -19901,14 +19901,14 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <junction x="166.37" y="68.58"/>
 </segment>
 </net>
-<net name="CH9_CV" class="0">
+<net name="CH9_SW" class="0">
 <segment>
 <pinref part="U6B" gate="G$1" pin="P2.0"/>
 <wire x1="181.61" y1="43.18" x2="181.61" y2="38.735" width="0.1524" layer="91"/>
 <junction x="181.61" y="38.735"/>
 </segment>
 </net>
-<net name="CH8_CV_IN" class="0">
+<net name="CH8_SW" class="0">
 <segment>
 <pinref part="U6B" gate="G$1" pin="P2.2"/>
 <wire x1="186.69" y1="43.18" x2="186.69" y2="38.735" width="0.1524" layer="91"/>
