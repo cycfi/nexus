@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.025" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
 <layer number="2" name="Route2" color="1" fill="3" visible="no" active="no"/>
@@ -13756,7 +13756,7 @@ Source: &lt;a href="https://componentsearchengine.com/Datasheets/1/BLM18KG700TN1
 <sheet>
 <plain>
 <text x="182.88" y="19.05" size="2.54" layer="95">GK and MIDI Analog Input Stage</text>
-<text x="252.73" y="6.985" size="2.54" layer="95">v2.3</text>
+<text x="252.73" y="6.985" size="2.54" layer="95">v2.5</text>
 <wire x1="175.5775" y1="74.6125" x2="175.5775" y2="71.4375" width="0.254" layer="95"/>
 <wire x1="175.5775" y1="71.4375" x2="188.2775" y2="71.4375" width="0.254" layer="95"/>
 <wire x1="188.2775" y1="71.4375" x2="189.865" y2="73.025" width="0.254" layer="95"/>
@@ -16395,7 +16395,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <rectangle x1="204.37475" y1="33.17875" x2="213.20125" y2="33.24225" layer="95"/>
 <rectangle x1="216.05875" y1="33.17875" x2="224.18675" y2="33.24225" layer="95"/>
 <rectangle x1="224.75825" y1="33.17875" x2="227.10775" y2="33.24225" layer="95"/>
-<text x="254" y="8.255" size="2.54" layer="95">v2.3</text>
+<text x="254" y="8.255" size="2.54" layer="95">v2.5</text>
 <text x="6.35" y="6.35" size="2.1844" layer="95">GK+MIDI Module for Nexus Project by Cycfi Research is licensed under a 
 Creative Commons Attribution-ShareAlike 4.0 International License.
 
@@ -16903,7 +16903,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <sheet>
 <plain>
 <text x="193.04" y="16.51" size="2.54" layer="95">MCU Input and MIDI Out</text>
-<text x="252.73" y="6.985" size="2.54" layer="95">v2.3</text>
+<text x="252.73" y="6.985" size="2.54" layer="95">v2.5</text>
 <text x="151.765" y="122.555" size="1.778" layer="95" rot="MR0">P3.3</text>
 <text x="151.765" y="120.015" size="1.778" layer="95" rot="MR0">P3.2</text>
 <text x="151.765" y="117.475" size="1.778" layer="95" rot="MR0">P2.2</text>
@@ -18541,7 +18541,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <sheet>
 <plain>
 <text x="193.04" y="19.05" size="2.54" layer="95">Digital Power Source</text>
-<text x="252.73" y="6.985" size="2.54" layer="95">v2.3</text>
+<text x="252.73" y="6.985" size="2.54" layer="95">v2.5</text>
 <text x="8.89" y="4.445" size="2.1844" layer="95">GK+MIDI Module for Nexus Project by Cycfi Research is licensed under a 
 Creative Commons Attribution-ShareAlike 4.0 International License.
 

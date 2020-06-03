@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.025" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
 <layer number="2" name="Route2" color="1" fill="3" visible="no" active="no"/>
@@ -481,7 +481,7 @@ In this library the device names are the same as the pin names of the symbols, t
 <description>MAIN</description>
 <plain>
 <text x="203.2" y="19.05" size="2.54" layer="95">I/O Board</text>
-<text x="252.73" y="6.985" size="2.54" layer="95">v2.3.</text>
+<text x="252.73" y="6.985" size="2.54" layer="95">v2.5</text>
 <text x="10.16" y="7.62" size="2.1844" layer="95" font="vector">I/O Module for Nexus Project by Cycfi Research is licensed under a 
 Creative Commons Attribution-ShareAlike 4.0 International License. 
 

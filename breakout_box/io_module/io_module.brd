@@ -279,7 +279,7 @@
 <wire x1="53.65" y1="35" x2="-0.15" y2="34.95" width="0.1" layer="20"/>
 <wire x1="-0.15" y1="34.95" x2="-0.15" y2="-0.05" width="0.1" layer="20"/>
 <wire x1="53.65" y1="35" x2="53.65" y2="0" width="0.1" layer="20"/>
-<text x="50" y="1" size="0.8128" layer="25" font="vector">v2.3</text>
+<text x="50" y="1" size="0.8128" layer="25" font="vector">v2.5</text>
 </plain>
 <libraries>
 <library name="con-lstb">

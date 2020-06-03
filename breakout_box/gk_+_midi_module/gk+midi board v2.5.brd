@@ -317,10 +317,10 @@
 <text x="57.25" y="19.75" size="0.7" layer="25" font="vector" ratio="12">5V</text>
 <text x="54.5" y="19.75" size="0.7" layer="25" font="vector" ratio="12">GND</text>
 <text x="59.75" y="19.75" size="0.7" layer="25" font="vector" ratio="12">GND</text>
-<text x="40.75" y="72.25" size="0.7" layer="25" font="vector" ratio="12" rot="R90">TEST</text>
-<text x="43.25" y="72" size="0.7" layer="25" font="vector" ratio="12" rot="R90">/RST</text>
-<text x="45.75" y="72.25" size="0.7" layer="25" font="vector" ratio="12" rot="R90">DVCC</text>
-<text x="48.25" y="72.25" size="0.7" layer="25" font="vector" ratio="12" rot="R90">DGND</text>
+<text x="40.625" y="72.5" size="0.7" layer="25" font="vector" ratio="12" rot="R90">TEST</text>
+<text x="43.25" y="72.375" size="0.7" layer="25" font="vector" ratio="12" rot="R90">/RST</text>
+<text x="45.75" y="72.625" size="0.7" layer="25" font="vector" ratio="12" rot="R90">DVCC</text>
+<text x="48.25" y="72.5" size="0.7" layer="25" font="vector" ratio="12" rot="R90">DGND</text>
 <text x="48" y="27.25" size="0.7" layer="25" font="vector" ratio="12">P1.1</text>
 <text x="48" y="29.75" size="0.7" layer="25" font="vector" ratio="12">P3.1</text>
 <text x="48" y="32.25" size="0.7" layer="25" font="vector" ratio="12">P3.0</text>

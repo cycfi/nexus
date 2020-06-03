@@ -14198,7 +14198,6 @@ Source: www.kingbright.com</description>
 <text x="363.855" y="161.925" size="1.778" layer="95">CH15_A</text>
 <text x="214.757" y="164.084" size="1.778" layer="125">V_OUT</text>
 <text x="214.757" y="161.544" size="1.778" layer="125">V_OUT</text>
-<text x="218.821" y="148.844" size="1.778" layer="95">NC</text>
 <text x="214.63" y="158.75" size="1.778" layer="95">AGND</text>
 <text x="214.63" y="156.21" size="1.778" layer="95">AGND</text>
 <text x="214.63" y="153.67" size="1.778" layer="95">AGND</text>
@@ -14226,7 +14225,7 @@ Source: www.kingbright.com</description>
 <wire x1="311.15" y1="59.69" x2="313.69" y2="62.23" width="0.1524" layer="94"/>
 <wire x1="313.69" y1="62.23" x2="311.15" y2="64.77" width="0.1524" layer="94"/>
 <wire x1="311.15" y1="64.77" x2="295.91" y2="64.77" width="0.1524" layer="94"/>
-<text x="391.16" y="7.62" size="2.54" layer="95" font="vector">v2.3</text>
+<text x="391.16" y="7.62" size="2.54" layer="95" font="vector">v2.5</text>
 <text x="339.09" y="17.145" size="2.54" layer="95" font="vector">Main Board</text>
 <text x="363.855" y="257.175" size="1.778" layer="95">CH1</text>
 <text x="363.855" y="254.635" size="1.778" layer="95">CH2</text>
@@ -15180,6 +15179,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <rectangle x1="351.94875" y1="31.90875" x2="360.07675" y2="31.97225" layer="95"/>
 <rectangle x1="360.64825" y1="31.90875" x2="362.99775" y2="31.97225" layer="95"/>
 <text x="109.22" y="58.42" size="1.6764" layer="95">H6</text>
+<text x="214.63" y="148.59" size="1.778" layer="95">AGND</text>
 </plain>
 <instances>
 <instance part="U$1" gate="G$1" x="0" y="0"/>
@@ -15256,7 +15256,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <instance part="H4" gate="1" x="361.315" y="219.71" rot="R180"/>
 <instance part="H17" gate="1" x="276.225" y="148.59" rot="R180"/>
 <instance part="JP1" gate="A" x="158.115" y="214.63" smashed="yes">
-<attribute name="NAME" x="146.05" y="217.805" size="1.778" layer="95"/>
+<attribute name="NAME" x="146.685" y="217.805" size="1.778" layer="95"/>
 <attribute name="VALUE" x="151.765" y="207.01" size="1.778" layer="96"/>
 </instance>
 <instance part="JP2" gate="A" x="158.115" y="200.025"/>
@@ -15414,6 +15414,9 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <pinref part="H1" gate="1" pin="16"/>
 <wire x1="231.775" y1="157.48" x2="231.775" y2="160.02" width="0.1524" layer="91"/>
 <junction x="231.775" y="157.48"/>
+<pinref part="H1" gate="1" pin="20"/>
+<wire x1="231.775" y1="152.4" x2="231.775" y2="149.86" width="0.1524" layer="91"/>
+<junction x="231.775" y="152.4"/>
 </segment>
 <segment>
 <pinref part="GND" gate="G$1" pin="P"/>
@@ -15539,6 +15542,21 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <pinref part="H1" gate="1" pin="11"/>
 <wire x1="231.775" y1="175.26" x2="231.775" y2="172.72" width="0.1524" layer="91"/>
 <junction x="231.775" y="175.26"/>
+</segment>
+<segment>
+<pinref part="H4" gate="1" pin="5"/>
+<wire x1="353.695" y1="217.17" x2="351.79" y2="217.17" width="0.1524" layer="91"/>
+<wire x1="351.79" y1="217.17" x2="351.79" y2="214.63" width="0.1524" layer="91"/>
+<pinref part="H4" gate="1" pin="6"/>
+<wire x1="351.79" y1="214.63" x2="353.695" y2="214.63" width="0.1524" layer="91"/>
+<wire x1="351.79" y1="214.63" x2="351.79" y2="212.09" width="0.1524" layer="91"/>
+<junction x="351.79" y="214.63"/>
+<pinref part="H4" gate="1" pin="7"/>
+<wire x1="351.79" y1="212.09" x2="353.695" y2="212.09" width="0.1524" layer="91"/>
+<wire x1="351.79" y1="212.09" x2="351.79" y2="209.55" width="0.1524" layer="91"/>
+<junction x="351.79" y="212.09"/>
+<pinref part="H4" gate="1" pin="8"/>
+<wire x1="351.79" y1="209.55" x2="353.695" y2="209.55" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$14" class="0">
@@ -15950,23 +15968,6 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <junction x="165.735" y="30.48"/>
 <pinref part="R1" gate="G$1" pin="1"/>
 <pinref part="R2" gate="G$1" pin="2"/>
-</segment>
-</net>
-<net name="GND1" class="0">
-<segment>
-<pinref part="H4" gate="1" pin="5"/>
-<wire x1="353.695" y1="217.17" x2="351.79" y2="217.17" width="0.1524" layer="91"/>
-<wire x1="351.79" y1="217.17" x2="351.79" y2="214.63" width="0.1524" layer="91"/>
-<pinref part="H4" gate="1" pin="6"/>
-<wire x1="351.79" y1="214.63" x2="353.695" y2="214.63" width="0.1524" layer="91"/>
-<wire x1="351.79" y1="214.63" x2="351.79" y2="212.09" width="0.1524" layer="91"/>
-<junction x="351.79" y="214.63"/>
-<pinref part="H4" gate="1" pin="7"/>
-<wire x1="351.79" y1="212.09" x2="353.695" y2="212.09" width="0.1524" layer="91"/>
-<wire x1="351.79" y1="212.09" x2="351.79" y2="209.55" width="0.1524" layer="91"/>
-<junction x="351.79" y="212.09"/>
-<pinref part="H4" gate="1" pin="8"/>
-<wire x1="351.79" y1="209.55" x2="353.695" y2="209.55" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$2" class="0">
