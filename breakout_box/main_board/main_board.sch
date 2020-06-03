@@ -14188,8 +14188,8 @@ Source: www.kingbright.com</description>
 <text x="36.83" y="206.375" size="1.778" layer="95" rot="MR0">CH13</text>
 <text x="36.83" y="203.835" size="1.778" layer="95" rot="MR0">CH14</text>
 <text x="36.83" y="201.295" size="1.778" layer="95" rot="MR0">CH15</text>
-<text x="30.48" y="198.755" size="1.778" layer="125">V_OUT</text>
-<text x="30.48" y="196.215" size="1.778" layer="125">V_OUT</text>
+<text x="28.575" y="198.755" size="1.778" layer="125">V_OUT</text>
+<text x="28.575" y="196.215" size="1.778" layer="125">V_OUT</text>
 <text x="162.56" y="127" size="1.778" layer="95">A</text>
 <text x="162.56" y="111.76" size="1.778" layer="95">A</text>
 <text x="162.56" y="96.52" size="1.778" layer="95">A</text>
@@ -14202,8 +14202,8 @@ Source: www.kingbright.com</description>
 <text x="210.185" y="155.575" size="1.778" layer="95">AGND</text>
 <text x="210.185" y="153.035" size="1.778" layer="95">AGND</text>
 <text x="210.185" y="150.495" size="1.778" layer="95">AGND</text>
-<text x="30.48" y="193.04" size="1.778" layer="95">AGND</text>
-<text x="30.48" y="189.865" size="1.778" layer="95">AGND</text>
+<text x="28.575" y="193.04" size="1.778" layer="95">AGND</text>
+<text x="28.575" y="190.5" size="1.778" layer="95">AGND</text>
 <text x="363.855" y="158.75" size="1.778" layer="95">AGND</text>
 <text x="363.855" y="156.21" size="1.778" layer="95">AGND</text>
 <text x="363.855" y="153.67" size="1.778" layer="95">AGND</text>
