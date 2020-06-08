@@ -260,6 +260,13 @@ struct program_change_controller
 
   void operator()(uint32_t val_)
   {
+    uint32_t curr_ = curr * 205;
+    int diff = curr_ - val_;
+    if (diff < 0)
+      diff = -diff;
+    if (diff < 64)
+      return;
+
     uint8_t val = (val_ * 5) / 1024;
     if (val != curr)
     {
@@ -325,9 +332,9 @@ struct sustain_controller
   {
     int state = edge(sw);
     if (state == 1)
-      midi_out << midi::control_change{0, midi::cc::sustain, 127};
-    else if (state == -1)
       midi_out << midi::control_change{0, midi::cc::sustain, 0};
+    else if (state == -1)
+      midi_out << midi::control_change{0, midi::cc::sustain, 127};
   }
 
   edge_detector<> edge;
@@ -402,7 +409,7 @@ bank_select_controller                 bank_select_control;
 ///////////////////////////////////////////////////////////////////////////////
 void setup()
 {
-  pinMode(ch9 , INPUT);
+  pinMode(ch9 , INPUT_PULLUP);
   pinMode(ch10, INPUT);
   pinMode(ch11, INPUT);
   pinMode(ch12, INPUT);
