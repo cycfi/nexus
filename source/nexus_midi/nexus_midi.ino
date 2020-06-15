@@ -264,7 +264,7 @@ struct program_change_controller
     int diff = curr_ - val_;
     if (diff < 0)
       diff = -diff;
-    if (diff < 64)
+    if (diff < 8)
       return;
 
     uint8_t val = (val_ * 5) / 1024;
@@ -530,12 +530,12 @@ uint16_t analog_read(uint16_t pin)
 void loop()
 {
   sustain_control(digitalRead(ch9));
-  modulation_control(analog_read(ch10));
-  pitch_bend(analog_read(ch11));
+  volume_control(analog_read(ch10));
+  fx1_control(analog_read(ch11));
   fx2_control(analog_read(ch12));
-  fx1_control(analog_read(ch13));
+   pitch_bend(analog_read(ch13));
   program_change(analog_read(ch14));
-  volume_control(analog_read(ch15));
+  modulation_control(analog_read(ch15));
 
   program_change.up(!digitalRead(aux1));
   program_change.down(!digitalRead(aux2));
