@@ -13682,7 +13682,6 @@ Source: &lt;a href="https://componentsearchengine.com/Datasheets/1/BLM18KG700TN1
 <part name="H2" library="con-lstb" deviceset="MA08-1" device=""/>
 <part name="JP3" library="pinhead-2" deviceset="PINHD-1X03" device="_2.00"/>
 <part name="JP2" library="pinhead-2" deviceset="PINHD-1X03" device="_2.00"/>
-<part name="JP1" library="pinhead-2" deviceset="PINHD-1X03" device="_2.00"/>
 <part name="D1" library="CYCFI_semicon" deviceset="1SS302" device=""/>
 <part name="D2" library="CYCFI_semicon" deviceset="1SS302" device=""/>
 <part name="R20" library="resistor" deviceset="R-EU_" device="R0402" value="18K"/>
@@ -13762,7 +13761,7 @@ Source: &lt;a href="https://componentsearchengine.com/Datasheets/1/BLM18KG700TN1
 <wire x1="188.2775" y1="71.4375" x2="189.865" y2="73.025" width="0.254" layer="95"/>
 <wire x1="189.865" y1="73.025" x2="188.2775" y2="74.6125" width="0.254" layer="95"/>
 <wire x1="188.2775" y1="74.6125" x2="175.5775" y2="74.6125" width="0.254" layer="95"/>
-<text x="14.2875" y="123.825" size="1.778" layer="95">CH9_CV</text>
+<text x="14.2875" y="123.825" size="1.778" layer="95">CH9_SW</text>
 <text x="1.27" y="121.285" size="1.778" layer="95">CH10_GK_VOL/CV</text>
 <text x="12.7" y="118.745" size="1.778" layer="95">CH11_CV</text>
 <text x="12.7" y="116.205" size="1.778" layer="95">CH12_CV</text>
@@ -13821,19 +13820,17 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <text x="13.97" y="146.05" size="1.778" layer="95">CH4_GK</text>
 <text x="13.97" y="143.51" size="1.778" layer="95">CH5_GK</text>
 <text x="13.97" y="140.97" size="1.778" layer="95">CH6_GK</text>
-<text x="4.445" y="135.255" size="1.778" layer="95">CH7_GK_SW/CV</text>
+<text x="14.605" y="135.255" size="1.778" layer="95">CH7_SW</text>
 <text x="12.7" y="138.43" size="1.778" layer="95">MONO_GK</text>
-<text x="4.445" y="127" size="1.778" layer="95">CH8_GK_SW/CV</text>
+<text x="14.605" y="127" size="1.778" layer="95">CH8_SW</text>
 <text x="53.975" y="165.1" size="1.778" layer="95">GK</text>
 <text x="53.975" y="146.05" size="1.778" layer="95">GK</text>
 <text x="67.31" y="165.1" size="1.778" layer="95">CV</text>
 <text x="67.31" y="146.05" size="1.778" layer="95">CV</text>
-<text x="93.345" y="144.78" size="1.778" layer="95">GK</text>
-<text x="101.6" y="144.78" size="1.778" layer="95">CV</text>
 <wire x1="66.04" y1="154.94" x2="67.945" y2="156.845" width="0.1524" layer="95"/>
-<wire x1="67.945" y1="156.845" x2="82.55" y2="156.845" width="0.1524" layer="95"/>
-<wire x1="82.55" y1="156.845" x2="82.55" y2="153.67" width="0.1524" layer="95"/>
-<wire x1="82.55" y1="153.67" x2="67.945" y2="153.67" width="0.1524" layer="95"/>
+<wire x1="67.945" y1="156.845" x2="85.09" y2="156.845" width="0.1524" layer="95"/>
+<wire x1="85.09" y1="156.845" x2="85.09" y2="153.67" width="0.1524" layer="95"/>
+<wire x1="85.09" y1="153.67" x2="67.945" y2="153.67" width="0.1524" layer="95"/>
 <wire x1="67.945" y1="153.67" x2="66.04" y2="154.94" width="0.1524" layer="95"/>
 <wire x1="55.88" y1="154.94" x2="53.975" y2="156.845" width="0.1524" layer="95"/>
 <wire x1="53.975" y1="156.845" x2="38.735" y2="156.845" width="0.1524" layer="95"/>
@@ -13841,9 +13838,9 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <wire x1="38.735" y1="153.67" x2="53.975" y2="153.67" width="0.1524" layer="95"/>
 <wire x1="53.975" y1="153.67" x2="55.88" y2="154.94" width="0.1524" layer="95"/>
 <wire x1="66.04" y1="135.89" x2="67.945" y2="137.795" width="0.1524" layer="95"/>
-<wire x1="67.945" y1="137.795" x2="81.915" y2="137.795" width="0.1524" layer="95"/>
-<wire x1="81.915" y1="137.795" x2="81.915" y2="134.62" width="0.1524" layer="95"/>
-<wire x1="81.915" y1="134.62" x2="67.945" y2="134.62" width="0.1524" layer="95"/>
+<wire x1="67.945" y1="137.795" x2="84.455" y2="137.795" width="0.1524" layer="95"/>
+<wire x1="84.455" y1="137.795" x2="84.455" y2="134.62" width="0.1524" layer="95"/>
+<wire x1="84.455" y1="134.62" x2="67.945" y2="134.62" width="0.1524" layer="95"/>
 <wire x1="67.945" y1="134.62" x2="66.04" y2="135.89" width="0.1524" layer="95"/>
 <wire x1="55.88" y1="130.81" x2="53.975" y2="132.715" width="0.1524" layer="95"/>
 <wire x1="53.975" y1="132.715" x2="38.1" y2="132.715" width="0.1524" layer="95"/>
@@ -14753,11 +14750,6 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <rectangle x1="203.10475" y1="31.90875" x2="211.93125" y2="31.97225" layer="95"/>
 <rectangle x1="214.78875" y1="31.90875" x2="222.91675" y2="31.97225" layer="95"/>
 <rectangle x1="223.48825" y1="31.90875" x2="225.83775" y2="31.97225" layer="95"/>
-<wire x1="109.855" y1="132.715" x2="111.125" y2="134.62" width="0.1524" layer="95"/>
-<wire x1="111.125" y1="134.62" x2="129.54" y2="134.62" width="0.1524" layer="95"/>
-<wire x1="129.54" y1="134.62" x2="129.54" y2="131.445" width="0.1524" layer="95"/>
-<wire x1="129.54" y1="131.445" x2="111.125" y2="131.445" width="0.1524" layer="95"/>
-<wire x1="111.125" y1="131.445" x2="109.855" y2="132.715" width="0.1524" layer="95"/>
 <text x="249.555" y="78.105" size="1.778" layer="95">U1C</text>
 <text x="121.285" y="106.68" size="1.778" layer="95">U1B</text>
 <text x="120.65" y="127.635" size="1.778" layer="95">U1A</text>
@@ -14916,7 +14908,6 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <attribute name="NAME" x="54.61" y="159.385" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="68.58" y="156.845" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="JP1" gate="A" x="99.06" y="142.875" rot="R90"/>
 <instance part="FB1" gate="G$1" x="31.115" y="71.12" smashed="yes" rot="R90">
 <attribute name="NAME" x="41.91" y="76.835" size="1.778" layer="95" rot="R180" align="center-left"/>
 <attribute name="VALUE" x="43.18" y="88.265" size="1.778" layer="96" rot="R180" align="center-left"/>
@@ -14953,31 +14944,14 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <segment>
 <wire x1="116.205" y1="139.065" x2="136.525" y2="139.065" width="0.1524" layer="91"/>
 <pinref part="TP_1" gate="G$1" pin="TP"/>
-<wire x1="83.185" y1="125.095" x2="83.185" y2="149.225" width="0.1524" layer="91"/>
-<wire x1="83.185" y1="149.225" x2="116.205" y2="149.225" width="0.1524" layer="91"/>
+<wire x1="88.265" y1="125.095" x2="88.265" y2="149.225" width="0.1524" layer="91"/>
+<wire x1="88.265" y1="149.225" x2="116.205" y2="149.225" width="0.1524" layer="91"/>
 <pinref part="H3" gate="1" pin="2"/>
-<wire x1="83.185" y1="125.095" x2="33.655" y2="125.095" width="0.1524" layer="91"/>
+<wire x1="88.265" y1="125.095" x2="33.655" y2="125.095" width="0.1524" layer="91"/>
 <wire x1="116.205" y1="149.225" x2="139.065" y2="149.225" width="0.1524" layer="91"/>
 <wire x1="116.205" y1="139.065" x2="116.205" y2="149.225" width="0.1524" layer="91"/>
 <junction x="116.205" y="149.225"/>
 <label x="140.335" y="148.59" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="N$10" class="0">
-<segment>
-<pinref part="R1" gate="G$1" pin="2"/>
-<wire x1="108.585" y1="123.825" x2="108.585" y2="121.285" width="0.1524" layer="91"/>
-<pinref part="C3" gate="G$1" pin="1"/>
-<wire x1="95.885" y1="123.825" x2="108.585" y2="123.825" width="0.1524" layer="91"/>
-<wire x1="95.885" y1="120.015" x2="95.885" y2="123.825" width="0.1524" layer="91"/>
-<pinref part="U1" gate="G$1" pin="IN+"/>
-<wire x1="118.11" y1="123.825" x2="108.585" y2="123.825" width="0.1524" layer="91"/>
-<junction x="108.585" y="123.825"/>
-<pinref part="JP1" gate="A" pin="3"/>
-<wire x1="101.6" y1="140.335" x2="101.6" y2="128.27" width="0.1524" layer="91"/>
-<wire x1="101.6" y1="128.27" x2="95.885" y2="128.27" width="0.1524" layer="91"/>
-<wire x1="95.885" y1="128.27" x2="95.885" y2="123.825" width="0.1524" layer="91"/>
-<junction x="95.885" y="123.825"/>
 </segment>
 </net>
 <net name="N$11" class="0">
@@ -15267,7 +15241,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <label x="39.37" y="130.175" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="CH8_SW" class="0">
+<net name="CH8_MIDI_SW" class="0">
 <segment>
 <pinref part="JP3" gate="A" pin="3"/>
 <wire x1="63.5" y1="141.605" x2="63.5" y2="135.89" width="0.1524" layer="91"/>
@@ -15275,7 +15249,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <label x="67.31" y="135.255" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="CH7_SW" class="0">
+<net name="CH7_MIDI_SW" class="0">
 <segment>
 <pinref part="JP2" gate="A" pin="3"/>
 <wire x1="63.5" y1="160.655" x2="63.5" y2="154.94" width="0.1524" layer="91"/>
@@ -15448,22 +15422,21 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <junction x="57.15" y="67.945"/>
 </segment>
 </net>
-<net name="N$4" class="0">
-<segment>
-<pinref part="H3" gate="1" pin="3"/>
-<wire x1="33.655" y1="122.555" x2="89.535" y2="122.555" width="0.1524" layer="91"/>
-<wire x1="89.535" y1="122.555" x2="89.535" y2="130.81" width="0.1524" layer="91"/>
-<pinref part="JP1" gate="A" pin="2"/>
-<wire x1="89.535" y1="130.81" x2="99.06" y2="130.81" width="0.1524" layer="91"/>
-<wire x1="99.06" y1="130.81" x2="99.06" y2="140.335" width="0.1524" layer="91"/>
-</segment>
-</net>
 <net name="CH10_GK_VOL" class="0">
 <segment>
-<pinref part="JP1" gate="A" pin="1"/>
-<wire x1="96.52" y1="140.335" x2="96.52" y2="132.715" width="0.1524" layer="91"/>
-<label x="111.125" y="132.08" size="1.778" layer="95"/>
-<wire x1="96.52" y1="132.715" x2="109.855" y2="132.715" width="0.1524" layer="91"/>
+<pinref part="H3" gate="1" pin="3"/>
+<wire x1="33.655" y1="122.555" x2="92.075" y2="122.555" width="0.1524" layer="91"/>
+<wire x1="92.075" y1="122.555" x2="92.075" y2="123.825" width="0.1524" layer="91"/>
+<pinref part="R1" gate="G$1" pin="2"/>
+<wire x1="108.585" y1="123.825" x2="108.585" y2="121.285" width="0.1524" layer="91"/>
+<pinref part="C3" gate="G$1" pin="1"/>
+<wire x1="95.885" y1="123.825" x2="108.585" y2="123.825" width="0.1524" layer="91"/>
+<wire x1="95.885" y1="120.015" x2="95.885" y2="123.825" width="0.1524" layer="91"/>
+<pinref part="U1" gate="G$1" pin="IN+"/>
+<wire x1="118.11" y1="123.825" x2="108.585" y2="123.825" width="0.1524" layer="91"/>
+<junction x="108.585" y="123.825"/>
+<wire x1="92.075" y1="123.825" x2="95.885" y2="123.825" width="0.1524" layer="91"/>
+<junction x="95.885" y="123.825"/>
 </segment>
 </net>
 </nets>
@@ -16944,11 +16917,11 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <wire x1="31.4325" y1="84.7725" x2="33.02" y2="86.36" width="0.254" layer="95"/>
 <wire x1="33.02" y1="86.36" x2="31.4325" y2="87.9475" width="0.254" layer="95"/>
 <wire x1="31.4325" y1="87.9475" x2="20.0025" y2="87.9475" width="0.254" layer="95"/>
-<wire x1="199.7075" y1="166.0525" x2="199.7075" y2="169.2275" width="0.254" layer="95"/>
-<wire x1="199.7075" y1="169.2275" x2="189.5475" y2="169.2275" width="0.254" layer="95"/>
+<wire x1="202.2475" y1="166.0525" x2="202.2475" y2="169.2275" width="0.254" layer="95"/>
+<wire x1="202.2475" y1="169.2275" x2="189.5475" y2="169.2275" width="0.254" layer="95"/>
 <wire x1="189.5475" y1="169.2275" x2="187.96" y2="167.64" width="0.254" layer="95"/>
 <wire x1="187.96" y1="167.64" x2="189.5475" y2="166.0525" width="0.254" layer="95"/>
-<wire x1="189.5475" y1="166.0525" x2="199.7075" y2="166.0525" width="0.254" layer="95"/>
+<wire x1="189.5475" y1="166.0525" x2="202.2475" y2="166.0525" width="0.254" layer="95"/>
 <wire x1="211.1375" y1="133.0325" x2="211.1375" y2="136.2075" width="0.254" layer="95"/>
 <wire x1="211.1375" y1="136.2075" x2="199.7075" y2="136.2075" width="0.254" layer="95"/>
 <wire x1="199.7075" y1="136.2075" x2="198.12" y2="134.62" width="0.254" layer="95"/>
@@ -16990,14 +16963,14 @@ Creative Commons Attribution-ShareAlike 4.0 International License.
 
 Copyright CYCFI Research Inc. 2013-2020</text>
 <wire x1="130.81" y1="153.67" x2="128.905" y2="155.575" width="0.1524" layer="95"/>
-<wire x1="128.905" y1="155.575" x2="114.935" y2="155.575" width="0.1524" layer="95"/>
-<wire x1="114.935" y1="155.575" x2="114.935" y2="152.4" width="0.1524" layer="95"/>
-<wire x1="114.935" y1="152.4" x2="128.905" y2="152.4" width="0.1524" layer="95"/>
+<wire x1="128.905" y1="155.575" x2="109.855" y2="155.575" width="0.1524" layer="95"/>
+<wire x1="109.855" y1="155.575" x2="109.855" y2="152.4" width="0.1524" layer="95"/>
+<wire x1="109.855" y1="152.4" x2="128.905" y2="152.4" width="0.1524" layer="95"/>
 <wire x1="128.905" y1="152.4" x2="130.81" y2="153.67" width="0.1524" layer="95"/>
 <wire x1="130.81" y1="140.97" x2="128.905" y2="142.875" width="0.1524" layer="95"/>
-<wire x1="128.905" y1="142.875" x2="114.935" y2="142.875" width="0.1524" layer="95"/>
-<wire x1="114.935" y1="142.875" x2="114.935" y2="139.7" width="0.1524" layer="95"/>
-<wire x1="114.935" y1="139.7" x2="128.905" y2="139.7" width="0.1524" layer="95"/>
+<wire x1="128.905" y1="142.875" x2="107.315" y2="142.875" width="0.1524" layer="95"/>
+<wire x1="107.315" y1="142.875" x2="107.315" y2="139.7" width="0.1524" layer="95"/>
+<wire x1="107.315" y1="139.7" x2="128.905" y2="139.7" width="0.1524" layer="95"/>
 <wire x1="128.905" y1="139.7" x2="130.81" y2="140.97" width="0.1524" layer="95"/>
 <rectangle x1="181.83225" y1="26.70175" x2="190.72225" y2="26.76525" layer="95"/>
 <rectangle x1="195.35775" y1="26.70175" x2="200.31075" y2="26.76525" layer="95"/>
@@ -18205,7 +18178,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <wire x1="152.4" y1="120.65" x2="154.94" y2="120.65" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="CH8_SW" class="0">
+<net name="CH8_MIDI_SW" class="0">
 <segment>
 <wire x1="152.4" y1="118.11" x2="165.735" y2="118.11" width="0.1524" layer="91"/>
 <wire x1="165.735" y1="118.11" x2="165.735" y2="140.97" width="0.1524" layer="91"/>
@@ -18213,12 +18186,12 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <label x="127" y="142.24" size="1.778" layer="95" rot="R180"/>
 </segment>
 </net>
-<net name="CH7_SW" class="0">
+<net name="CH7_MIDI_SW" class="0">
 <segment>
 <wire x1="152.4" y1="115.57" x2="168.275" y2="115.57" width="0.1524" layer="91"/>
 <wire x1="168.275" y1="115.57" x2="168.275" y2="153.67" width="0.1524" layer="91"/>
 <wire x1="168.275" y1="153.67" x2="130.81" y2="153.67" width="0.1524" layer="91"/>
-<label x="117.475" y="153.035" size="1.778" layer="95"/>
+<label x="112.395" y="153.035" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="P3.1" class="0">
@@ -19727,7 +19700,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <junction x="166.37" y="86.36"/>
 </segment>
 </net>
-<net name="CH7_SW" class="0">
+<net name="CH7_MIDI_SW" class="0">
 <segment>
 <pinref part="U6" gate="G$1" pin="P2.1"/>
 <wire x1="184.15" y1="43.18" x2="184.15" y2="38.735" width="0.1524" layer="91"/>
@@ -19912,7 +19885,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <junction x="181.61" y="38.735"/>
 </segment>
 </net>
-<net name="CH8_SW" class="0">
+<net name="CH8_MIDI_SW" class="0">
 <segment>
 <pinref part="U6" gate="G$1" pin="P2.2"/>
 <wire x1="186.69" y1="43.18" x2="186.69" y2="38.735" width="0.1524" layer="91"/>
