@@ -1238,8 +1238,6 @@ AUX4</text>
 <text x="29.25" y="98.5" size="0.7" layer="25" font="vector" ratio="12">MIDI_OUT</text>
 <text x="9.25" y="55.75" size="0.8062" layer="25" font="vector" ratio="12">GK</text>
 <text x="9.25" y="53" size="0.8062" layer="25" font="vector" ratio="12">GK</text>
-<text x="11.5" y="30" size="0.8062" layer="25" font="vector" ratio="12">GK</text>
-<text x="15.25" y="30" size="0.8062" layer="25" font="vector" ratio="12">MIDI</text>
 <text x="18.5" y="55.75" size="0.8062" layer="25" font="vector" ratio="12">MIDI</text>
 <text x="18.5" y="52.75" size="0.8062" layer="25" font="vector" ratio="12">MIDI</text>
 </plain>
