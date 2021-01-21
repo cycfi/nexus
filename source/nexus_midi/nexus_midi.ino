@@ -95,56 +95,56 @@ midi::midi_stream midi_out;
 ///////////////////////////////////////////////////////////////////////////////
 struct flash
 {
-      typedef unsigned char byte;
+   typedef unsigned char byte;
 
-      flash(byte* segment_)
-         : _segment(segment_)
-      {}
+   flash(byte* segment_)
+      : _segment(segment_)
+   {}
 
-      void erase()
+   void erase()
+   {
+      Flash.erase(_segment);
+   }
+
+   bool empty() const
+   {
+      return (*_segment == 0xff);
+   }
+
+   byte read() const
+   {
+      if (empty())
+         return 0xff;
+      if (byte* p = find_free())
+         return *(p - 1);
+      return _segment[63];
+   }
+
+   void write(byte val)
+   {
+      byte* p = find_free();
+      if (p == 0)
       {
-         Flash.erase(_segment);
+         erase();
+         Flash.write(_segment, &val, 1);
       }
-
-      bool empty() const
+      else
       {
-         return (*_segment == 0xff);
+         Flash.write(p, &val, 1);
       }
-
-      byte read() const
-      {
-         if (empty())
-            return 0xff;
-         if (byte* p = find_free())
-            return *(p - 1);
-         return _segment[63];
-      }
-
-      void write(byte val)
-      {
-         byte* p = find_free();
-         if (p == 0)
-         {
-            erase();
-            Flash.write(_segment, &val, 1);
-         }
-         else
-         {
-            Flash.write(p, &val, 1);
-         }
-      }
+   }
 
    private:
 
-      byte* find_free() const
-      {
-         for (int i = 0; i != 64; ++i)
-            if (_segment[i] == 0xff)
-               return &_segment[i];
-         return 0;
-      }
+   byte* find_free() const
+   {
+      for (int i = 0; i != 64; ++i)
+         if (_segment[i] == 0xff)
+            return &_segment[i];
+      return 0;
+   }
 
-      byte* _segment;
+   byte* _segment;
 };
 
 // We use SEGMENT_B and SEGMENT_C to store program change and bank select data
@@ -218,7 +218,7 @@ struct pitch_bend_controller
    {
       uint32_t val = lp(val_);
       if (gt(val))
-         midi_out << midi::pitch_bend{0, uint16_t{val_}};
+         midi_out << midi::pitch_bend{0, uint16_t{(val << 4) + (val % 16)}};
    }
 
    lowpass<64, int32_t> lp;
@@ -515,10 +515,10 @@ void loop()
 
 #else // !NEXUS_TEST
 
-uint16_t analog_read(uint16_t pin, long range = 1023)
+uint16_t analog_read(uint16_t pin)
 {
    uint16_t const min_x = 5;
-   uint16_t const max_x = 890;
+   uint16_t const max_x = 1023;
    uint16_t x = analogRead(pin);
    if (x < min_x)
       x = min_x;
@@ -533,7 +533,7 @@ void loop()
    volume_control(analog_read(ch10));
    fx1_control(analog_read(ch11));
    fx2_control(analog_read(ch12));
-   pitch_bend(analog_read(ch13, 16383));
+   pitch_bend(analog_read(ch13));
    program_change(analog_read(ch14));
    modulation_control(analog_read(ch15));
 
@@ -546,7 +546,7 @@ void loop()
 
    // Save the program_change and bank_select_control if needed
    if ((save_delay_start_time != -1)
-      && (millis() > (save_delay_start_time + save_delay)))
+         && (millis() > (save_delay_start_time + save_delay)))
    {
       program_change.save();
       bank_select_control.save();

@@ -13675,8 +13675,6 @@ Source: &lt;a href="https://componentsearchengine.com/Datasheets/1/BLM18KG700TN1
 <part name="SUPPLY18" library="supply2" deviceset="GND" device=""/>
 <part name="H6" library="con-lstb" deviceset="MA08-1" device="" value="DNP"/>
 <part name="H7" library="con-lstb" deviceset="MA08-1" device="" value="DNP"/>
-<part name="R30" library="resistor" deviceset="R-EU_" device="R0603" value="220R"/>
-<part name="R31" library="resistor" deviceset="R-EU_" device="R0603" value="220R"/>
 <part name="C35" library="resistor" deviceset="C-EU" device="C0402" value="1nF"/>
 <part name="C30" library="resistor" deviceset="C-EU" device="C0402" value="1uF"/>
 <part name="H2" library="con-lstb" deviceset="MA08-1" device=""/>
@@ -13698,8 +13696,6 @@ Source: &lt;a href="https://componentsearchengine.com/Datasheets/1/BLM18KG700TN1
 <part name="U3" library="CYCFI_semicon" deviceset="TLV2170DGKT" device="" value="TLV2170DGKT"/>
 <part name="C15" library="resistor" deviceset="C-EU" device="C0603" value="4.7uF"/>
 <part name="C16" library="resistor" deviceset="C-EU" device="C0603" value="4.7uF"/>
-<part name="C17" library="resistor" deviceset="C-EU" device="C0402" value="0.1uF"/>
-<part name="C18" library="resistor" deviceset="C-EU" device="C0402" value="0.1uF"/>
 <part name="C14" library="resistor" deviceset="C-EU" device="C0402" value="0.01uF"/>
 <part name="R13" library="resistor" deviceset="R-EU_" device="R0402" value="5.1k"/>
 <part name="R7" library="resistor" deviceset="R-EU_" device="R0402" value="5.1k"/>
@@ -13750,6 +13746,10 @@ Source: &lt;a href="https://componentsearchengine.com/Datasheets/1/BLM18KG700TN1
 <part name="R40" library="resistor" deviceset="R-EU_" device="R0402" value="5.1k"/>
 <part name="FRAME6" library="frames" deviceset="DINA4_L" device=""/>
 <part name="U$1" library="CYCFI_Con" deviceset="13P_MIDI_2" device=""/>
+<part name="R30" library="resistor" deviceset="R-EU_" device="R0402" value="220"/>
+<part name="R31" library="resistor" deviceset="R-EU_" device="R0402" value="220"/>
+<part name="C17" library="resistor" deviceset="C-EU" device="C0603" value="0.1uF"/>
+<part name="C18" library="resistor" deviceset="C-EU" device="C0603" value="0.1uF"/>
 </parts>
 <sheets>
 <sheet>
@@ -16439,14 +16439,6 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <attribute name="NAME" x="237.109" y="142.621" size="1.778" layer="95"/>
 <attribute name="VALUE" x="237.109" y="137.541" size="1.778" layer="96"/>
 </instance>
-<instance part="C17" gate="G$1" x="252.095" y="161.29" smashed="yes">
-<attribute name="NAME" x="253.619" y="161.671" size="1.778" layer="95"/>
-<attribute name="VALUE" x="253.619" y="156.591" size="1.778" layer="96"/>
-</instance>
-<instance part="C18" gate="G$1" x="252.095" y="142.24" smashed="yes">
-<attribute name="NAME" x="253.619" y="142.621" size="1.778" layer="95"/>
-<attribute name="VALUE" x="253.619" y="137.541" size="1.778" layer="96"/>
-</instance>
 <instance part="C14" gate="G$1" x="102.87" y="124.46" smashed="yes">
 <attribute name="NAME" x="96.774" y="126.111" size="1.778" layer="95"/>
 <attribute name="VALUE" x="92.964" y="118.491" size="1.778" layer="96"/>
@@ -16513,6 +16505,14 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <attribute name="SHEET" x="248.92" y="1.905" size="2.54" layer="94" font="vector"/>
 </instance>
 <instance part="U$1" gate="G$1" x="184.785" y="88.9"/>
+<instance part="C17" gate="G$1" x="252.095" y="161.29" smashed="yes">
+<attribute name="NAME" x="253.619" y="161.671" size="1.778" layer="95"/>
+<attribute name="VALUE" x="253.619" y="156.591" size="1.778" layer="96"/>
+</instance>
+<instance part="C18" gate="G$1" x="252.095" y="142.24" smashed="yes">
+<attribute name="NAME" x="253.619" y="142.621" size="1.778" layer="95"/>
+<attribute name="VALUE" x="253.619" y="137.541" size="1.778" layer="96"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -17981,14 +17981,6 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <attribute name="NAME" x="156.21" y="74.93" size="1.778" layer="95"/>
 <attribute name="TP_SIGNAL_NAME" x="161.29" y="74.93" size="1.778" layer="97" rot="R90"/>
 </instance>
-<instance part="R30" gate="G$1" x="83.82" y="61.595" smashed="yes">
-<attribute name="NAME" x="81.28" y="63.7286" size="1.778" layer="95"/>
-<attribute name="VALUE" x="80.645" y="57.658" size="1.778" layer="96"/>
-</instance>
-<instance part="R31" gate="G$1" x="133.35" y="68.58" smashed="yes" rot="R90">
-<attribute name="NAME" x="140.97" y="73.4314" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="142.24" y="66.802" size="1.778" layer="96" rot="R180"/>
-</instance>
 <instance part="R24" gate="G$1" x="40.64" y="154.94" smashed="yes">
 <attribute name="NAME" x="39.37" y="158.75" size="1.778" layer="95" rot="R180"/>
 <attribute name="VALUE" x="49.53" y="158.75" size="1.778" layer="96" rot="R180"/>
@@ -18012,6 +18004,14 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <instance part="R40" gate="G$1" x="190.5" y="58.42" smashed="yes">
 <attribute name="NAME" x="187.96" y="62.23" size="1.778" layer="95" rot="R180"/>
 <attribute name="VALUE" x="196.85" y="62.23" size="1.778" layer="96" rot="R180"/>
+</instance>
+<instance part="R30" gate="G$1" x="83.82" y="61.595" smashed="yes">
+<attribute name="NAME" x="86.36" y="65.405" size="1.778" layer="95" rot="R180"/>
+<attribute name="VALUE" x="86.36" y="59.817" size="1.778" layer="96" rot="R180"/>
+</instance>
+<instance part="R31" gate="G$1" x="133.35" y="68.58" smashed="yes" rot="R90">
+<attribute name="NAME" x="134.62" y="73.025" size="1.778" layer="95"/>
+<attribute name="VALUE" x="135.255" y="64.008" size="1.778" layer="96"/>
 </instance>
 </instances>
 <busses>
@@ -18472,7 +18472,6 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <wire x1="53.34" y1="53.34" x2="66.04" y2="53.34" width="0.1524" layer="91"/>
 <pinref part="C23" gate="G$1" pin="1"/>
 <wire x1="66.04" y1="53.34" x2="66.04" y2="50.8" width="0.1524" layer="91"/>
-<pinref part="R30" gate="G$1" pin="1"/>
 <wire x1="66.04" y1="53.34" x2="66.04" y2="61.595" width="0.1524" layer="91"/>
 <wire x1="66.04" y1="61.595" x2="78.74" y2="61.595" width="0.1524" layer="91"/>
 <junction x="66.04" y="53.34"/>
@@ -18490,6 +18489,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <label x="34.925" y="52.705" size="1.778" layer="95"/>
 <label x="77.47" y="91.44" size="1.778" layer="95"/>
 <label x="77.47" y="88.9" size="1.778" layer="95"/>
+<pinref part="R30" gate="G$1" pin="1"/>
 </segment>
 <segment>
 <pinref part="H4" gate="G$1" pin="2"/>
