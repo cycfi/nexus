@@ -530,12 +530,12 @@ uint16_t analog_read(uint16_t pin)
 void loop()
 {
    sustain_control(digitalRead(ch9));
-   volume_control(analog_read(ch10));
+   volume_control(analog_read(ch15));
    fx1_control(analog_read(ch11));
    fx2_control(analog_read(ch12));
    pitch_bend(analog_read(ch13));
    program_change(analog_read(ch14));
-   modulation_control(analog_read(ch15));
+   modulation_control(analog_read(ch10));
 
    program_change.up(!digitalRead(aux1));
    program_change.down(!digitalRead(aux2));
