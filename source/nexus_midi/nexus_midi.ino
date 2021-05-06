@@ -506,7 +506,7 @@ void loop()
 
    // Save the program_change and bank_select_control if needed
    if ((save_delay_start_time != -1)
-         && (millis() > (save_delay_start_time + save_delay)))
+      && (millis() > (save_delay_start_time + save_delay)))
    {
       program_change.save();
       bank_select_control.save();
@@ -530,26 +530,35 @@ uint16_t analog_read(uint16_t pin)
    return map(x, min_x, max_x, 0, 1023);
 }
 
+uint32_t prev_time = 0;
+
 void loop()
 {
-   sustain_control(digitalRead(ch9));
-   volume_control(analog_read(ch10));
-   fx1_control(analog_read(ch11));
-   fx2_control(analog_read(ch12));
-   pitch_bend(analog_read(ch13));
-   program_change(analog_read(ch14));
-   modulation_control(analog_read(ch15));
+   // Wish we used timer interrupts. Anyway, at least make sure we don't
+   // exceed a 1kHz processing loop.
+   if (prev_time != millis())
+   {
+      sustain_control(digitalRead(ch9));
+      volume_control(analog_read(ch10));
+      fx1_control(analog_read(ch11));
+      fx2_control(analog_read(ch12));
+      pitch_bend(analog_read(ch13));
+      program_change(analog_read(ch14));
+      modulation_control(analog_read(ch15));
 
-   program_change.up(!digitalRead(aux1));
-   program_change.down(!digitalRead(aux2));
-   program_change.group_up(!digitalRead(aux3));
-   program_change.group_down(!digitalRead(aux4));
-   bank_select_control.up(!digitalRead(aux5));
-   bank_select_control.down(!digitalRead(aux6));
+      program_change.up(!digitalRead(aux1));
+      program_change.down(!digitalRead(aux2));
+      program_change.group_up(!digitalRead(aux3));
+      program_change.group_down(!digitalRead(aux4));
+      bank_select_control.up(!digitalRead(aux5));
+      bank_select_control.down(!digitalRead(aux6));
+
+      prev_time = millis();
+   }
 
    // Save the program_change and bank_select_control if needed
    if ((save_delay_start_time != -1)
-         && (millis() > (save_delay_start_time + save_delay)))
+      && (millis() > (save_delay_start_time + save_delay)))
    {
       program_change.save();
       bank_select_control.save();
