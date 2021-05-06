@@ -195,7 +195,7 @@ struct controller
 
    void operator()(uint32_t val_)
    {
-      uint32_t val = lp(val_);
+      uint32_t val = lp2(lp1(val_));
       if (gt(val))
       {
          uint8_t const msb = val >> 3;
@@ -205,7 +205,8 @@ struct controller
       }
    }
 
-   lowpass<64, int32_t> lp;
+   lowpass<8, int32_t> lp1;
+   lowpass<16, int32_t> lp2;
    gate<noise_window, int32_t> gt;
 };
 
