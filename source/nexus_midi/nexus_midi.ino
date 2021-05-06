@@ -68,7 +68,7 @@ int const aux6 = P2_6; //digital
 #ifdef NEXUS_TEST
 int const noise_window = 4;
 #else
-int const noise_window = 1;
+int const noise_window = 2;
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -515,10 +515,12 @@ void loop()
 
 #else // !NEXUS_TEST
 
+// The effective range of our controls (e.g. pots) is within 1% of the travel
+uint16_t const min_x = 1024 * 0.01;
+uint16_t const max_x = 1024 * 0.99;
+
 uint16_t analog_read(uint16_t pin)
 {
-   uint16_t const min_x = 5;
-   uint16_t const max_x = 1023;
    uint16_t x = analogRead(pin);
    if (x < min_x)
       x = min_x;
