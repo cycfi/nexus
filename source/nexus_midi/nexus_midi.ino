@@ -217,12 +217,13 @@ struct pitch_bend_controller
 {
    void operator()(uint32_t val_)
    {
-      uint32_t val = lp(val_);
+      uint32_t val = lp2(lp1(val_));
       if (gt(val))
          midi_out << midi::pitch_bend{0, uint16_t{(val << 4) + (val % 16)}};
    }
 
-   lowpass<64, int32_t> lp;
+   lowpass<8, int32_t> lp1;
+   lowpass<16, int32_t> lp2;
    gate<noise_window, int32_t> gt;
 };
 
@@ -516,9 +517,9 @@ void loop()
 
 #else // !NEXUS_TEST
 
-// The effective range of our controls (e.g. pots) is within 1% of the travel
-uint16_t const min_x = 1024 * 0.01;
-uint16_t const max_x = 1024 * 0.99;
+// The effective range of our controls (e.g. pots) is within 2% of the travel
+constexpr uint16_t min_x = 1024 * 0.02;
+constexpr uint16_t max_x = 1024 * 0.98;
 
 uint16_t analog_read(uint16_t pin)
 {
