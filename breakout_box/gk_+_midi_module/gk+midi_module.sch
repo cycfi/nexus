@@ -1,41 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.3">
+<eagle version="9.6.1">
 <drawing>
 <settings>
-<setting alwaysvectorfont="yes"/>
+<setting alwaysvectorfont="no"/>
+<setting keepoldvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.025" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
-<layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
-<layer number="2" name="Route2" color="1" fill="3" visible="no" active="no"/>
-<layer number="3" name="Route3" color="4" fill="3" visible="no" active="no"/>
-<layer number="4" name="Route4" color="1" fill="4" visible="no" active="no"/>
-<layer number="5" name="Route5" color="4" fill="4" visible="no" active="no"/>
-<layer number="6" name="Route6" color="1" fill="8" visible="no" active="no"/>
-<layer number="7" name="Route7" color="4" fill="8" visible="no" active="no"/>
-<layer number="8" name="Route8" color="1" fill="2" visible="no" active="no"/>
-<layer number="9" name="Route9" color="4" fill="2" visible="no" active="no"/>
-<layer number="10" name="Route10" color="1" fill="7" visible="no" active="no"/>
-<layer number="11" name="Route11" color="4" fill="7" visible="no" active="no"/>
-<layer number="12" name="Route12" color="1" fill="5" visible="no" active="no"/>
-<layer number="13" name="Route13" color="4" fill="5" visible="no" active="no"/>
-<layer number="14" name="Route14" color="1" fill="6" visible="no" active="no"/>
-<layer number="15" name="Route15" color="4" fill="6" visible="no" active="no"/>
-<layer number="16" name="Bottom" color="1" fill="1" visible="no" active="no"/>
-<layer number="17" name="Pads" color="2" fill="1" visible="no" active="no"/>
-<layer number="18" name="Vias" color="2" fill="1" visible="no" active="no"/>
-<layer number="19" name="Unrouted" color="6" fill="1" visible="no" active="no"/>
-<layer number="20" name="Dimension" color="15" fill="1" visible="no" active="no"/>
-<layer number="21" name="tPlace" color="7" fill="1" visible="no" active="no"/>
-<layer number="22" name="bPlace" color="7" fill="1" visible="no" active="no"/>
-<layer number="23" name="tOrigins" color="15" fill="1" visible="no" active="no"/>
-<layer number="24" name="bOrigins" color="15" fill="1" visible="no" active="no"/>
-<layer number="25" name="tNames" color="7" fill="1" visible="no" active="no"/>
-<layer number="26" name="bNames" color="7" fill="1" visible="no" active="no"/>
-<layer number="27" name="tValues" color="7" fill="1" visible="no" active="no"/>
-<layer number="28" name="bValues" color="7" fill="1" visible="no" active="no"/>
+<layer number="1" name="Top" color="4" fill="1" visible="yes" active="no"/>
+<layer number="2" name="Route2" color="1" fill="3" visible="yes" active="no"/>
+<layer number="3" name="Route3" color="4" fill="3" visible="yes" active="no"/>
+<layer number="4" name="Route4" color="1" fill="4" visible="yes" active="no"/>
+<layer number="5" name="Route5" color="4" fill="4" visible="yes" active="no"/>
+<layer number="6" name="Route6" color="1" fill="8" visible="yes" active="no"/>
+<layer number="7" name="Route7" color="4" fill="8" visible="yes" active="no"/>
+<layer number="8" name="Route8" color="1" fill="2" visible="yes" active="no"/>
+<layer number="9" name="Route9" color="4" fill="2" visible="yes" active="no"/>
+<layer number="10" name="Route10" color="1" fill="7" visible="yes" active="no"/>
+<layer number="11" name="Route11" color="4" fill="7" visible="yes" active="no"/>
+<layer number="12" name="Route12" color="1" fill="5" visible="yes" active="no"/>
+<layer number="13" name="Route13" color="4" fill="5" visible="yes" active="no"/>
+<layer number="14" name="Route14" color="1" fill="6" visible="yes" active="no"/>
+<layer number="15" name="Route15" color="4" fill="6" visible="yes" active="no"/>
+<layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="no"/>
+<layer number="17" name="Pads" color="2" fill="1" visible="yes" active="no"/>
+<layer number="18" name="Vias" color="2" fill="1" visible="yes" active="no"/>
+<layer number="19" name="Unrouted" color="6" fill="1" visible="yes" active="no"/>
+<layer number="20" name="Dimension" color="15" fill="1" visible="yes" active="no"/>
+<layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="no"/>
+<layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="no"/>
+<layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="no"/>
+<layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="no"/>
+<layer number="25" name="tNames" color="7" fill="1" visible="yes" active="no"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="no"/>
+<layer number="27" name="tValues" color="7" fill="1" visible="yes" active="no"/>
+<layer number="28" name="bValues" color="7" fill="1" visible="yes" active="no"/>
 <layer number="29" name="tStop" color="7" fill="3" visible="no" active="no"/>
 <layer number="30" name="bStop" color="7" fill="6" visible="no" active="no"/>
 <layer number="31" name="tCream" color="7" fill="4" visible="no" active="no"/>
@@ -44,8 +45,8 @@
 <layer number="34" name="bFinish" color="6" fill="6" visible="no" active="no"/>
 <layer number="35" name="tGlue" color="7" fill="4" visible="no" active="no"/>
 <layer number="36" name="bGlue" color="7" fill="5" visible="no" active="no"/>
-<layer number="37" name="tTest" color="7" fill="1" visible="no" active="no"/>
-<layer number="38" name="bTest" color="7" fill="1" visible="no" active="no"/>
+<layer number="37" name="tTest" color="7" fill="1" visible="yes" active="no"/>
+<layer number="38" name="bTest" color="7" fill="1" visible="yes" active="no"/>
 <layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="no"/>
 <layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="no"/>
 <layer number="41" name="tRestrict" color="4" fill="10" visible="no" active="no"/>
@@ -53,19 +54,19 @@
 <layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="no"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="no"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="no" active="no"/>
-<layer number="46" name="Milling" color="3" fill="1" visible="no" active="no"/>
-<layer number="47" name="Measures" color="7" fill="1" visible="no" active="no"/>
-<layer number="48" name="Document" color="7" fill="1" visible="no" active="no"/>
-<layer number="49" name="Reference" color="7" fill="1" visible="no" active="no"/>
-<layer number="50" name="dxf" color="7" fill="1" visible="no" active="no"/>
-<layer number="51" name="tDocu" color="7" fill="1" visible="no" active="no"/>
-<layer number="52" name="bDocu" color="7" fill="1" visible="no" active="no"/>
-<layer number="53" name="tGND_GNDA" color="7" fill="9" visible="no" active="no"/>
-<layer number="54" name="bGND_GNDA" color="1" fill="9" visible="no" active="no"/>
-<layer number="56" name="wert" color="7" fill="1" visible="no" active="no"/>
-<layer number="57" name="tCAD" color="7" fill="1" visible="no" active="no"/>
-<layer number="59" name="tCarbon" color="7" fill="1" visible="no" active="no"/>
-<layer number="60" name="bCarbon" color="7" fill="1" visible="no" active="no"/>
+<layer number="46" name="Milling" color="3" fill="1" visible="yes" active="no"/>
+<layer number="47" name="Measures" color="7" fill="1" visible="yes" active="no"/>
+<layer number="48" name="Document" color="7" fill="1" visible="yes" active="no"/>
+<layer number="49" name="Reference" color="7" fill="1" visible="yes" active="no"/>
+<layer number="50" name="dxf" color="7" fill="1" visible="yes" active="no"/>
+<layer number="51" name="tDocu" color="7" fill="1" visible="yes" active="no"/>
+<layer number="52" name="bDocu" color="7" fill="1" visible="yes" active="no"/>
+<layer number="53" name="tGND_GNDA" color="7" fill="9" visible="yes" active="no"/>
+<layer number="54" name="bGND_GNDA" color="1" fill="9" visible="yes" active="no"/>
+<layer number="56" name="wert" color="7" fill="1" visible="yes" active="no"/>
+<layer number="57" name="tCAD" color="7" fill="1" visible="yes" active="no"/>
+<layer number="59" name="tCarbon" color="7" fill="1" visible="yes" active="no"/>
+<layer number="60" name="bCarbon" color="7" fill="1" visible="yes" active="no"/>
 <layer number="88" name="SimResults" color="9" fill="1" visible="yes" active="yes"/>
 <layer number="89" name="SimProbes" color="9" fill="1" visible="yes" active="yes"/>
 <layer number="90" name="Modules" color="5" fill="1" visible="yes" active="yes"/>
@@ -13683,9 +13684,9 @@ Source: &lt;a href="https://componentsearchengine.com/Datasheets/1/BLM18KG700TN1
 <part name="D1" library="CYCFI_semicon" deviceset="1SS302" device=""/>
 <part name="D2" library="CYCFI_semicon" deviceset="1SS302" device=""/>
 <part name="R20" library="resistor" deviceset="R-EU_" device="R0402" value="18K"/>
-<part name="R23" library="resistor" deviceset="R-EU_" device="R0402" value="100R"/>
+<part name="R23" library="resistor" deviceset="R-EU_" device="R0603" value="100R"/>
 <part name="R19" library="resistor" deviceset="R-EU_" device="R0402" value="10K"/>
-<part name="R22" library="resistor" deviceset="R-EU_" device="R0402" value="100R"/>
+<part name="R22" library="resistor" deviceset="R-EU_" device="R0603" value="100R"/>
 <part name="C13" library="resistor" deviceset="C-EU" device="C0603" value="0.47uF"/>
 <part name="R21" library="resistor" deviceset="R-EU_" device="R0402" value="470K"/>
 <part name="SUPPLY22" library="supply2" deviceset="GND" device=""/>
@@ -13746,8 +13747,8 @@ Source: &lt;a href="https://componentsearchengine.com/Datasheets/1/BLM18KG700TN1
 <part name="R40" library="resistor" deviceset="R-EU_" device="R0402" value="5.1k"/>
 <part name="FRAME6" library="frames" deviceset="DINA4_L" device=""/>
 <part name="U$1" library="CYCFI_Con" deviceset="13P_MIDI_2" device=""/>
-<part name="R30" library="resistor" deviceset="R-EU_" device="R0402" value="220"/>
-<part name="R31" library="resistor" deviceset="R-EU_" device="R0402" value="220"/>
+<part name="R30" library="resistor" deviceset="R-EU_" device="R0603" value="220"/>
+<part name="R31" library="resistor" deviceset="R-EU_" device="R0603" value="220"/>
 <part name="C17" library="resistor" deviceset="C-EU" device="C0603" value="0.1uF"/>
 <part name="C18" library="resistor" deviceset="C-EU" device="C0603" value="0.1uF"/>
 </parts>
@@ -14903,7 +14904,10 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <attribute name="VALUE" x="24.765" y="159.385" size="1.778" layer="96" rot="MR180"/>
 <attribute name="NAME" x="24.765" y="133.223" size="1.778" layer="95" rot="MR180"/>
 </instance>
-<instance part="JP3" gate="A" x="60.96" y="144.145" rot="R90"/>
+<instance part="JP3" gate="A" x="60.96" y="144.145" smashed="yes" rot="R90">
+<attribute name="NAME" x="55.245" y="137.795" size="1.778" layer="95" rot="R90"/>
+<attribute name="VALUE" x="68.58" y="137.795" size="1.778" layer="96" rot="R90"/>
+</instance>
 <instance part="JP2" gate="A" x="60.96" y="163.195" smashed="yes" rot="R90">
 <attribute name="NAME" x="54.61" y="159.385" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="68.58" y="156.845" size="1.778" layer="96" rot="R90"/>
@@ -16504,7 +16508,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <attribute name="LAST_DATE_TIME" x="175.26" y="1.905" size="2.54" layer="94" font="vector"/>
 <attribute name="SHEET" x="248.92" y="1.905" size="2.54" layer="94" font="vector"/>
 </instance>
-<instance part="U$1" gate="G$1" x="184.785" y="88.9"/>
+<instance part="U$1" gate="G$1" x="184.785" y="88.9" smashed="yes"/>
 <instance part="C17" gate="G$1" x="252.095" y="161.29" smashed="yes">
 <attribute name="NAME" x="253.619" y="161.671" size="1.778" layer="95"/>
 <attribute name="VALUE" x="253.619" y="156.591" size="1.778" layer="96"/>
@@ -17866,7 +17870,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <rectangle x1="226.02825" y1="31.90875" x2="228.37775" y2="31.97225" layer="95"/>
 </plain>
 <instances>
-<instance part="FRAME1" gate="G$1" x="0" y="0"/>
+<instance part="FRAME1" gate="G$1" x="0" y="0" smashed="yes"/>
 <instance part="FRAME1" gate="G$2" x="162.56" y="0" smashed="yes">
 <attribute name="LAST_DATE_TIME" x="175.26" y="1.27" size="2.54" layer="94" font="vector"/>
 <attribute name="SHEET" x="248.92" y="1.27" size="2.54" layer="94" font="vector"/>
@@ -17883,7 +17887,10 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <attribute name="NAME" x="143.51" y="58.42" size="1.778" layer="95"/>
 <attribute name="VALUE" x="143.51" y="55.88" size="1.778" layer="96"/>
 </instance>
-<instance part="MIDI1" gate="G$1" x="105.41" y="64.135" rot="MR0"/>
+<instance part="MIDI1" gate="G$1" x="105.41" y="64.135" smashed="yes" rot="MR0">
+<attribute name="VALUE" x="105.41" y="74.93" size="1.778" layer="96" rot="MR0"/>
+<attribute name="NAME" x="115.57" y="74.93" size="1.778" layer="95" rot="MR0"/>
+</instance>
 <instance part="C21" gate="G$1" x="35.56" y="76.2" smashed="yes">
 <attribute name="NAME" x="38.1" y="76.835" size="1.778" layer="95"/>
 <attribute name="VALUE" x="38.1" y="71.12" size="1.778" layer="96"/>
@@ -19435,7 +19442,7 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <text x="41.91" y="46.355" size="1.778" layer="95">(AUX6)</text>
 </plain>
 <instances>
-<instance part="FRAME3" gate="G$1" x="0" y="0"/>
+<instance part="FRAME3" gate="G$1" x="0" y="0" smashed="yes"/>
 <instance part="FRAME3" gate="G$2" x="162.56" y="0" smashed="yes">
 <attribute name="LAST_DATE_TIME" x="175.26" y="1.27" size="2.54" layer="94" font="vector"/>
 <attribute name="SHEET" x="248.92" y="1.27" size="2.54" layer="94" font="vector"/>
@@ -19489,7 +19496,10 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <instance part="SUPPLY17" gate="GND" x="233.68" y="118.11" smashed="yes" rot="MR0">
 <attribute name="VALUE" x="236.22" y="114.3" size="1.778" layer="96" rot="MR0"/>
 </instance>
-<instance part="H8" gate="1" x="133.985" y="80.645" rot="R180"/>
+<instance part="H8" gate="1" x="133.985" y="80.645" smashed="yes" rot="R180">
+<attribute name="VALUE" x="135.255" y="90.805" size="1.778" layer="96" rot="R180"/>
+<attribute name="NAME" x="135.255" y="74.803" size="1.778" layer="95" rot="R180"/>
+</instance>
 <instance part="SUPPLY18" gate="GND" x="123.825" y="74.295" smashed="yes">
 <attribute name="VALUE" x="121.285" y="70.485" size="1.778" layer="96"/>
 </instance>
@@ -19501,8 +19511,14 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <attribute name="VALUE" x="19.685" y="62.23" size="1.778" layer="96" rot="MR180"/>
 <attribute name="NAME" x="19.685" y="36.068" size="1.778" layer="95" rot="MR180"/>
 </instance>
-<instance part="C35" gate="G$1" x="227.33" y="78.74"/>
-<instance part="C30" gate="G$1" x="90.17" y="133.35"/>
+<instance part="C35" gate="G$1" x="227.33" y="78.74" smashed="yes">
+<attribute name="NAME" x="228.854" y="79.121" size="1.778" layer="95"/>
+<attribute name="VALUE" x="228.854" y="74.041" size="1.778" layer="96"/>
+</instance>
+<instance part="C30" gate="G$1" x="90.17" y="133.35" smashed="yes">
+<attribute name="NAME" x="91.694" y="133.731" size="1.778" layer="95"/>
+<attribute name="VALUE" x="91.694" y="128.651" size="1.778" layer="96"/>
+</instance>
 <instance part="C29" gate="G$1" x="80.01" y="139.7" smashed="yes">
 <attribute name="NAME" x="82.55" y="140.335" size="1.778" layer="95"/>
 <attribute name="VALUE" x="81.915" y="134.62" size="1.778" layer="96"/>
@@ -19520,7 +19536,10 @@ Copyright CYCFI Research Inc. 2013-2020</text>
 <instance part="U4" gate="G$1" x="67.31" y="142.24" smashed="yes" rot="MR0">
 <attribute name="NAME" x="65.405" y="152.4" size="1.778" layer="95" rot="MR0"/>
 </instance>
-<instance part="C27" gate="G$1" x="39.37" y="138.43"/>
+<instance part="C27" gate="G$1" x="39.37" y="138.43" smashed="yes">
+<attribute name="NAME" x="40.894" y="138.811" size="1.778" layer="95"/>
+<attribute name="VALUE" x="40.894" y="133.731" size="1.778" layer="96"/>
+</instance>
 </instances>
 <busses>
 </busses>
