@@ -5818,7 +5818,7 @@ In this library the device names are the same as the pin names of the symbols, t
 </classes>
 <parts>
 <part name="H1" library="con-lstb" deviceset="MA03-1" device="_EDITED"/>
-<part name="R3" library="resistor" deviceset="R-EU_" device="R0402" value="2K"/>
+<part name="R3" library="resistor" deviceset="R-EU_" device="R0402" value="3k"/>
 <part name="R4" library="resistor" deviceset="R-EU_" device="R0402" value="1.5K"/>
 <part name="FRAME1" library="frames" deviceset="LETTER_L" device=""/>
 <part name="R2" library="resistor" deviceset="R-EU_" device="R0402" value="3K"/>

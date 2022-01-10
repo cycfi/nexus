@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.025" unitdist="inch" unit="inch" style="lines" multiple="1" display="yes" altdistance="0.01" altunitdist="inch" altunit="inch"/>
+<grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
 <layer number="2" name="Route2" color="1" fill="3" visible="no" active="no"/>
@@ -7833,12 +7833,12 @@ Marquardt, Siemens, C&amp;K, ITT, and others&lt;p&gt;
 <part name="FRAME1" library="frames" deviceset="LETTER_L" device=""/>
 <part name="R1" library="resistor" deviceset="R-EU_" device="R0402" value="1K"/>
 <part name="SUPPLY1" library="supply2" deviceset="GND" device=""/>
-<part name="D1" library="m-pad-2.1" deviceset="D_SCHOTTKY" device="L"/>
+<part name="D1" library="m-pad-2.1" deviceset="D_SCHOTTKY" device="L" value="CUS551V30,H3F"/>
 <part name="C1" library="resistor" deviceset="C-EU" device="C0603" value="10uF"/>
 <part name="SUPPLY2" library="supply2" deviceset="GND" device=""/>
 <part name="R2" library="resistor" deviceset="R-EU_" device="R0402" value="1K"/>
 <part name="SUPPLY4" library="supply2" deviceset="GND" device=""/>
-<part name="D2" library="m-pad-2.1" deviceset="D_SCHOTTKY" device="L"/>
+<part name="D2" library="m-pad-2.1" deviceset="D_SCHOTTKY" device="L" value="CUS551V30,H3F"/>
 <part name="C2" library="resistor" deviceset="C-EU" device="C0603" value="10uF"/>
 <part name="S1" library="switch" deviceset="SPDT" device=""/>
 <part name="SUPPLY3" library="supply2" deviceset="GND" device=""/>
@@ -8760,7 +8760,7 @@ Copyright CYCFI Research Inc. 2013-2017</text>
 <instance part="SUPPLY1" gate="GND" x="130.175" y="111.125" smashed="yes"/>
 <instance part="D1" gate="G$1" x="139.065" y="127.635" smashed="yes" rot="R180">
 <attribute name="NAME" x="135.636" y="132.588" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="141.351" y="132.08" size="1.778" layer="96" rot="R180"/>
+<attribute name="VALUE" x="159.131" y="132.08" size="1.778" layer="96" rot="R180"/>
 </instance>
 <instance part="C1" gate="G$1" x="130.175" y="121.285"/>
 <instance part="SUPPLY2" gate="GND" x="85.09" y="108.585" smashed="yes"/>
@@ -8771,7 +8771,7 @@ Copyright CYCFI Research Inc. 2013-2017</text>
 <instance part="SUPPLY4" gate="GND" x="130.81" y="82.55" smashed="yes"/>
 <instance part="D2" gate="G$1" x="139.7" y="99.06" smashed="yes" rot="R180">
 <attribute name="NAME" x="136.271" y="104.013" size="1.778" layer="95" rot="R180"/>
-<attribute name="VALUE" x="141.986" y="103.505" size="1.778" layer="96" rot="R180"/>
+<attribute name="VALUE" x="159.766" y="103.505" size="1.778" layer="96" rot="R180"/>
 </instance>
 <instance part="C2" gate="G$1" x="130.81" y="92.71"/>
 <instance part="S1" gate="S1" x="92.71" y="114.3" smashed="yes" rot="R270">

@@ -68,7 +68,7 @@ int const aux6 = P2_6; //digital
 #ifdef NEXUS_TEST
 int const noise_window = 4;
 #else
-int const noise_window = 1;
+int const noise_window = 2;
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -195,7 +195,7 @@ struct controller
 
    void operator()(uint32_t val_)
    {
-      uint32_t val = lp(val_);
+      uint32_t val = lp2(lp1(val_));
       if (gt(val))
       {
          uint8_t const msb = val >> 3;
@@ -205,7 +205,8 @@ struct controller
       }
    }
 
-   lowpass<64, int32_t> lp;
+   lowpass<8, int32_t> lp1;
+   lowpass<16, int32_t> lp2;
    gate<noise_window, int32_t> gt;
 };
 
@@ -216,12 +217,13 @@ struct pitch_bend_controller
 {
    void operator()(uint32_t val_)
    {
-      uint32_t val = lp(val_);
+      uint32_t val = lp2(lp1(val_));
       if (gt(val))
          midi_out << midi::pitch_bend{0, uint16_t{(val << 4) + (val % 16)}};
    }
 
-   lowpass<64, int32_t> lp;
+   lowpass<8, int32_t> lp1;
+   lowpass<16, int32_t> lp2;
    gate<noise_window, int32_t> gt;
 };
 
@@ -505,7 +507,7 @@ void loop()
 
    // Save the program_change and bank_select_control if needed
    if ((save_delay_start_time != -1)
-         && (millis() > (save_delay_start_time + save_delay)))
+      && (millis() > (save_delay_start_time + save_delay)))
    {
       program_change.save();
       bank_select_control.save();
@@ -515,10 +517,12 @@ void loop()
 
 #else // !NEXUS_TEST
 
+// The effective range of our controls (e.g. pots) is within 2% of the travel
+constexpr uint16_t min_x = 1024 * 0.02;
+constexpr uint16_t max_x = 1024 * 0.98;
+
 uint16_t analog_read(uint16_t pin)
 {
-   uint16_t const min_x = 5;
-   uint16_t const max_x = 1023;
    uint16_t x = analogRead(pin);
    if (x < min_x)
       x = min_x;
@@ -527,26 +531,35 @@ uint16_t analog_read(uint16_t pin)
    return map(x, min_x, max_x, 0, 1023);
 }
 
+uint32_t prev_time = 0;
+
 void loop()
 {
-   sustain_control(digitalRead(ch9));
-   volume_control(analog_read(ch10));
-   fx1_control(analog_read(ch11));
-   fx2_control(analog_read(ch12));
-   pitch_bend(analog_read(ch13));
-   program_change(analog_read(ch14));
-   modulation_control(analog_read(ch15));
+   // Wish we used timer interrupts. Anyway, at least make sure we don't
+   // exceed a 1kHz processing loop.
+   if (prev_time != millis())
+   {
+      sustain_control(digitalRead(ch9));
+      volume_control(analog_read(ch10));
+      fx1_control(analog_read(ch11));
+      fx2_control(analog_read(ch12));
+      pitch_bend(analog_read(ch13));
+      program_change(analog_read(ch14));
+      modulation_control(analog_read(ch15));
 
-   program_change.up(!digitalRead(aux1));
-   program_change.down(!digitalRead(aux2));
-   program_change.group_up(!digitalRead(aux3));
-   program_change.group_down(!digitalRead(aux4));
-   bank_select_control.up(!digitalRead(aux5));
-   bank_select_control.down(!digitalRead(aux6));
+      program_change.up(!digitalRead(aux1));
+      program_change.down(!digitalRead(aux2));
+      program_change.group_up(!digitalRead(aux3));
+      program_change.group_down(!digitalRead(aux4));
+      bank_select_control.up(!digitalRead(aux5));
+      bank_select_control.down(!digitalRead(aux6));
+
+      prev_time = millis();
+   }
 
    // Save the program_change and bank_select_control if needed
    if ((save_delay_start_time != -1)
-         && (millis() > (save_delay_start_time + save_delay)))
+      && (millis() > (save_delay_start_time + save_delay)))
    {
       program_change.save();
       bank_select_control.save();

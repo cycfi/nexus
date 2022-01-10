@@ -3111,7 +3111,7 @@ design rules under a new name.</description>
 <attribute name="NAME" x="9.865" y="14.762" size="0.8" layer="25" font="vector"/>
 <attribute name="VALUE" x="6.968" y="15.135" size="0.8" layer="27" rot="R270"/>
 </element>
-<element name="D1" library="m-pad-2.1" package="SOD-323" value="" x="12.5" y="12.5" smashed="yes" rot="R90">
+<element name="D1" library="m-pad-2.1" package="SOD-323" value="CUS551V30,H3F" x="12.5" y="12.5" smashed="yes" rot="R90">
 <attribute name="NAME" x="13.07" y="10.657" size="0.8" layer="25" font="vector" rot="R180"/>
 <attribute name="VALUE" x="14.513" y="10.73" size="1.27" layer="27" rot="R90"/>
 </element>
@@ -3123,7 +3123,7 @@ design rules under a new name.</description>
 <attribute name="NAME" x="11.135" y="4.238" size="0.8" layer="25" font="vector" rot="R180"/>
 <attribute name="VALUE" x="11.032" y="1.865" size="0.8" layer="27" rot="R90"/>
 </element>
-<element name="D2" library="m-pad-2.1" package="SOD-323" value="" x="12.5" y="4.5" smashed="yes" rot="R270">
+<element name="D2" library="m-pad-2.1" package="SOD-323" value="CUS551V30,H3F" x="12.5" y="4.5" smashed="yes" rot="R270">
 <attribute name="NAME" x="11.43" y="1.843" size="0.8" layer="25" font="vector"/>
 <attribute name="VALUE" x="10.487" y="6.27" size="1.27" layer="27" rot="R270"/>
 </element>
