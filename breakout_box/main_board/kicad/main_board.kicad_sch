@@ -1979,7 +1979,6 @@
     )
   )
 
-
   (junction (at 249.555 119.38) (diameter 0) (color 0 0 0 0)
     (uuid 030b8db5-a857-4477-86bd-aa043049706b)
   )
@@ -5090,13 +5089,16 @@
     (property "Reference" "Q2" (id 0) (at 203.835 225.425 90)
       (effects (font (size 1.778 1.5113)) (justify left bottom))
     )
-    (property "Value" "TIP122" (id 1) (at 218.059 225.425 90)
+    (property "Value" "MJD122" (id 1) (at 218.059 225.425 90)
       (effects (font (size 1.778 1.5113)) (justify left bottom))
     )
-    (property "Footprint" "main_board:TO-220H" (id 2) (at 206.375 232.41 0)
+    (property "Footprint" "Package_TO_SOT_SMD:TO-252-2" (id 2) (at 206.375 232.41 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "" (id 3) (at 206.375 232.41 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "LCSC" "C59488" (id 4) (at 206.375 232.41 90)
       (effects (font (size 1.27 1.27)) hide)
     )
     (pin "1" (uuid 01686e47-a235-4821-830f-7420314a62c7))
@@ -5245,7 +5247,7 @@
       (reference "Q1") (unit 1) (value "DMP3099L") (footprint "main_board:SOT23")
     )
     (path "/fba4920e-fdf5-46ca-bff8-f6116ea09a34"
-      (reference "Q2") (unit 1) (value "TIP122") (footprint "main_board:TO-220H")
+      (reference "Q2") (unit 1) (value "MJD122") (footprint "Package_TO_SOT_SMD:TO-252-2")
     )
     (path "/a5d2a7d4-11d3-4ff9-a61d-2d4964edff84"
       (reference "R1") (unit 1) (value "220R") (footprint "main_board:R0603")
