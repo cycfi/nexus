@@ -1,2 +1,10 @@
 .DS_Store
 /breakout_box/main_board/kicad/main_board-backups/
+/breakout_box/main_board/kicad/panel/gerber/
+/breakout_box/main_board/kicad/panel/main_board_panel-backups/
+/breakout_box/main_board/kicad/panel/bom.csv
+/breakout_box/main_board/kicad/panel/fp-info-cache
+/breakout_box/main_board/kicad/panel/main_board_gerbers.zip
+/breakout_box/main_board/kicad/panel/main_board_panel.kicad_prl
+/breakout_box/main_board/kicad/panel/main_board_panel.kicad_pro
+/breakout_box/main_board/kicad/panel/pos.csv
