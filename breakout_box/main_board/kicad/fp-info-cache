@@ -1,4 +1,4 @@
-20133955688494108
+20255350399182741
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -85599,6 +85599,517 @@ Varistor
 RV_Disc_D21.5mm_W11.4mm_P10mm
 Varistor, diameter 21.5mm, width 11.4mm, pitch 10mm
 varistor SIOV
+0
+2
+2
+cycfi_library
+Crystal_SMD_3225-4Pin_3.2x2.5mm
+SMD Crystal SERIES SMD3225/4 http://www.txccrystal.com/images/pdf/7m-accuracy.pdf, 3.2x2.5mm^2 package
+SMD SMT crystal
+0
+4
+4
+cycfi_library
+DF40C-60DP-0.4V51
+DF40C-60DP-0.4V(51)
+Connector
+0
+64
+64
+cycfi_library
+DF40C-60DP-0.4V51_R
+DF40C-60DP-0.4V(51) Reversed (Bottom)
+Connector
+0
+64
+64
+cycfi_library
+DF40C-60DS-0.4V51
+DF40C-60DS-0.4V(51)
+Connector
+0
+60
+60
+cycfi_library
+DO-214AC
+Diode, MELF,,
+Diode MELF 
+0
+2
+2
+cycfi_library
+LS601
+
+
+0
+6
+4
+cycfi_library
+LS1201
+
+
+0
+6
+4
+cycfi_library
+PS5801
+
+
+0
+6
+6
+cycfi_library
+PTS636SK25SMTRLFS
+
+
+0
+2
+2
+cycfi_library
+RS32716
+
+
+0
+6
+5
+cycfi_library
+SOIC-16_3.9x9.9mm_P1.27mm
+SOIC, 16 Pin (JEDEC MS-012AC, https://www.analog.com/media/en/package-pcb-resources/package/pkg_pdf/soic_narrow-r/r_16.pdf), generated with kicad-footprint-generator ipc_gullwing_generator.py
+SOIC SO
+0
+16
+16
+cycfi_library
+SOT-23-6
+SOT, 6 Pin (https://www.jedec.org/sites/default/files/docs/Mo-178c.PDF variant AB), generated with kicad-footprint-generator ipc_gullwing_generator.py
+SOT TO_SOT_SMD
+0
+6
+6
+cycfi_library
+TSSOP-14_4.4x5mm_P0.65mm
+TSSOP, 14 Pin (JEDEC MO-153 Var AB-1 https://www.jedec.org/document_search?search_api_views_fulltext=MO-153), generated with kicad-footprint-generator ipc_gullwing_generator.py
+TSSOP SO
+0
+14
+14
+cycfi_library
+alpha_concentric_pot
+
+
+0
+6
+6
+cycfi_library
+bourns_pdb181
+
+
+0
+3
+3
+cycfi_library
+bourns_pdb241
+
+
+0
+3
+3
+cycfi_library
+cond_hole_rect_1.2x3.5mm
+Mounting Hole rectangular 1.2x3.5mm
+mounting hole rectangular 1.2x3.5mm
+0
+1
+1
+cycfi_library
+cycfi-logo-9mm
+
+
+0
+0
+0
+cycfi_library
+cycfi-logo-12mm
+
+
+0
+0
+0
+cycfi_library
+cycfi-logo-15mm
+
+
+0
+0
+0
+cycfi_library
+cycfi-logo-20mm
+
+
+0
+0
+0
+cycfi_library
+cycfi-logo-30mm
+
+
+0
+0
+0
+cycfi_library
+hole_1.2mm
+Mounting Hole 2.1mm, no annular
+mounting hole 2.1mm no annular
+0
+0
+0
+cycfi_library
+hole_1.2x2mm
+Mounting Hole 2.1mm, no annular
+mounting hole 2.1mm no annular
+0
+0
+0
+cycfi_library
+hole_1.2x3mm
+Mounting Hole 2.1mm, no annular
+mounting hole 2.1mm no annular
+0
+0
+0
+cycfi_library
+hole_1.5mm
+Mounting Hole 2.1mm, no annular
+mounting hole 2.1mm no annular
+0
+0
+0
+cycfi_library
+hole_1mm
+Mounting Hole 2.1mm, no annular
+mounting hole 2.1mm no annular
+0
+0
+0
+cycfi_library
+hole_2.65mm
+Mounting Hole 2.1mm, no annular
+mounting hole 2.1mm no annular
+0
+0
+0
+cycfi_library
+hole_3mm
+Mounting Hole 2.1mm, no annular
+mounting hole 2.1mm no annular
+0
+0
+0
+cycfi_library
+mounting_hole_2.1mm
+Mounting Hole 2.1mm, no annular
+mounting hole 2.1mm no annular
+0
+0
+0
+cycfi_library
+mounting_hole_m2
+Mounting Hole 2.1mm, no annular
+mounting hole 2.1mm no annular
+0
+0
+0
+cycfi_library
+mounting_hole_m3
+Mounting Hole 3mm, no annular
+mounting hole 3mm no annular
+0
+0
+0
+cycfi_library
+mounting_hole_st1.9
+Mounting Hole 2.1mm, no annular
+mounting hole 2.1mm no annular
+0
+0
+0
+cycfi_library
+mouse-bite-2mm-slot
+
+
+0
+0
+0
+cycfi_library
+mouse-bite-2mm-slot-one-side
+
+
+0
+0
+0
+cycfi_library
+mouse-bite-3mm-slot
+
+
+0
+0
+0
+cycfi_library
+mouse-bite-3mm-slot-one-side
+
+
+0
+0
+0
+cycfi_library
+nu_capsule
+
+
+0
+5
+3
+cycfi_library
+nu_magnet_pad
+
+
+0
+1
+1
+cycfi_library
+pad_1x3p_2.54mm
+Through hole straight pin header, 1x03, 2.54mm pitch, single row
+Through hole pin header THT 1x03 2.54mm single row
+0
+3
+3
+cycfi_library
+pin_header_1x3p_2.54mm_smd_horizontal
+
+
+0
+3
+3
+cycfi_library
+pin_header_1x4p_2.54mm_smd_horizontal
+
+
+0
+4
+4
+cycfi_library
+pin_header_1x8p_2.54mm_smd_horizontal
+
+
+0
+8
+8
+cycfi_library
+pin_header_2x2p_2.00mm_smd_vertical
+surface-mounted straight pin socket, 2x2, 2.00mm pitch, double rows
+Surface mounted pin header SMD 2x2 200mm double row
+0
+4
+4
+cycfi_library
+pin_header_2x3p_1.00mm_smd_vertical
+surface-mounted straight pin header, 2x03, 1.00mm pitch, double rows
+Surface mounted pin header SMD 2x03 1.00mm double row
+0
+6
+6
+cycfi_library
+pin_header_2x3p_2.54mm_smd_horizontal
+
+
+0
+6
+6
+cycfi_library
+pin_header_2x5_P2.54mm_vertical
+Through hole straight pin header, 2x05, 2.54mm pitch, double rows
+Through hole pin header THT 2x05 2.54mm double row
+0
+10
+10
+cycfi_library
+pin_header_2x5p_2.54mm_smd_horizontal
+
+
+0
+10
+10
+cycfi_library
+pin_header_2x7p_1.00mm_smd_vertical
+surface-mounted straight pin header, 2x7, 1.00mm pitch, double rows
+Surface mounted pin header SMD 2x7 1.00mm double row
+0
+14
+14
+cycfi_library
+pin_socket_1x4p_2.54mm_smd_horizontal
+
+
+0
+4
+4
+cycfi_library
+pin_socket_2x2p_2.00mm_smd_vertical
+surface-mounted straight pin socket, 2x2, 2.00mm pitch, double rows
+Surface mounted pin header SMD 2x2 200mm double row
+0
+4
+4
+cycfi_library
+pin_socket_2x3p_1.00mm_smd_vertical
+surface-mounted straight pin header, 2x03, 1.00mm pitch, double rows
+Surface mounted pin header SMD 2x03 1.00mm double row
+0
+6
+6
+cycfi_library
+round-single-pad-0.9mm-th
+
+
+0
+1
+1
+cycfi_library
+round-single-pad-1.8mm-th
+
+
+0
+1
+1
+cycfi_library
+self_clinching_m3
+Mounting Hole 2.1mm, no annular
+mounting hole 2.1mm no annular
+0
+0
+0
+cycfi_library
+single-pad-1.2x1.2
+
+
+0
+1
+1
+cycfi_library
+single-pad-1.5x1.5-th
+
+
+0
+1
+1
+cycfi_library
+single-pad-1.6x1.6_circular
+
+
+0
+1
+1
+cycfi_library
+single-pad-1.52x1.52-th
+
+
+0
+1
+1
+cycfi_library
+single-pad-2x2
+
+
+0
+1
+1
+cycfi_library
+single-pad-2x2-circular
+
+
+0
+1
+1
+cycfi_library
+single-pad-2x2-th
+
+
+0
+1
+1
+cycfi_library
+single-pad-3.5x2
+
+
+0
+1
+1
+cycfi_library
+single-pad-3x1.5
+
+
+0
+1
+1
+cycfi_library
+single-pad-3x2
+
+
+0
+1
+1
+cycfi_library
+single-pad-3x3
+
+
+0
+1
+1
+cycfi_library
+single-pad-3x3-th
+
+
+0
+1
+1
+cycfi_library
+single-pad-5x3.5
+
+
+0
+1
+1
+cycfi_library
+single-pad-10x2
+
+
+0
+1
+1
+cycfi_library
+single-pad-20x2
+
+
+0
+1
+1
+cycfi_library
+single-pad-25x2
+
+
+0
+1
+1
+cycfi_library
+single-pad-31x2
+
+
+0
+1
+1
+cycfi_library
+tb_inductor
+
+
 0
 2
 2
