@@ -283,7 +283,6 @@
 <wire x1="51.1" y1="89.48495" x2="49.1" y2="89.48495" width="0.2032" layer="49"/>
 <hole x="59" y="3" drill="3.1"/>
 <hole x="7" y="3" drill="3.1"/>
-<hole x="60.5" y="100" drill="6"/>
 <wire x1="16.5" y1="26.75" x2="18.5" y2="24.75" width="0.2032" layer="49"/>
 <wire x1="18.5" y1="24.75" x2="18.5" y2="16.75" width="0.2032" layer="49"/>
 <text x="0.5" y="74.25" size="0.7" layer="25" font="vector" ratio="12">CH1_GK</text>
