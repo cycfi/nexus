@@ -6,8 +6,8 @@
 
   (title_block
     (title "Nexus Main Board")
-    (date "2022-08-29")
-    (rev "2.51")
+    (date "2023-03-05")
+    (rev "2.6")
     (company "Document Number: 2022011")
   )
 
@@ -2377,10 +2377,6 @@
   (text "19P LEMO Connector" (at 73.66 42.545 270)
     (effects (font (size 2.54 2.159)) (justify right bottom))
     (uuid 8db72d04-aa4e-4246-8b1e-434f2f787f79)
-  )
-  (text "v2.5" (at 408.94 276.86 180)
-    (effects (font (size 2.54 2.54)) (justify left bottom))
-    (uuid 96364f16-2c24-44e3-8d9d-4291948c5c82)
   )
   (text "GND" (at 128.905 201.295 180)
     (effects (font (size 1.778 1.5113)) (justify left bottom))
