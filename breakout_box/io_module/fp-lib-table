@@ -1,0 +1,4 @@
+(fp_lib_table
+  (lib (name "io_module")(type "KiCad")(uri "$(KIPRJMOD)/io_module.pretty")(options "")(descr ""))
+  (lib (name "cycfi_library")(type "KiCad")(uri "$(KIPRJMOD)/../../pcb_common/kicad/cycfi_library.pretty")(options "")(descr ""))
+)
