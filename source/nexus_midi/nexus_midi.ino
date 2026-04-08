@@ -212,14 +212,16 @@ struct pitch_bend_controller
 {
    void operator()(uint32_t val_)
    {
-      uint32_t val = lp2(lp1(val_));
-      if (gt(val))
+      uint16_t val = smoother(val_);
+      if (val != prev)
+      {
+         prev = val;
          midi_out << midi::pitch_bend{0, uint16_t{(val << 4) + (val % 16)}};
+      }
    }
 
-   lowpass<8, int32_t> lp1;
-   lowpass<16, int32_t> lp2;
-   gate<noise_window, int32_t> gt;
+   dynamic_smoother<16, 128> smoother;
+   uint16_t prev = 0xFFFF;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
