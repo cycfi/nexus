@@ -250,16 +250,13 @@ struct pitch_bend_controller
    {
       int32_t val = dc(smoother(val_)) + 8192;
       int32_t out = max(int32_t(0), min(val, int32_t(16383)));
-      if (out != prev_out && !controls_active())
-      {
-         prev_out = out;
+      if (gt(out) && !controls_active())
          midi_out << midi::pitch_bend{0, uint16_t(out)};
-      }
    }
 
    dynamic_smoother<16, 128, 4> smoother;
    dc_block<14> dc;
-   int32_t prev_out;
+   gate<16, int32_t> gt;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
