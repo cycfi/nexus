@@ -224,6 +224,39 @@ namespace cycfi
       T _lp;
    };
 
+   //////////////////////////////////////////////////////////////////////////////
+   // offset_servo: Tracks and removes slow offset drift near the center.
+   //////////////////////////////////////////////////////////////////////////////
+   template <int Shift, typename T = int32_t>
+   struct offset_servo
+   {
+      offset_servo()
+      : _i(0)
+      {}
+
+      void init(T s)
+      {
+         _i = s << Shift;
+      }
+
+      void update(T s)
+      {
+         _i += s - (_i >> Shift);
+      }
+
+      T operator()(T s) const
+      {
+         return s - (_i >> Shift);
+      }
+
+      T offset() const
+      {
+         return _i >> Shift;
+      }
+
+      T _i;
+   };
+
    ////////////////////////////////////////////////////////////////////////////
    // Noise gate. Returns true if the signal, s, is above or below the given
    // window. For example, if window is 5, the previous signal is 20 and the

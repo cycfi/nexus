@@ -206,6 +206,20 @@ bool controls_active()
    return (millis() - control_active_time) < blank_window_ms;
 }
 
+// The effective range of our controls (e.g. pots) is within 2% of the travel
+constexpr uint16_t min_x = 1024 * 0.02;
+constexpr uint16_t max_x = 1024 * 0.98;
+
+uint16_t analog_read(uint16_t pin)
+{
+   uint16_t x = analogRead(pin);
+   if (x < min_x)
+      x = min_x;
+   else if (x > max_x)
+      x = max_x;
+   return map(x, min_x, max_x, 0, 1023);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Generic controller handling
 ///////////////////////////////////////////////////////////////////////////////
@@ -234,26 +248,50 @@ struct controller
 ///////////////////////////////////////////////////////////////////////////////
 struct pitch_bend_controller
 {
+   static int32_t constexpr center = 8192;
+
+   // eWhammy hardware deadband is 5% total => +/-2.5% around center
+   static int32_t constexpr center_window = 16384 / 40;   // 409
+
+   // Startup center in analog_read() / smoother domain
+   static int32_t constexpr adc_center = 512;
+
+   // +/-2.5% of 1024 ~= 25
+   static int32_t constexpr adc_center_window = (1024 * 25) / 1000;
+
    void init(uint16_t pin)
    {
-      // Warm up the smoother using raw analogRead (available from setup()),
-      // then pre-load the DC estimate so the filter starts converged.
-      uint32_t val = analogRead(pin);
+      // Warm up the smoother and initialize the offset estimate.
+      uint32_t val = analog_read(pin);
       for (int i = 0; i < 100; ++i)
          smoother(val);
-      dc.init(smoother(val));
+
+      int32_t s = smoother(val);
+      if ((s >= (adc_center - adc_center_window))
+         && (s <= (adc_center + adc_center_window)))
+         servo.init(s);
+      else
+         servo.init(adc_center);
    }
 
    void operator()(uint32_t val_)
    {
-      int32_t val = dc(smoother(val_)) + 8192;
+      int32_t s = smoother(val_);
+      int32_t val = servo(s) + center;
       int32_t out = max(int32_t(0), min(val, int32_t(16383)));
+
+      if ((out >= (center - center_window)) && (out <= (center + center_window)))
+         servo.update(s);
+
+      val = servo(s) + center;
+      out = max(int32_t(0), min(val, int32_t(16383)));
+
       if (gt(out) && !controls_active())
          midi_out << midi::pitch_bend{0, uint16_t(out)};
    }
 
    dynamic_smoother<16, 128, 4> smoother;
-   dc_block<14> dc;
+   offset_servo<13> servo;
    gate<16, int32_t> gt;
 };
 
@@ -459,7 +497,7 @@ void setup()
 
    midi_out.start();
 
-   // Pre-load pitch bend DC estimate from the sensor's resting position
+   // Initialize pitch bend offset handling.
    pitch_bend.init(ch13);
 
    // Load the program_change and bank_select_control states from flash
@@ -550,20 +588,6 @@ void loop()
 }
 
 #else // !NEXUS_TEST
-
-// The effective range of our controls (e.g. pots) is within 2% of the travel
-constexpr uint16_t min_x = 1024 * 0.02;
-constexpr uint16_t max_x = 1024 * 0.98;
-
-uint16_t analog_read(uint16_t pin)
-{
-   uint16_t x = analogRead(pin);
-   if (x < min_x)
-      x = min_x;
-   else if (x > max_x)
-      x = max_x;
-   return map(x, min_x, max_x, 0, 1023);
-}
 
 uint32_t prev_time = 0;
 
