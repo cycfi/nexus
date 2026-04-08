@@ -186,66 +186,34 @@ note _note;
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
-// Pitch continuity filter
+// Pitch activity filter
 //
 // Crosstalk from other analog controls tends to produce isolated one-off pitch
-// excursions. Real eWhammy motion is continuous over successive samples.
+// excursions. Real eWhammy motion is continuous, even when each individual
+// sample change is small.
 //
-// We therefore require a confirming pitch event within continuity_window_ms
-// before transmitting. Once motion is established, updates continue as long as
-// pitch events keep arriving within the same window.
+// A small gate<2> detects recent fine motion and keeps an activity window
+// alive. The main gate<16> in pitch_bend_controller then decides when a
+// change is large enough to warrant a new MIDI message. This separates
+// "is the eWhammy moving?" from "is this worth sending?"
 ///////////////////////////////////////////////////////////////////////////////
-struct pitch_continuity_filter
+struct pitch_activity_filter
 {
-   static uint32_t constexpr continuity_window_ms = 4;
+   static uint32_t constexpr activity_window_ms = 4;
 
-   pitch_continuity_filter()
-    : pending(false)
-    , active(false)
-    , pending_time(0)
-    , last_time(0)
+   pitch_activity_filter()
+    : last_motion_time(0)
    {}
 
-   bool operator()(bool changed, uint32_t now)
+   bool operator()(int32_t out, uint32_t now)
    {
-      if (!changed)
-      {
-         if (active && ((now - last_time) > continuity_window_ms))
-            active = false;
-         return false;
-      }
-
-      if (active)
-      {
-         if ((now - last_time) <= continuity_window_ms)
-         {
-            last_time = now;
-            return true;
-         }
-
-         active = false;
-      }
-
-      if (pending)
-      {
-         if ((now - pending_time) <= continuity_window_ms)
-         {
-            pending = false;
-            active = true;
-            last_time = now;
-            return true;
-         }
-      }
-
-      pending = true;
-      pending_time = now;
-      return false;
+      if (motion_gt(out))
+         last_motion_time = now;
+      return (now - last_motion_time) <= activity_window_ms;
    }
 
-   bool     pending;
-   bool     active;
-   uint32_t pending_time;
-   uint32_t last_time;
+   gate<2, int32_t> motion_gt;
+   uint32_t         last_motion_time;
 };
 
 // The effective range of our controls (e.g. pots) is within 2% of the travel
@@ -326,14 +294,14 @@ struct pitch_bend_controller
       out = max(int32_t(0), min(val, int32_t(16383)));
 
       uint32_t now = millis();
-      if (continuity(gt(out), now))
+      if (activity(out, now) && gt(out))
          midi_out << midi::pitch_bend{0, uint16_t(out)};
    }
 
    dynamic_smoother<16, 128, 4> smoother;
    offset_servo<13> servo;
    gate<16, int32_t> gt;
-   pitch_continuity_filter continuity;
+   pitch_activity_filter activity;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
