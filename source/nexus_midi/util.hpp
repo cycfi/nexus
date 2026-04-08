@@ -173,7 +173,7 @@ namespace cycfi
    //        g (also Q8). Analogous to sense = sensitivity × 4 in the float
    //        version but expressed for a 10-bit signal.
    ////////////////////////////////////////////////////////////////////////////
-   template <int G0, int Sense, typename T = int32_t>
+   template <int G0, int Sense, int OutShift = 8, typename T = int32_t>
    struct dynamic_smoother
    {
       T operator()(T s)
@@ -191,13 +191,34 @@ namespace cycfi
 
          low1 = low1z + (int32_t(g) * ((s << 8) - low1z) >> 8);
          low2 = low2z + (int32_t(g) * (low1 - low2z) >> 8);
-         return low2 >> 8;
+         return low2 >> OutShift;
       }
 
       dynamic_smoother() : low1(0), low2(0) {}
 
       T low1;
       T low2;
+   };
+
+   ////////////////////////////////////////////////////////////////////////////
+   // dc_block: High-pass (DC blocking) filter. Removes slow DC offset/drift.
+   // K is the time constant in samples; use powers of 2 for efficiency
+   // (division becomes a shift). TC = K / sample_rate.
+   // E.g. K=8192 at 1 kHz → TC ≈ 8.2 s.
+   ////////////////////////////////////////////////////////////////////////////
+   template <int Shift, typename T = int32_t>
+   struct dc_block
+   {
+      // TC = 2^Shift / sample_rate. E.g. Shift=13 at 1 kHz → TC ≈ 8.2 s.
+      dc_block() : _lp(0) {}
+
+      T operator()(T s)
+      {
+         _lp += s - (_lp >> Shift);
+         return s - (_lp >> Shift);
+      }
+
+      T _lp;
    };
 
    ////////////////////////////////////////////////////////////////////////////

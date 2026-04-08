@@ -212,19 +212,21 @@ struct controller
 ///////////////////////////////////////////////////////////////////////////////
 struct pitch_bend_controller
 {
+   pitch_bend_controller() : prev(0xFFFF) {}
+
    void operator()(uint32_t val_)
    {
-      uint16_t val = smoother(val_);
-      if (val != prev)
+      int32_t val = dc(smoother(val_)) + 8192;
+      uint16_t out = uint16_t(max(int32_t(0), min(val, int32_t(16383))));
+      if (out != prev)
       {
-         prev = val;
-         midi_out << midi::pitch_bend{0, uint16_t{(val << 4) + (val % 16)}};
+         prev = out;
+         midi_out << midi::pitch_bend{0, out};
       }
    }
 
-   pitch_bend_controller() : prev(0xFFFF) {}
-
-   dynamic_smoother<16, 128> smoother;
+   dynamic_smoother<16, 128, 4> smoother;
+   dc_block<13> dc;
    uint16_t prev;
 };
 
