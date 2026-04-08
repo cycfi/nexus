@@ -262,23 +262,20 @@ struct pitch_bend_controller
    // eWhammy hardware deadband is 5% total => +/-2.5% around center
    static int32_t constexpr center_window = 16384 / 40;   // 409
 
-   // Startup center in the smoother / servo domain
-   static int32_t constexpr adc_center = center;
-   static int32_t constexpr adc_center_window = center_window;
-
    void init(uint16_t pin)
    {
       // Warm up the smoother and initialize the offset estimate.
+      // If the eWhammy is depressed at boot, fall back to nominal center
+      // rather than locking in a false offset.
       uint32_t val = analog_read(pin);
       for (int i = 0; i < 100; ++i)
          smoother(val);
 
       int32_t s = smoother(val);
-      if ((s >= (adc_center - adc_center_window))
-         && (s <= (adc_center + adc_center_window)))
+      if ((s >= (center - center_window)) && (s <= (center + center_window)))
          servo.init(s);
       else
-         servo.init(adc_center);
+         servo.init(center);
    }
 
    void operator()(uint32_t val_)
