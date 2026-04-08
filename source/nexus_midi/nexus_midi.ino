@@ -257,7 +257,7 @@ struct controller
 
    controller() : prev(0) {}
 
-   dynamic_smoother<16, 128> smoother;
+   dynamic_smoother<2, 128> smoother;
    uint8_t prev;
 };
 
@@ -304,7 +304,7 @@ struct pitch_bend_controller
          midi_out << midi::pitch_bend{0, uint16_t(out)};
    }
 
-   dynamic_smoother<16, 128, 4> smoother;
+   dynamic_smoother<2, 128, 4> smoother;
    offset_servo<13> servo;
    gate<16, int32_t> gt;
    pitch_activity_filter activity;
