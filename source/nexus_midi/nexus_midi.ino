@@ -186,6 +186,27 @@ note _note;
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
+// Crosstalk blanking
+//
+// When any analog control (volume, fx, modulation, program change) changes,
+// pitch bend output is suppressed for blank_window_ms milliseconds. This
+// prevents ADC ground-bounce on shared supply rails from appearing as
+// spurious pitch bend, without widening the pitch bend gate.
+///////////////////////////////////////////////////////////////////////////////
+uint32_t const blank_window_ms = 30;
+uint32_t control_active_time = 0;
+
+void mark_control_active()
+{
+   control_active_time = millis();
+}
+
+bool controls_active()
+{
+   return (millis() - control_active_time) < blank_window_ms;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // Generic controller handling
 ///////////////////////////////////////////////////////////////////////////////
 template <midi::cc::controller ctrl>
@@ -198,6 +219,7 @@ struct controller
       {
          prev = cc;
          midi_out << midi::control_change{0, ctrl, cc};
+         mark_control_active();
       }
    }
 
@@ -212,7 +234,7 @@ struct controller
 ///////////////////////////////////////////////////////////////////////////////
 struct pitch_bend_controller
 {
-   pitch_bend_controller() {}
+   pitch_bend_controller() : prev_out(-1) {}
 
    void init(uint16_t pin)
    {
@@ -228,13 +250,16 @@ struct pitch_bend_controller
    {
       int32_t val = dc(smoother(val_)) + 8192;
       int32_t out = max(int32_t(0), min(val, int32_t(16383)));
-      if (gt(out))
+      if (out != prev_out && !controls_active())
+      {
+         prev_out = out;
          midi_out << midi::pitch_bend{0, uint16_t(out)};
+      }
    }
 
    dynamic_smoother<16, 128, 4> smoother;
    dc_block<14> dc;
-   gate<64, int32_t> gt;
+   int32_t prev_out;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -283,6 +308,7 @@ struct program_change_controller
       if (val != curr)
       {
          curr = val;
+         mark_control_active();
          transmit();
       }
    }
