@@ -186,25 +186,67 @@ note _note;
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
-// Crosstalk blanking
+// Pitch continuity filter
 //
-// When any analog control (volume, fx, modulation, program change) changes,
-// pitch bend output is suppressed for blank_window_ms milliseconds. This
-// prevents ADC ground-bounce on shared supply rails from appearing as
-// spurious pitch bend, without widening the pitch bend gate.
+// Crosstalk from other analog controls tends to produce isolated one-off pitch
+// excursions. Real eWhammy motion is continuous over successive samples.
+//
+// We therefore require a confirming pitch event within continuity_window_ms
+// before transmitting. Once motion is established, updates continue as long as
+// pitch events keep arriving within the same window.
 ///////////////////////////////////////////////////////////////////////////////
-uint32_t const blank_window_ms = 30;
-uint32_t control_active_time = 0;
-
-void mark_control_active()
+struct pitch_continuity_filter
 {
-   control_active_time = millis();
-}
+   static uint32_t constexpr continuity_window_ms = 4;
 
-bool controls_active()
-{
-   return (millis() - control_active_time) < blank_window_ms;
-}
+   pitch_continuity_filter()
+    : pending(false)
+    , active(false)
+    , pending_time(0)
+    , last_time(0)
+   {}
+
+   bool operator()(bool changed, uint32_t now)
+   {
+      if (!changed)
+      {
+         if (active && ((now - last_time) > continuity_window_ms))
+            active = false;
+         return false;
+      }
+
+      if (active)
+      {
+         if ((now - last_time) <= continuity_window_ms)
+         {
+            last_time = now;
+            return true;
+         }
+
+         active = false;
+      }
+
+      if (pending)
+      {
+         if ((now - pending_time) <= continuity_window_ms)
+         {
+            pending = false;
+            active = true;
+            last_time = now;
+            return true;
+         }
+      }
+
+      pending = true;
+      pending_time = now;
+      return false;
+   }
+
+   bool     pending;
+   bool     active;
+   uint32_t pending_time;
+   uint32_t last_time;
+};
 
 // The effective range of our controls (e.g. pots) is within 2% of the travel
 constexpr uint16_t min_x = 1024 * 0.02;
@@ -233,7 +275,6 @@ struct controller
       {
          prev = cc;
          midi_out << midi::control_change{0, ctrl, cc};
-         mark_control_active();
       }
    }
 
@@ -253,11 +294,9 @@ struct pitch_bend_controller
    // eWhammy hardware deadband is 5% total => +/-2.5% around center
    static int32_t constexpr center_window = 16384 / 40;   // 409
 
-   // Startup center in analog_read() / smoother domain
-   static int32_t constexpr adc_center = 512;
-
-   // +/-2.5% of 1024 ~= 25
-   static int32_t constexpr adc_center_window = (1024 * 25) / 1000;
+   // Startup center in the smoother / servo domain
+   static int32_t constexpr adc_center = center;
+   static int32_t constexpr adc_center_window = center_window;
 
    void init(uint16_t pin)
    {
@@ -286,13 +325,15 @@ struct pitch_bend_controller
       val = servo(s) + center;
       out = max(int32_t(0), min(val, int32_t(16383)));
 
-      if (gt(out) && !controls_active())
+      uint32_t now = millis();
+      if (continuity(gt(out), now))
          midi_out << midi::pitch_bend{0, uint16_t(out)};
    }
 
    dynamic_smoother<16, 128, 4> smoother;
    offset_servo<13> servo;
    gate<16, int32_t> gt;
+   pitch_continuity_filter continuity;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -341,7 +382,6 @@ struct program_change_controller
       if (val != curr)
       {
          curr = val;
-         mark_control_active();
          transmit();
       }
    }
