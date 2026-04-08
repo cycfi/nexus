@@ -214,6 +214,16 @@ struct pitch_bend_controller
 {
    pitch_bend_controller() : prev(0xFFFF) {}
 
+   void init(uint16_t pin)
+   {
+      // Warm up the smoother, then pre-load the DC estimate so the
+      // filter starts converged — no warm-up drift at power-on.
+      uint32_t val = analogRead(pin);
+      for (int i = 0; i < 100; ++i)
+         smoother(val);
+      dc.init(smoother(val));
+   }
+
    void operator()(uint32_t val_)
    {
       int32_t val = dc(smoother(val_)) + 8192;
@@ -226,7 +236,7 @@ struct pitch_bend_controller
    }
 
    dynamic_smoother<16, 128, 4> smoother;
-   dc_block<13> dc;
+   dc_block<16> dc;
    uint16_t prev;
 };
 
@@ -430,6 +440,9 @@ void setup()
    pinMode(aux6, INPUT_PULLUP);
 
    midi_out.start();
+
+   // Pre-load pitch bend DC estimate from the sensor's resting position
+   pitch_bend.init(ch13);
 
    // Load the program_change and bank_select_control states from flash
    program_change.load();

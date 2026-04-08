@@ -254,25 +254,26 @@ static void test_dc_passthrough()
 // ----------------------------------------------------------------------------
 // Test 8: bipolar centering for pitch bend
 //
-// Uses dc_block<13> on a 14-bit signal (as in pitch_bend_controller).
-// After settling, dc output ≈ 0, so dc + 8192 ≈ 8192 (MIDI centre).
-// Input extremes after settling at mid-scale should stay in [0, 16383].
+// Uses dc_block<16> with init() (as in pitch_bend_controller).
+// init() pre-loads _lp so the filter starts already converged — no warmup.
+// After init at centre (8192), dc output should be 0 immediately.
+// Input extremes should stay in [0, 16383] after adding 8192.
 // ----------------------------------------------------------------------------
 static void test_dc_pitch_bend_centering()
 {
-   printf("Test 8: bipolar centering for 14-bit pitch bend\n");
+   printf("Test 8: bipolar centering for 14-bit pitch bend (with init)\n");
 
-   // Settle at mid-scale (14-bit: 8192 = centre)
-   dc_block<13> dc_mid;
-   for (int i = 0; i < 100000; ++i)
-      dc_mid(8192);
+   // init() pre-loads: output should be 0 on the very first call
+   dc_block<16> dc_mid;
+   dc_mid.init(8192);
    int32_t center_out = dc_mid(8192) + 8192;
-   printf("  dc(8192)+8192 after settling: %d  (expected ~8192)\n", (int)center_out);
+   printf("  dc(8192)+8192 after init: %d  (expected 8192)\n", (int)center_out);
    CHECK(center_out >= 8191 && center_out <= 8193);
 
-   // Transient at extremes: adding 8192 should stay in [0, 16383]
-   dc_block<13> dc_lo, dc_hi;
-   for (int i = 0; i < 100000; ++i) { dc_lo(8192); dc_hi(8192); }
+   // Transient at extremes after init at centre
+   dc_block<16> dc_lo, dc_hi;
+   dc_lo.init(8192);
+   dc_hi.init(8192);
 
    int32_t lo_out = dc_lo(0)     + 8192;
    int32_t hi_out = dc_hi(16383) + 8192;

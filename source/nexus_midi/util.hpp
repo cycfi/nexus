@@ -209,8 +209,11 @@ namespace cycfi
    template <int Shift, typename T = int32_t>
    struct dc_block
    {
-      // TC = 2^Shift / sample_rate. E.g. Shift=13 at 1 kHz → TC ≈ 8.2 s.
+      // TC = 2^Shift / sample_rate. E.g. Shift=16 at 1 kHz → TC ≈ 65.5 s.
       dc_block() : _lp(0) {}
+
+      // Pre-load the DC estimate so the filter starts converged.
+      void init(T s) { _lp = s << Shift; }
 
       T operator()(T s)
       {
