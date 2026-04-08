@@ -178,8 +178,8 @@ namespace cycfi
    {
       T operator()(T s)
       {
-         auto const low1z = low1;
-         auto const low2z = low2;
+         T const low1z = low1;
+         T const low2z = low2;
          T band = low1z - low2z;
          if (band < 0)
             band = -band;
@@ -194,8 +194,10 @@ namespace cycfi
          return low2 >> 8;
       }
 
-      T low1 = 0;
-      T low2 = 0;
+      dynamic_smoother() : low1(0), low2(0) {}
+
+      T low1;
+      T low2;
    };
 
    ////////////////////////////////////////////////////////////////////////////

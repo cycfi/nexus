@@ -201,8 +201,10 @@ struct controller
       }
    }
 
+   controller() : prev(0) {}
+
    dynamic_smoother<16, 128> smoother;
-   uint8_t prev = 0;
+   uint8_t prev;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -220,8 +222,10 @@ struct pitch_bend_controller
       }
    }
 
+   pitch_bend_controller() : prev(0xFFFF) {}
+
    dynamic_smoother<16, 128> smoother;
-   uint16_t prev = 0xFFFF;
+   uint16_t prev;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
