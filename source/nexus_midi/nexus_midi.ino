@@ -234,8 +234,6 @@ struct controller
 ///////////////////////////////////////////////////////////////////////////////
 struct pitch_bend_controller
 {
-   pitch_bend_controller() : prev_out(-1) {}
-
    void init(uint16_t pin)
    {
       // Warm up the smoother using raw analogRead (available from setup()),
