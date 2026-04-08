@@ -203,17 +203,26 @@ struct pitch_activity_filter
 
    pitch_activity_filter()
     : last_motion_time(0)
+    , active(false)
    {}
 
    bool operator()(int32_t out, uint32_t now)
    {
       if (motion_gt(out))
+      {
          last_motion_time = now;
-      return (now - last_motion_time) <= activity_window_ms;
+         active = true;
+      }
+
+      if (active && ((now - last_motion_time) > activity_window_ms))
+         active = false;
+
+      return active;
    }
 
    gate<2, int32_t> motion_gt;
    uint32_t         last_motion_time;
+   bool             active;
 };
 
 // The effective range of our controls (e.g. pots) is within 2% of the travel
