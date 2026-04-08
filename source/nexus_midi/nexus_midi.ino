@@ -234,7 +234,7 @@ struct pitch_bend_controller
 
    dynamic_smoother<16, 128, 4> smoother;
    dc_block<14> dc;
-   gate<32, int32_t> gt;
+   gate<128, int32_t> gt;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
