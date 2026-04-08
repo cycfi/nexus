@@ -191,18 +191,11 @@ note _note;
 template <midi::cc::controller ctrl>
 struct controller
 {
-   static midi::cc::controller const ctrl_lsb = midi::cc::controller(ctrl | 0x20);
-
    void operator()(uint32_t val_)
    {
       uint32_t val = lp2(lp1(val_));
       if (gt(val))
-      {
-         uint8_t const msb = val >> 3;
-         uint8_t const lsb = (val << 4) & 0x7F;
-         midi_out << midi::control_change{0, ctrl_lsb, lsb};
-         midi_out << midi::control_change{0, ctrl, msb};
-      }
+         midi_out << midi::control_change{0, ctrl, uint8_t(val >> 3)};
    }
 
    lowpass<8, int32_t> lp1;
