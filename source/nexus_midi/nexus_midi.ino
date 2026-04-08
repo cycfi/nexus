@@ -193,14 +193,16 @@ struct controller
 {
    void operator()(uint32_t val_)
    {
-      uint32_t val = lp2(lp1(val_));
-      if (gt(val))
-         midi_out << midi::control_change{0, ctrl, uint8_t(val >> 3)};
+      uint8_t cc = smoother(val_) >> 3;
+      if (cc != prev)
+      {
+         prev = cc;
+         midi_out << midi::control_change{0, ctrl, cc};
+      }
    }
 
-   lowpass<8, int32_t> lp1;
-   lowpass<16, int32_t> lp2;
-   gate<noise_window, int32_t> gt;
+   dynamic_smoother<16, 128> smoother;
+   uint8_t prev = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
