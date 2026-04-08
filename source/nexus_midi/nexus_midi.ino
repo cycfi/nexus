@@ -216,9 +216,9 @@ struct pitch_bend_controller
 
    void init(uint16_t pin)
    {
-      // Warm up the smoother, then pre-load the DC estimate so the
-      // filter starts converged — no warm-up drift at power-on.
-      uint32_t val = analogRead(pin);
+      // Warm up the smoother using the same mapped read as the main loop,
+      // then pre-load the DC estimate so the filter starts converged.
+      uint32_t val = analog_read(pin);
       for (int i = 0; i < 100; ++i)
          smoother(val);
       dc.init(smoother(val));
@@ -233,8 +233,8 @@ struct pitch_bend_controller
    }
 
    dynamic_smoother<16, 128, 4> smoother;
-   dc_block<16> dc;
-   gate<8, uint16_t> gt;
+   dc_block<14> dc;
+   gate<32, uint16_t> gt;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
