@@ -216,9 +216,9 @@ struct pitch_bend_controller
 
    void init(uint16_t pin)
    {
-      // Warm up the smoother using the same mapped read as the main loop,
+      // Warm up the smoother using raw analogRead (available from setup()),
       // then pre-load the DC estimate so the filter starts converged.
-      uint32_t val = analog_read(pin);
+      uint32_t val = analogRead(pin);
       for (int i = 0; i < 100; ++i)
          smoother(val);
       dc.init(smoother(val));
@@ -227,14 +227,14 @@ struct pitch_bend_controller
    void operator()(uint32_t val_)
    {
       int32_t val = dc(smoother(val_)) + 8192;
-      uint16_t out = uint16_t(max(int32_t(0), min(val, int32_t(16383))));
+      int32_t out = max(int32_t(0), min(val, int32_t(16383)));
       if (gt(out))
-         midi_out << midi::pitch_bend{0, out};
+         midi_out << midi::pitch_bend{0, uint16_t(out)};
    }
 
    dynamic_smoother<16, 128, 4> smoother;
    dc_block<14> dc;
-   gate<32, uint16_t> gt;
+   gate<32, int32_t> gt;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
