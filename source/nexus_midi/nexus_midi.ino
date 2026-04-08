@@ -191,23 +191,18 @@ note _note;
 template <midi::cc::controller ctrl>
 struct controller
 {
-   static midi::cc::controller const ctrl_lsb = midi::cc::controller(ctrl | 0x20);
-
    void operator()(uint32_t val_)
    {
-      uint32_t val = lp2(lp1(val_));
-      if (gt(val))
+      uint8_t cc = smoother(val_) >> 3;
+      if (cc != prev)
       {
-         uint8_t const msb = val >> 3;
-         uint8_t const lsb = (val << 4) & 0x7F;
-         midi_out << midi::control_change{0, ctrl_lsb, lsb};
-         midi_out << midi::control_change{0, ctrl, msb};
+         prev = cc;
+         midi_out << midi::control_change{0, ctrl, cc};
       }
    }
 
-   lowpass<8, int32_t> lp1;
-   lowpass<16, int32_t> lp2;
-   gate<noise_window, int32_t> gt;
+   dynamic_smoother<16, 128> smoother;
+   uint8_t prev = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
