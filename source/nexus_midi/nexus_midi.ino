@@ -224,11 +224,18 @@ struct pitch_bend_controller
 {
    void operator()(uint32_t val_)
    {
-      uint32_t val = lp2(lp1(val_));
+      uint32_t val = lp2(lp1(ma(val_)));
       if (gt(val))
          midi_out << midi::pitch_bend{0, uint16_t{(val << 4) + (val % 16)}};
    }
 
+   // Signal chain: ma → lp1 → lp2
+   //   ma:  8-sample boxcar, linear phase, sqrt(8) noise reduction,
+   //        first null at 125 Hz (fs/8 at 1 kHz).
+   //   lp1: leaky integrator k=8  → ~21 Hz at 1 kHz.
+   //   lp2: leaky integrator k=16 → ~10 Hz at 1 kHz.
+   //        Cascaded lp1+lp2 gives sub-10 Hz combined cutoff.
+   moving_average<3, int16_t> ma;
    lowpass<8, int32_t> lp1;
    lowpass<16, int32_t> lp2;
    gate<noise_window, int32_t> gt;
