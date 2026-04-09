@@ -185,58 +185,6 @@ struct note
 note _note;
 #endif
 
-///////////////////////////////////////////////////////////////////////////////
-// Pitch activity filter
-//
-// Crosstalk from other analog controls tends to produce isolated one-off pitch
-// excursions. Real eWhammy motion is continuous, even when each individual
-// sample change is small.
-//
-// Two gates serve distinct roles:
-//
-//   motion_gt  gate<2>  — motion detector. Fires on any ≥2-unit change in
-//              the corrected pitch output. gate<1> was tried but picks up
-//              1-unit offset_servo thermal drift, causing spurious activity.
-//              gate<2> filters that out while still catching real motion.
-//
-//   (main gt)  gate<6>  — MIDI transmission gate, lives in pitch_bend_controller.
-//              Only sends when the value has moved ≥6 units from the last sent
-//              value. Tuned to balance sensitivity vs. idle chatter.
-//              gate<4> was chatty; gate<8> missed small wiggles.
-//
-// activity_window_ms — how long the activity window stays open after the last
-//              motion_gt hit. 4 ms at 1 kHz = 4 samples. Long enough for
-//              the main gate to catch real motion; short enough that isolated
-//              crosstalk spikes (1–2 samples) expire before gt can fire.
-///////////////////////////////////////////////////////////////////////////////
-struct pitch_activity_filter
-{
-   static uint32_t constexpr activity_window_ms = 4;
-
-   pitch_activity_filter()
-    : last_motion_time(0)
-    , active(false)
-   {}
-
-   bool operator()(int32_t out, uint32_t now)
-   {
-      if (motion_gt(out))
-      {
-         last_motion_time = now;
-         active = true;
-      }
-
-      if (active && ((now - last_motion_time) > activity_window_ms))
-         active = false;
-
-      return active;
-   }
-
-   gate<2, int32_t> motion_gt;   // motion detector — ignores 1-unit servo drift
-   uint32_t         last_motion_time;
-   bool             active;
-};
-
 // The effective range of our controls (e.g. pots) is within 2% of the travel
 constexpr uint16_t min_x = 1024 * 0.02;
 constexpr uint16_t max_x = 1024 * 0.98;
@@ -252,33 +200,21 @@ uint16_t analog_read(uint16_t pin)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Generic controller handling
+// Generic controller handling (with course and fine controls)
 ///////////////////////////////////////////////////////////////////////////////
 template <midi::cc::controller ctrl>
 struct controller
 {
-   void init(uint16_t pin)
-   {
-      uint32_t val = analog_read(pin);
-      for (int i = 0; i < 200; ++i)
-         smoother(val);
-      prev = smoother(val) >> 3;
-   }
-
    void operator()(uint32_t val_)
    {
-      uint8_t cc = smoother(val_) >> 3;
-      if (cc != prev)
-      {
-         prev = cc;
-         midi_out << midi::control_change{0, ctrl, cc};
-      }
+      uint32_t val = lp2(lp1(val_));
+      if (gt(val))
+         midi_out << midi::control_change{0, ctrl, uint8_t(val >> 3)};
    }
 
-   controller() : prev(0) {}
-
-   dynamic_smoother<2, 128> smoother;
-   uint8_t prev;
+   lowpass<8, int32_t> lp1;
+   lowpass<16, int32_t> lp2;
+   gate<noise_window, int32_t> gt;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -286,81 +222,16 @@ struct controller
 ///////////////////////////////////////////////////////////////////////////////
 struct pitch_bend_controller
 {
-   static int32_t constexpr center = 8192;
-
-   // eWhammy hardware deadband is 5% total => +/-2.5% around center
-   static int32_t constexpr center_window = 16384 / 40;   // 409
-
-   void init(uint16_t pin)
-   {
-      // Wait for the Hall effect sensor and ADC reference to stabilize
-      // after power-up before taking any readings.
-      delay(100);
-
-      // Warm up the smoother with real ADC reads, bypassing the MA so its
-      // zero-filled buffer does not bias the smoother's initial state.
-      // 200 reads at 1 ms spacing = 200 ms; the smoother converges to the
-      // true ADC average over this window.
-      uint32_t val = 0;
-      for (int i = 0; i < 200; ++i)
-      {
-         val = analog_read(pin);
-         smoother(val);
-         delay(1);
-      }
-
-      // Pre-fill the MA buffer with the last converged ADC value so there
-      // is no transient when the main loop starts using ma().
-      ma.init(val);
-
-      // If the eWhammy is depressed at boot, fall back to nominal center
-      // rather than locking in a false offset.
-      int32_t s = smoother(val);
-      if ((s >= (center - center_window)) && (s <= (center + center_window)))
-         servo.init(s);
-      else
-         servo.init(center);
-   }
-
    void operator()(uint32_t val_)
    {
-      int32_t s = smoother(ma(val_));
-      int32_t val = servo(s) + center;
-      int32_t out = max(int32_t(0), min(val, int32_t(16383)));
-
-      if ((out >= (center - center_window)) && (out <= (center + center_window)))
-         servo.update(s);
-
-      val = servo(s) + center;
-      out = max(int32_t(0), min(val, int32_t(16383)));
-
-      uint32_t now = millis();
-      if (activity(out, now) && gt(out))
-         midi_out << midi::pitch_bend{0, uint16_t(out)};
+      uint32_t val = lp2(lp1(val_));
+      if (gt(val))
+         midi_out << midi::pitch_bend{0, uint16_t{(val << 4) + (val % 16)}};
    }
 
-   // 4-sample moving average before the smoother. Reduces broadband ADC
-   // noise by sqrt(4)=2x at the cost of 2ms latency. int16_t saves RAM:
-   // 10-bit values (0-1023) and their 4-sample sum (max 4092) fit in int16_t.
-   moving_average<3, int16_t> ma;
-
-   // G0=2  → ~2 Hz base cutoff (very stable at rest)
-   // Sense=192 → adaptive term opens filter for motion above the noise floor
-   // OutShift=4 → 14-bit output from 10-bit ADC (Q8 sub-integer precision)
-   dynamic_smoother<2, 192, 4> smoother;
-
-   // Tracks and removes slow Hall effect sensor offset drift, but only
-   // updates within the hardware deadband (center ± center_window) so
-   // sustained bends are never absorbed as offset.
-   // Shift=13 → TC ≈ 8 s at 1 kHz. The moving_average reduces the noise
-   // floor enough to allow a faster TC without reintroducing chatter.
-   offset_servo<13> servo;
-
-   // MIDI transmission gate. Tuned to gate<6> after hardware testing:
-   // gate<4> → chatty; gate<8> → missed small wiggles (~3 Hz).
-   gate<6, int32_t> gt;
-
-   pitch_activity_filter activity;
+   lowpass<8, int32_t> lp1;
+   lowpass<16, int32_t> lp2;
+   gate<noise_window, int32_t> gt;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -563,19 +434,6 @@ void setup()
    pinMode(aux6, INPUT_PULLUP);
 
    midi_out.start();
-
-   // Pre-warm CC controller smoothers so they start at the current ADC
-   // values instead of 0. Without this, all four controllers converge
-   // from 0 → actual over the first ~300 ms of loop(), causing sustained
-   // ADC ground-bounce / crosstalk that the pitch bend activity filter
-   // misreads as real eWhammy motion.
-   volume_control.init(ch10);
-   fx1_control.init(ch11);
-   fx2_control.init(ch12);
-   modulation_control.init(ch15);
-
-   // Initialize pitch bend offset handling.
-   pitch_bend.init(ch13);
 
    // Load the program_change and bank_select_control states from flash
    program_change.load();
