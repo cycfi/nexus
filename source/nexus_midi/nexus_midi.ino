@@ -222,11 +222,54 @@ struct controller
 ///////////////////////////////////////////////////////////////////////////////
 struct pitch_bend_controller
 {
+   // MIDI pitch bend: 14-bit offset binary, center = 8192.
+   static int32_t constexpr center = 8192;
+
+   // Hardware deadband: eWhammy ±2.5% around center.
+   // Servo only updates within this window so sustained bends
+   // are never absorbed as drift.
+   static int32_t constexpr center_window = 16384 / 40;  // 409
+
+   void init(uint16_t pin)
+   {
+      // Wait for Hall effect sensor and ADC reference to stabilize.
+      delay(100);
+
+      // Warm up all filters with real ADC reads so loop() starts
+      // fully converged. 200 ms at 1 ms spacing is enough for the
+      // leaky integrators to settle to the true ADC average.
+      int32_t val = 0;
+      for (int i = 0; i < 200; ++i)
+      {
+         val = lp2(lp1(ma(analog_read(pin))));
+         delay(1);
+      }
+
+      // Seed the servo from the converged 14-bit reading.
+      servo.init((val << 4) + (val % 16));
+   }
+
    void operator()(uint32_t val_)
    {
-      uint32_t val = lp2(lp1(ma(val_)));
-      if (gt(val))
-         midi_out << midi::pitch_bend{0, uint16_t{(val << 4) + (val % 16)}};
+      // Signal chain: ma → lp1 → lp2 (10-bit output)
+      int32_t val = lp2(lp1(ma(val_)));
+
+      // Expand 10-bit → 14-bit (bit-replicate LSBs for full range)
+      int32_t s = (val << 4) + (val % 16);
+
+      // Apply drift compensation: servo removes slow DC offset so the
+      // output stays centered at 8192 regardless of sensor drift.
+      int32_t out = servo(s) + center;
+      out = max(int32_t(0), min(out, int32_t(16383)));
+
+      // Update servo estimate only within the hardware deadband.
+      if (out >= (center - center_window) && out <= (center + center_window))
+         servo.update(s);
+
+      // Gate on the 14-bit output. noise_window is defined in 10-bit
+      // units; multiply by 16 to get the equivalent 14-bit threshold.
+      if (gt(out))
+         midi_out << midi::pitch_bend{0, uint16_t(out)};
    }
 
    // Signal chain: ma → lp1 → lp2
@@ -238,7 +281,14 @@ struct pitch_bend_controller
    moving_average<3, int16_t> ma;
    lowpass<8, int32_t> lp1;
    lowpass<16, int32_t> lp2;
-   gate<noise_window, int32_t> gt;
+
+   // Drift compensation: tracks slow Hall effect sensor offset (temperature,
+   // age). Shift=13 → TC ≈ 8 s at 1 kHz. Only updates within deadband.
+   offset_servo<13> servo;
+
+   // Gate on 14-bit out. noise_window*16 scales the 10-bit threshold
+   // to 14-bit space (1 ADC count = 16 in 14-bit).
+   gate<noise_window * 16, int32_t> gt;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -441,6 +491,8 @@ void setup()
    pinMode(aux6, INPUT_PULLUP);
 
    midi_out.start();
+
+   pitch_bend.init(ch13);
 
    // Load the program_change and bank_select_control states from flash
    program_change.load();
