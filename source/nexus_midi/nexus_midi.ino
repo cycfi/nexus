@@ -284,12 +284,12 @@ struct pitch_bend_controller
    }
 
    // Signal chain: ma → lp1 → lp2
-   //   ma:  8-sample boxcar, linear phase, sqrt(8) noise reduction,
-   //        first null at 125 Hz (fs/8 at 1 kHz).
+   //   ma:  16-sample boxcar, linear phase, sqrt(16)=4x noise reduction,
+   //        first null at 62.5 Hz (fs/16 at 1 kHz), 8ms latency.
    //   lp1: leaky integrator k=8  → ~21 Hz at 1 kHz.
    //   lp2: leaky integrator k=16 → ~10 Hz at 1 kHz.
    //        Cascaded lp1+lp2 gives sub-10 Hz combined cutoff.
-   moving_average<3, int16_t> ma;
+   moving_average<4, int16_t> ma;
    lowpass<8, int32_t> lp1;
    lowpass<16, int32_t> lp2;
 
@@ -297,9 +297,9 @@ struct pitch_bend_controller
    // age). Shift=13 → TC ≈ 8 s at 1 kHz. Only updates within deadband.
    offset_servo<13> servo;
 
-   // Gate on 14-bit out. noise_window*16 scales the 10-bit threshold
-   // to 14-bit space (1 ADC count = 16 in 14-bit).
-   gate<noise_window * 16, int32_t> gt;
+   // Gate on 14-bit out. 48 = 3 ADC counts; noise floor is ~34 units
+   // so this silences idle chatter without affecting real bends.
+   gate<48, int32_t> gt;
 
    // CC blanking window. Pitch bend is suppressed for this many ms
    // after the last CC message. 80 ms covers the observed crosstalk
