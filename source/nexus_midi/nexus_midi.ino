@@ -7,6 +7,18 @@
 #include "util.hpp"
 #include "MspFlash.h"
 
+// Drive MIDI TX (P1.2) HIGH as early as possible — before global constructors
+// and before setup(). The internal pull-up (~50kΩ) is too weak to overcome
+// the MIDI output circuit (220Ω + LED), so we actively drive the pin HIGH as
+// an output. Serial.begin() in midi_out.start() will reconfigure P1.2 as
+// UART TX; while in UART reset (UCSWRST=1, the default at power-on), the
+// UART peripheral holds TX HIGH, so the transition is glitch-free.
+void __attribute__((naked, section(".init3"), used)) _midi_tx_drive_high()
+{
+   P1DIR |= BIT2;   // set P1.2 as output
+   P1OUT |= BIT2;   // drive P1.2 HIGH (MIDI mark = idle)
+}
+
 //#define NEXUS_TEST
 //#define NEXUS_TEST_NOTE
 //#define NEXUS_TEST_VOLUME
@@ -531,6 +543,9 @@ bank_select_controller                 bank_select_control;
 ///////////////////////////////////////////////////////////////////////////////
 void setup()
 {
+   midi_out.start();
+   midi_out << uint8_t(0xFF);
+
    pinMode(ch9 , INPUT_PULLUP);
    pinMode(ch10, INPUT);
    pinMode(ch11, INPUT);
@@ -545,8 +560,6 @@ void setup()
    pinMode(aux4, INPUT_PULLUP);
    pinMode(aux5, INPUT_PULLUP);
    pinMode(aux6, INPUT_PULLUP);
-
-   midi_out.start();
 
    // Prime controller filters from the live hardware state so the first loop
    // iteration does not ramp from zero.
