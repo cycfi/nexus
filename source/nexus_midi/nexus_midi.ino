@@ -276,8 +276,12 @@ struct pitch_bend_controller
          delay(1);
       }
 
-      // Seed the servo from the converged 14-bit reading.
-      servo.init((val << 4) + (val % 16));
+      // Seed servo and gates from the converged 14-bit reading.
+      int32_t s = (val << 4) + (val % 16);
+      servo.init(s);
+      int32_t out = servo(s) + center;
+      gt_idle(out);
+      gt_active(out);
    }
 
    void operator()(uint32_t val_)
@@ -297,13 +301,26 @@ struct pitch_bend_controller
       if (out >= (center - center_window) && out <= (center + center_window))
          servo.update(s);
 
-      // Gate on the 14-bit output. noise_window is defined in 10-bit
-      // units; multiply by 16 to get the equivalent 14-bit threshold.
-      // Blank pitch bend while any CC is active: CC ground bounce causes
-      // crosstalk on the pitch channel. cc_blank_ms holds the window
-      // open after the last CC message to cover the tail of the bounce.
+      // Hysteresis gate: high threshold (gate_idle) to start motion,
+      // low threshold (gate_active) to continue once moving.
+      // Idle noise never reaches gate_idle; real bends do, then small
+      // follow-through movements near center pass at gate_active.
+      // Active state expires after active_timeout_ms of no gate hits.
       uint32_t now = millis();
-      if (gt(out) && ((now - last_cc_time) >= cc_blank_ms))
+      bool hit = _moving ? gt_active(out) : gt_idle(out);
+      if (hit)
+      {
+         _last_hit = now;
+         _moving = true;
+      }
+      else if (_moving && ((now - _last_hit) > active_timeout_ms))
+      {
+         _moving = false;
+         gt_idle(out);    // re-seed idle gate at current position
+      }
+
+      // Blank pitch bend while any CC is active.
+      if (hit && ((now - last_cc_time) >= cc_blank_ms))
          midi_out << midi::pitch_bend{0, uint16_t(out)};
    }
 
@@ -321,8 +338,17 @@ struct pitch_bend_controller
    // age). Shift=13 → TC ≈ 8 s at 1 kHz. Only updates within deadband.
    offset_servo<13> servo;
 
-   // Gate on 14-bit out. 48 = 3 ADC counts; noise floor is ~34 units.
-   gate<48, int32_t> gt;
+   // Hysteresis gate: idle threshold silences noise, active threshold
+   // allows small movements once a real bend has been detected.
+   static int32_t constexpr gate_idle    = 40;
+   static int32_t constexpr gate_active  = 24;
+   static uint32_t constexpr active_timeout_ms = 200;
+   gate<gate_idle, int32_t>   gt_idle;
+   gate<gate_active, int32_t> gt_active;
+   uint32_t _last_hit;
+   bool     _moving;
+
+   pitch_bend_controller() : _last_hit(0), _moving(false) {}
 
    // CC blanking window. Pitch bend is suppressed for this many ms
    // after the last CC message. 80 ms covers the observed crosstalk
