@@ -199,24 +199,8 @@ uint16_t analog_read(uint16_t pin)
    return map(x, min_x, max_x, 0, 1023);
 }
 
-// Oversampled read for pitch bend. 16x oversampling improves ENOB by
-// 2 bits (√16=4x noise reduction). MSP430 ADC ~200 kHz so 16 reads
-// ≈ 80 µs, fits within the 1 ms loop tick.
-uint16_t analog_read_ex(uint16_t pin)
-{
-   uint16_t sum = 0;
-   for (int i = 0; i < 16; ++i)
-      sum += analogRead(pin);
-   uint16_t x = sum >> 4;
-   if (x < min_x)
-      x = min_x;
-   else if (x > max_x)
-      x = max_x;
-   return map(x, min_x, max_x, 0, 1023);
-}
-
 // Timestamp of the last CC message sent. Used by pitch_bend_controller
-// to blank crosstalk near center when a CC control is active.
+// to suppress pitch bend briefly after CC activity to avoid crosstalk.
 uint32_t last_cc_time = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -226,6 +210,13 @@ template <midi::cc::controller ctrl>
 struct controller
 {
    controller() : prev(0xff) {}
+
+   void init(uint32_t val)
+   {
+      lp1.y = val * 8;
+      lp2.y = val * 16;
+      prev = uint8_t(val >> 3);
+   }
 
    void operator()(uint32_t val_)
    {
@@ -272,7 +263,7 @@ struct pitch_bend_controller
       int32_t val = 0;
       for (int i = 0; i < 200; ++i)
       {
-         val = lp2(lp1(ma(analog_read_ex(pin))));
+         val = lp2(lp1(ma(analog_read(pin))));
          delay(1);
       }
 
@@ -557,7 +548,13 @@ void setup()
 
    midi_out.start();
 
+   // Prime controller filters from the live hardware state so the first loop
+   // iteration does not ramp from zero.
+   volume_control.init(analog_read(ch10));
+   fx1_control.init(analog_read(ch11));
+   fx2_control.init(analog_read(ch12));
    pitch_bend.init(ch13);
+   modulation_control.init(analog_read(ch15));
 
    // Load the program_change and bank_select_control states from flash
    program_change.load();
@@ -660,7 +657,7 @@ void loop()
       volume_control(analog_read(ch10));
       fx1_control(analog_read(ch11));
       fx2_control(analog_read(ch12));
-      pitch_bend(analog_read_ex(ch13));
+      pitch_bend(analog_read(ch13));
       program_change(analog_read(ch14));
       modulation_control(analog_read(ch15));
 
