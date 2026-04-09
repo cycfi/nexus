@@ -269,13 +269,13 @@ struct pitch_bend_controller
       // Wait for Hall effect sensor and ADC reference to stabilize.
       delay(100);
 
-      // Warm up all filters with real ADC reads so loop() starts
+      // Warm up both lowpass filters with real ADC reads so loop() starts
       // fully converged. 200 ms at 1 ms spacing is enough for the
       // leaky integrators to settle to the true ADC average.
       int32_t val = 0;
       for (int i = 0; i < 200; ++i)
       {
-         val = lp2(lp1(ma(analog_read(pin))));
+         val = lp2(lp1(analog_read(pin)));
          delay(1);
       }
 
@@ -290,7 +290,7 @@ struct pitch_bend_controller
    void operator()(uint32_t val_)
    {
       // Signal chain: ma → lp1 → lp2 (10-bit output)
-      int32_t val = lp2(lp1(ma(val_)));
+      int32_t val = lp2(lp1(val_));
 
       // Expand 10-bit → 14-bit (bit-replicate LSBs for full range)
       int32_t s = (val << 4) + (val % 16);
@@ -327,13 +327,10 @@ struct pitch_bend_controller
          midi_out << midi::pitch_bend{0, uint16_t(out)};
    }
 
-   // Signal chain: ma → lp1 → lp2
-   //   ma:  16-sample boxcar, linear phase, sqrt(16)=4x noise reduction,
-   //        first null at 62.5 Hz (fs/16 at 1 kHz), 8ms latency.
+   // Signal chain: lp1 → lp2
    //   lp1: leaky integrator k=8  → ~21 Hz at 1 kHz.
    //   lp2: leaky integrator k=16 → ~10 Hz at 1 kHz.
    //        Cascaded lp1+lp2 gives sub-10 Hz combined cutoff.
-   moving_average<4, int16_t> ma;
    lowpass<8, int32_t> lp1;
    lowpass<16, int32_t> lp2;
 
