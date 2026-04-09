@@ -258,6 +258,46 @@ namespace cycfi
    };
 
    ////////////////////////////////////////////////////////////////////////////
+   // moving_average: Simple boxcar FIR filter. Optimal for reducing white
+   // (broadband) noise. N = 2^Shift samples. Noise is reduced by sqrt(N)
+   // and latency is N/2 samples. Use a small T (e.g. int16_t) to save RAM
+   // when the signal range fits — 10-bit ADC (0–1023) fits in int16_t and
+   // the sum of up to 32 samples (32×1023=32736) also fits in int16_t.
+   ////////////////////////////////////////////////////////////////////////////
+   template <int Shift, typename T = int32_t>
+   struct moving_average
+   {
+      static int constexpr size = 1 << Shift;
+
+      moving_average() : _sum(0), _index(0)
+      {
+         for (int i = 0; i < size; ++i)
+            _buf[i] = 0;
+      }
+
+      void init(T s)
+      {
+         for (int i = 0; i < size; ++i)
+            _buf[i] = s;
+         _sum = s * size;
+         _index = 0;
+      }
+
+      T operator()(T s)
+      {
+         _sum -= _buf[_index];
+         _buf[_index] = s;
+         _sum += s;
+         _index = (_index + 1) & (size - 1);
+         return _sum >> Shift;
+      }
+
+      T   _buf[size];
+      T   _sum;
+      int _index;
+   };
+
+   ////////////////////////////////////////////////////////////////////////////
    // Noise gate. Returns true if the signal, s, is above or below the given
    // window. For example, if window is 5, the previous signal is 20 and the
    // current signal, s, is within 15 to 25, the function returns false,
