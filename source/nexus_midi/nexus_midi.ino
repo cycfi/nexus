@@ -199,6 +199,22 @@ uint16_t analog_read(uint16_t pin)
    return map(x, min_x, max_x, 0, 1023);
 }
 
+// Oversampled read for pitch bend. 16x oversampling improves ENOB by
+// 2 bits (√16=4x noise reduction). MSP430 ADC ~200 kHz so 16 reads
+// ≈ 80 µs, fits within the 1 ms loop tick.
+uint16_t analog_read_ex(uint16_t pin)
+{
+   uint16_t sum = 0;
+   for (int i = 0; i < 16; ++i)
+      sum += analogRead(pin);
+   uint16_t x = sum >> 4;
+   if (x < min_x)
+      x = min_x;
+   else if (x > max_x)
+      x = max_x;
+   return map(x, min_x, max_x, 0, 1023);
+}
+
 // Timestamp of the last CC message sent. Used by pitch_bend_controller
 // to blank crosstalk near center when a CC control is active.
 uint32_t last_cc_time = 0;
@@ -256,7 +272,7 @@ struct pitch_bend_controller
       int32_t val = 0;
       for (int i = 0; i < 200; ++i)
       {
-         val = lp2(lp1(ma(analog_read(pin))));
+         val = lp2(lp1(ma(analog_read_ex(pin))));
          delay(1);
       }
 
@@ -305,8 +321,7 @@ struct pitch_bend_controller
    // age). Shift=13 → TC ≈ 8 s at 1 kHz. Only updates within deadband.
    offset_servo<13> servo;
 
-   // Gate on 14-bit out. 48 = 3 ADC counts; noise floor is ~34 units
-   // so this silences idle chatter without affecting real bends.
+   // Gate on 14-bit out. 48 = 3 ADC counts; noise floor is ~34 units.
    gate<48, int32_t> gt;
 
    // CC blanking window. Pitch bend is suppressed for this many ms
@@ -619,7 +634,7 @@ void loop()
       volume_control(analog_read(ch10));
       fx1_control(analog_read(ch11));
       fx2_control(analog_read(ch12));
-      pitch_bend(analog_read(ch13));
+      pitch_bend(analog_read_ex(ch13));
       program_change(analog_read(ch14));
       modulation_control(analog_read(ch15));
 
