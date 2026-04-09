@@ -209,19 +209,27 @@ uint32_t last_cc_time = 0;
 template <midi::cc::controller ctrl>
 struct controller
 {
+   controller() : prev(0xff) {}
+
    void operator()(uint32_t val_)
    {
       uint32_t val = lp2(lp1(val_));
       if (gt(val))
       {
-         last_cc_time = millis();
-         midi_out << midi::control_change{0, ctrl, uint8_t(val >> 3)};
+         uint8_t cc = uint8_t(val >> 3);
+         if (cc != prev)
+         {
+            prev = cc;
+            last_cc_time = millis();
+            midi_out << midi::control_change{0, ctrl, cc};
+         }
       }
    }
 
    lowpass<8, int32_t> lp1;
    lowpass<16, int32_t> lp2;
    gate<noise_window, int32_t> gt;
+   uint8_t prev;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
