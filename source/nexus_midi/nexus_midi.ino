@@ -257,6 +257,14 @@ uint16_t analog_read(uint16_t pin)
 template <midi::cc::controller ctrl>
 struct controller
 {
+   void init(uint16_t pin)
+   {
+      uint32_t val = analog_read(pin);
+      for (int i = 0; i < 200; ++i)
+         smoother(val);
+      prev = smoother(val) >> 3;
+   }
+
    void operator()(uint32_t val_)
    {
       uint8_t cc = smoother(val_) >> 3;
@@ -555,6 +563,16 @@ void setup()
    pinMode(aux6, INPUT_PULLUP);
 
    midi_out.start();
+
+   // Pre-warm CC controller smoothers so they start at the current ADC
+   // values instead of 0. Without this, all four controllers converge
+   // from 0 → actual over the first ~300 ms of loop(), causing sustained
+   // ADC ground-bounce / crosstalk that the pitch bend activity filter
+   // misreads as real eWhammy motion.
+   volume_control.init(ch10);
+   fx1_control.init(ch11);
+   fx2_control.init(ch12);
+   modulation_control.init(ch15);
 
    // Initialize pitch bend offset handling.
    pitch_bend.init(ch13);
