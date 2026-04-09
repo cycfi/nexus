@@ -199,6 +199,10 @@ uint16_t analog_read(uint16_t pin)
    return map(x, min_x, max_x, 0, 1023);
 }
 
+// Timestamp of the last CC message sent. Used by pitch_bend_controller
+// to blank crosstalk near center when a CC control is active.
+uint32_t last_cc_time = 0;
+
 ///////////////////////////////////////////////////////////////////////////////
 // Generic controller handling (with course and fine controls)
 ///////////////////////////////////////////////////////////////////////////////
@@ -209,7 +213,10 @@ struct controller
    {
       uint32_t val = lp2(lp1(val_));
       if (gt(val))
+      {
+         last_cc_time = millis();
          midi_out << midi::control_change{0, ctrl, uint8_t(val >> 3)};
+      }
    }
 
    lowpass<8, int32_t> lp1;
@@ -268,7 +275,11 @@ struct pitch_bend_controller
 
       // Gate on the 14-bit output. noise_window is defined in 10-bit
       // units; multiply by 16 to get the equivalent 14-bit threshold.
-      if (gt(out))
+      // Blank pitch bend while any CC is active: CC ground bounce causes
+      // crosstalk on the pitch channel. cc_blank_ms holds the window
+      // open after the last CC message to cover the tail of the bounce.
+      uint32_t now = millis();
+      if (gt(out) && ((now - last_cc_time) >= cc_blank_ms))
          midi_out << midi::pitch_bend{0, uint16_t(out)};
    }
 
@@ -289,6 +300,11 @@ struct pitch_bend_controller
    // Gate on 14-bit out. noise_window*16 scales the 10-bit threshold
    // to 14-bit space (1 ADC count = 16 in 14-bit).
    gate<noise_window * 16, int32_t> gt;
+
+   // CC blanking window. Pitch bend is suppressed for this many ms
+   // after the last CC message. 80 ms covers the observed crosstalk
+   // tail from a fast CC sweep.
+   static uint32_t constexpr cc_blank_ms = 80;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
