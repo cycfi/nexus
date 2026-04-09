@@ -19,20 +19,6 @@ void __attribute__((naked, section(".init3"), used)) _midi_tx_drive_high()
    P1OUT |= BIT2;   // drive P1.2 HIGH (MIDI mark = idle)
 }
 
-//#define NEXUS_TEST
-//#define NEXUS_TEST_NOTE
-//#define NEXUS_TEST_VOLUME
-//#define NEXUS_TEST_PITCH_BEND
-//#define NEXUS_TEST_PROGRAM_CHANGE
-//#define NEXUS_TEST_PROGRAM_CHANGE_UP_DOWN
-//#define NEXUS_TEST_PROGRAM_CHANGE_GROUP_UP_DOWN
-//#define NEXUS_TEST_EFFECTS_1
-//#define NEXUS_TEST_EFFECTS_2
-//#define NEXUS_TEST_MODULATION
-//#define NEXUS_TEST_SUSTAIN
-//#define NEXUS_TEST_BANK_SELECT
-//#define NEXUS_DUMP_FLASH
-
 using namespace cycfi;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -77,11 +63,7 @@ int const aux4 = P2_4; //digital
 int const aux5 = P2_5; //digital
 int const aux6 = P2_6; //digital
 
-#ifdef NEXUS_TEST
-int const noise_window = 4;
-#else
 int const noise_window = 2;
-#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // The main MIDI out stream
@@ -176,26 +158,6 @@ void reset_save_delay()
    save_delay_start_time = millis();
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Play notes (for testing only)
-///////////////////////////////////////////////////////////////////////////////
-#ifdef NEXUS_TEST
-struct note
-{
-   void operator()(bool sw)
-   {
-      int state = edge(sw);
-      if (state == 1)
-         midi_out << midi::note_on{0, 80, 127};
-      else if (state == -1)
-         midi_out << midi::note_off{0, 80, 127};
-   }
-
-   edge_detector<> edge;
-};
-
-note _note;
-#endif
 
 // The effective range of our controls (e.g. pots) is within 2% of the travel
 constexpr uint16_t min_x = 1024 * 0.02;
@@ -264,6 +226,11 @@ struct pitch_bend_controller
    // are never absorbed as drift.
    static int32_t constexpr center_window = 16384 / 40;  // 409
 
+   // CC blanking window. Pitch bend is suppressed for this many ms
+   // after the last CC message. 80 ms covers the observed crosstalk
+   // tail from a fast CC sweep.
+   static uint32_t constexpr cc_blank_ms = 80;
+
    void init(uint16_t pin)
    {
       // Wait for Hall effect sensor and ADC reference to stabilize.
@@ -325,11 +292,6 @@ struct pitch_bend_controller
 
    // Simple gate threshold.
    gate<40, int32_t> gt;
-
-   // CC blanking window. Pitch bend is suppressed for this many ms
-   // after the last CC message. 80 ms covers the observed crosstalk
-   // tail from a fast CC sweep.
-   static uint32_t constexpr cc_blank_ms = 80;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -550,86 +512,7 @@ void setup()
    program_change.transmit();
    bank_select_control.transmit();
 
-#ifdef NEXUS_DUMP_FLASH
-   unsigned char* seg_b = SEGMENT_B;
-   midi_out << midi::sysex<16> {0x5555, seg_b};
-   midi_out << midi::sysex<16> {0x5555, seg_b + 16};
-   midi_out << midi::sysex<16> {0x5555, seg_b + 32};
-   midi_out << midi::sysex<16> {0x5555, seg_b + 48};
-
-   unsigned char* seg_c = SEGMENT_C;
-   midi_out << midi::sysex<16> {0x5555, seg_c};
-   midi_out << midi::sysex<16> {0x5555, seg_c + 16};
-   midi_out << midi::sysex<16> {0x5555, seg_c + 32};
-   midi_out << midi::sysex<16> {0x5555, seg_c + 48};
-#endif
 }
-
-///////////////////////////////////////////////////////////////////////////////
-// loop
-///////////////////////////////////////////////////////////////////////////////
-
-#ifdef NEXUS_TEST
-void loop()
-{
-#ifdef NEXUS_TEST_NOTE
-   _note(digitalRead(aux1));
-#endif
-
-#ifdef NEXUS_TEST_VOLUME
-   volume_control(analog_read(ch10));
-#endif
-
-#ifdef NEXUS_TEST_PITCH_BEND
-   pitch_bend(analog_read(ch10));
-#endif
-
-#ifdef NEXUS_TEST_PROGRAM_CHANGE
-   program_change(analog_read(ch15));
-#endif
-
-#ifdef NEXUS_TEST_PROGRAM_CHANGE_UP_DOWN
-   program_change.up(digitalRead(ch12));
-   program_change.down(digitalRead(ch13));
-#endif
-
-#ifdef NEXUS_TEST_PROGRAM_CHANGE_GROUP_UP_DOWN
-   program_change.group_up(digitalRead(ch12));
-   program_change.group_down(digitalRead(ch13));
-#endif
-
-#ifdef NEXUS_TEST_EFFECTS_1
-   fx1_control(analog_read(ch11));
-#endif
-
-#ifdef NEXUS_TEST_EFFECTS_2
-   fx2_control(analog_read(ch11));
-#endif
-
-#ifdef NEXUS_TEST_MODULATION
-   modulation_control(analog_read(ch11));
-#endif
-
-#ifdef NEXUS_TEST_SUSTAIN
-   sustain_control(digitalRead(ch12));
-#endif
-
-#ifdef NEXUS_TEST_BANK_SELECT
-   bank_select_control.up(digitalRead(aux1));
-   bank_select_control.down(digitalRead(aux2));
-#endif
-
-   // Save the program_change and bank_select_control if needed
-   if ((save_delay_start_time != -1)
-      && (millis() > (save_delay_start_time + save_delay)))
-   {
-      program_change.save();
-      bank_select_control.save();
-      save_delay_start_time = -1;
-   }
-}
-
-#else // !NEXUS_TEST
 
 uint32_t prev_time = 0;
 
@@ -666,5 +549,3 @@ void loop()
       save_delay_start_time = -1;
    }
 }
-
-#endif // NEXUS_TEST
