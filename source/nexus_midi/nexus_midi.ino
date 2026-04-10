@@ -63,8 +63,6 @@ int const aux4 = P2_4; //digital
 int const aux5 = P2_5; //digital
 int const aux6 = P2_6; //digital
 
-constexpr int noise_window = 2;  // CC gate window (10-bit)
-
 ///////////////////////////////////////////////////////////////////////////////
 // The main MIDI out stream
 ///////////////////////////////////////////////////////////////////////////////
@@ -159,7 +157,8 @@ void reset_save_delay()
 }
 
 
-// The effective range of our controls (e.g. pots) is within 2% of the travel
+// Pots don't travel to the physical ends of their range; clamp to the
+// effective 2%–98% travel window and remap to the full 0–1023 range.
 constexpr uint16_t min_x = 1024 * 0.02;
 constexpr uint16_t max_x = 1024 * 0.98;
 
@@ -184,7 +183,11 @@ uint32_t last_cc_time = 0;
 template <midi::cc::controller ctrl>
 struct controller
 {
-   controller() : prev(0xff), prev_raw(0), gt(noise_window) {}
+   // Minimum ADC change required before a CC is transmitted.
+   // Filters out noise and small jitter on the 10-bit ADC signal.
+   static constexpr int cc_threshold = 2;
+
+   controller() : prev(0xff), prev_raw(0), gt(cc_threshold) {}
 
    void init(uint32_t val)
    {
@@ -237,7 +240,11 @@ struct pitch_bend_controller
 
    // CC idle time before gate returns to normal threshold.
    static constexpr uint32_t cc_idle_ms = 80;
+
+   // Maximum per-sample change in servo offset (14-bit units) that still
+   // counts as "settled".  At 1 kHz, 1 unit/sample = 1000 units/s drift.
    static constexpr int32_t settle_delta = 1;
+
    // Startup settle window must be tighter than the normal PB gate threshold.
    // Otherwise startup blanking can end while the bend is still hovering near
    // the gate edge, which then causes repeated gate open/close chatter.
@@ -247,18 +254,11 @@ struct pitch_bend_controller
 
    pitch_bend_controller()
     : prev_out(center)
-    , pb_out(0)
     , prev_offset(0)
     , settle_count(0)
     , startup_blank(true)
     , gt(threshold)
    {}
-
-   struct sample
-   {
-      int32_t s;
-      int32_t out;
-   };
 
    void init(uint16_t pin)
    {
@@ -288,10 +288,7 @@ struct pitch_bend_controller
          delay(1);
       }
 
-      int32_t out = servo(s_last) + center;
-      out = max(int32_t(0), min(out, int32_t(16383)));
       prev_out = center;
-      pb_out = 0;
       pb_out_ma.init(0);
       prev_offset = servo.offset();
       settle_count = 0;
@@ -300,32 +297,35 @@ struct pitch_bend_controller
 
    void operator()(uint32_t val_)
    {
-      sample x = process_signal(val_);
-      update_servo(x.s, x.out);
+      int32_t s, out;
+      process_signal(val_, s, out);
+      update_servo(s, out);
 
       int32_t delta = update_offset_delta();
-      int32_t abs_bend_offset = abs_value(x.out - center);
+      int32_t abs_bend_offset = out > center ? out - center : center - out;
 
       if (handle_startup_blank(delta, abs_bend_offset))
          return;
 
-      update_dynamic_threshold();
-      send_pitch_bend(x.out);
+      // Dynamic threshold: wider during CC activity to suppress crosstalk.
+      gt.threshold = ((millis() - last_cc_time) < cc_idle_ms)
+         ? threshold_high : threshold;
+
+      send_pitch_bend(out);
    }
 
-   sample process_signal(uint32_t val_)
+   void process_signal(uint32_t val_, int32_t& s, int32_t& out)
    {
       // Signal chain: ma → lp1 → lp2 (10-bit output)
       int32_t val = lp2(lp1(ma(val_)));
 
       // Expand 10-bit → 14-bit (bit-replicate LSBs for full range)
-      int32_t s = (val << 4) + (val % 16);
+      s = (val << 4) + (val % 16);
 
       // Apply drift compensation: servo removes slow DC offset so the
       // output stays centered at 8192 regardless of sensor drift.
-      int32_t out = servo(s) + center;
+      out = servo(s) + center;
       out = max(int32_t(0), min(out, int32_t(16383)));
-      return {s, out};
    }
 
    void update_servo(int32_t s, int32_t out)
@@ -403,18 +403,11 @@ struct pitch_bend_controller
       return false;
    }
 
-   void update_dynamic_threshold()
-   {
-      // Dynamic threshold: wider during CC activity to suppress crosstalk.
-      gt.threshold = ((millis() - last_cc_time) < cc_idle_ms)
-         ? threshold_high : threshold;
-   }
-
    void send_pitch_bend(int32_t out)
    {
       // Gate target in signed pitch-bend offset form. When the gate is open,
       // follow the actual bend offset. When the gate is closed, target zero.
-      pb_out = gt(out - center) ? (out - center) : 0;
+      int32_t pb_out = gt(out - center) ? (out - center) : 0;
 
       // Smooth gate opening/closing with a short moving average.
       int32_t filtered = pb_out_ma(pb_out);
@@ -434,11 +427,6 @@ struct pitch_bend_controller
       }
    }
 
-   static int32_t abs_value(int32_t x)
-   {
-      return x < 0 ? -x : x;
-   }
-
    // Signal chain: ma → lp1 → lp2
    //   ma:  moving average N=16 → ~4× noise reduction, 8ms latency.
    //   lp1: leaky integrator k=8  → ~21 Hz at 1 kHz.
@@ -453,7 +441,6 @@ struct pitch_bend_controller
    offset_servo<13> servo;
 
    int32_t prev_out;
-   int32_t pb_out;
    int32_t prev_offset;
    uint16_t settle_count;
    bool startup_blank;
