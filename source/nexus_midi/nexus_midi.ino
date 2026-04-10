@@ -184,20 +184,23 @@ uint32_t last_cc_time = 0;
 template <midi::cc::controller ctrl>
 struct controller
 {
-   controller() : prev(0xff), gt(noise_window) {}
+   controller() : prev(0xff), prev_raw(0), gt(noise_window) {}
 
    void init(uint32_t val)
    {
       lp1.y = val * 8;
       lp2.y = val * 16;
+      prev_raw = val;
       prev = uint8_t(val >> 3);
    }
 
    void operator()(uint32_t val_)
    {
       uint32_t val = lp2(lp1(val_));
-      if (gt(val))
+      uint32_t delta = val > prev_raw ? val - prev_raw : prev_raw - val;
+      if (gt(delta))
       {
+         prev_raw = val;
          uint8_t cc = uint8_t(val >> 3);
          if (cc != prev)
          {
@@ -210,7 +213,8 @@ struct controller
 
    lowpass<8, int32_t> lp1;
    lowpass<16, int32_t> lp2;
-   gate<int32_t> gt;
+   gate<uint32_t> gt;
+   uint32_t prev_raw;
    uint8_t prev;
 };
 
@@ -227,35 +231,48 @@ struct pitch_bend_controller
    // are never absorbed as drift.
    static constexpr int32_t center_window = 16384 / 40;  // 409
 
-   // Gate window: normal sensitivity and suppressed (during CC activity).
-   static constexpr int32_t window      = 24;
-   static constexpr int32_t window_high = 48;
+   // Gate threshold: normal sensitivity and suppressed (during CC activity).
+   static constexpr int32_t threshold      = 32;
+   static constexpr int32_t threshold_high = 64;
 
-   // CC idle time before gate returns to normal window.
+   // CC idle time before gate returns to normal threshold.
    static constexpr uint32_t cc_idle_ms = 80;
 
-   pitch_bend_controller() : gt(window) {}
+   pitch_bend_controller() : prev_out(center), gt(threshold) {}
 
    void init(uint16_t pin)
    {
       // Wait for Hall effect sensor and ADC reference to stabilize.
       delay(100);
 
-      // Warm up both lowpass filters with real ADC reads so loop() starts
-      // fully converged. 200 ms at 1 ms spacing is enough for the
-      // leaky integrators to settle to the true ADC average.
+      // Pre-seed all filters with the first live reading so there is no
+      // filter ramp-up transient (filters start in a pre-converged state).
+      // lowpass<k> stores the accumulator y = output * k, so seed y = seed * k.
+      int32_t seed = analog_read(pin);
+      ma.init(int16_t(seed));
+      lp1.y = seed * 8;    // lowpass<8>:  output = y/8
+      lp2.y = seed * 16;   // lowpass<16>: output = y/16
+
+      // Warm up LP+MA filters and estimate the true mean of s for servo
+      // initialization. The fast IIR (k=4, TC≈4 samples) converges to
+      // the oscillating signal mean well within the 200-sample window.
+      // Seeding the servo from the mean rather than the last sample
+      // prevents the first loop() call from seeing a large transient
+      // offset that would trigger the gate and lock in chattering.
       int32_t val = 0;
+      int32_t s_avg = 0;
       for (int i = 0; i < 200; ++i)
       {
          val = lp2(lp1(ma(analog_read(pin))));
+         int32_t s = (val << 4) + (val % 16);
+         s_avg += (s - s_avg) >> 2;   // fast IIR mean estimate
          delay(1);
       }
 
-      // Seed servo and gate from the converged 14-bit reading.
-      int32_t s = (val << 4) + (val % 16);
-      servo.init(s);
-      int32_t out = servo(s) + center;
-      gt.val = out;
+      // Seed servo from the converged mean so servo(s) ≈ noise only.
+      servo.init(s_avg);
+      int32_t out = servo(s_avg) + center;
+      prev_out = out;
    }
 
    void operator()(uint32_t val_)
@@ -275,21 +292,34 @@ struct pitch_bend_controller
       if (out >= (center - center_window) && out <= (center + center_window))
          servo.update(s);
 
-      int32_t new_window = ((millis() - last_cc_time) < cc_idle_ms)
-         ? window_high : window;
-      if (new_window != gt.window)
-         gt.val = out;   // reseed on transition to prevent zipper
-      gt.window = new_window;
-      if (gt(out))
-         midi_out << midi::pitch_bend{0, uint16_t(out)};
+      // Dynamic threshold: wider during CC activity to suppress crosstalk.
+      gt.threshold = ((millis() - last_cc_time) < cc_idle_ms)
+         ? threshold_high : threshold;
+
+      // Noise gate: pass MIDI only when the pitch is significantly bent
+      // away from center. When the gate closes on return to center, send
+      // one final center value so the receiver zeroes out the bend.
+      if (gt(out - center))
+      {
+         if (out != prev_out)
+         {
+            prev_out = out;
+            midi_out << midi::pitch_bend{0, uint16_t(out)};
+         }
+      }
+      else if (prev_out != center)
+      {
+         prev_out = center;
+         midi_out << midi::pitch_bend{0, uint16_t(center)};
+      }
    }
 
    // Signal chain: ma → lp1 → lp2
-   //   ma:  moving average N=8 → ~2.8× noise reduction, 4ms latency.
+   //   ma:  moving average N=16 → ~4× noise reduction, 8ms latency.
    //   lp1: leaky integrator k=8  → ~21 Hz at 1 kHz.
    //   lp2: leaky integrator k=16 → ~10 Hz at 1 kHz.
    //        Cascaded lp1+lp2 gives sub-10 Hz combined cutoff.
-   moving_average<3, int16_t> ma;
+   moving_average<4, int16_t> ma;
    lowpass<8, int32_t> lp1;
    lowpass<16, int32_t> lp2;
 
@@ -297,6 +327,7 @@ struct pitch_bend_controller
    // age). Shift=13 → TC ≈ 8 s at 1 kHz. Only updates within deadband.
    offset_servo<13> servo;
 
+   int32_t prev_out;
    gate<int32_t> gt;
 };
 

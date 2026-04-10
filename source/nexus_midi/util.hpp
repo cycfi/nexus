@@ -244,6 +244,15 @@ namespace cycfi
          _i += s - (_i >> Shift);
       }
 
+      // Fast-convergence update for use during init() only.
+      // Drives _i toward s<<Shift with TC = 2^fast_shift samples
+      // (fast_shift < Shift).  Once init completes, normal update()
+      // resumes with TC = 2^Shift.
+      void fast_update(T s, int fast_shift)
+      {
+         _i += ((s << Shift) - _i) >> fast_shift;
+      }
+
       T operator()(T s) const
       {
          return s - (_i >> Shift);
@@ -298,30 +307,29 @@ namespace cycfi
    };
 
    ////////////////////////////////////////////////////////////////////////////
-   // Noise gate. Returns true if the signal, s, is above or below the given
-   // window. For example, if window is 5, the previous signal is 20 and the
-   // current signal, s, is within 15 to 25, the function returns false,
-   // otherwise true. The window is adjustable at runtime.
+   // gate: Stateless dead-zone gate. Returns true if s lies outside the
+   // dead-zone around zero (i.e. the signal is not near zero).
+   // Bipolar for signed T:    passes if s < -threshold or s > threshold.
+   // Unipolar for unsigned T: passes if s > threshold.
+   // Signedness is detected automatically via T(-1) < T(0).
+   //
+   // Usage: pass the signal offset from its rest/center value. For example,
+   // pass (out - center) for a pitch-bend noise gate, or the absolute change
+   // |val - prev| for a CC change threshold.
    ////////////////////////////////////////////////////////////////////////////
    template <typename T = int>
    struct gate
    {
-      gate(T window_ = 1)
-       : val(0), window(window_)
+      gate(T threshold_ = 1)
+       : threshold(threshold_)
       {}
 
       bool operator()(T s)
       {
-         if ((s < (val-window)) || (s > (val+window)))
-         {
-            val = s;
-            return true;
-         }
-         return false;
+         return s > threshold || (T(-1) < T(0) && s < -threshold);
       }
 
-      T val;
-      T window;
+      T threshold;
    };
 }
 
