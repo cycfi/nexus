@@ -268,25 +268,23 @@ struct pitch_bend_controller
       lp1.y = seed * 8;    // lowpass<8>:  output = y/8
       lp2.y = seed * 16;   // lowpass<16>: output = y/16
 
-      // Warm up LP+MA filters and estimate the true mean of s for servo
-      // initialization. The fast IIR (k=4, TC≈4 samples) converges to
-      // the oscillating signal mean well within the 200-sample window.
-      // Seeding the servo from the mean rather than the last sample
-      // prevents the first loop() call from seeing a large transient
-      // offset that would trigger the gate and lock in chattering.
-      int32_t val = 0;
-      int32_t s_avg = 0;
-      for (int i = 0; i < 200; ++i)
+      // Fast-convergence burn-in: drive the servo to the sensor's startup
+      // resting value with TC = 64 samples (fast_shift = 6) instead of the
+      // normal TC = 8192 samples.  500 iterations ≈ 500 ms → >99.9% converged.
+      // This replaces the old IIR s_avg estimate which undershot because the
+      // IIR started from 0 and only 200 samples were collected.
+      int32_t s_last = (seed << 4) + (seed % 16);
+      servo.init(s_last);
+      for (int i = 0; i < 500; ++i)
       {
-         val = lp2(lp1(ma(analog_read(pin))));
-         int32_t s = (val << 4) + (val % 16);
-         s_avg += (s - s_avg) >> 2;   // fast IIR mean estimate
+         int32_t val = lp2(lp1(ma(analog_read(pin))));
+         s_last = (val << 4) + (val % 16);
+         servo.fast_update(s_last, 6);
          delay(1);
       }
 
-      // Seed servo from the converged mean so servo(s) ≈ noise only.
-      servo.init(s_avg);
-      int32_t out = servo(s_avg) + center;
+      int32_t out = servo(s_last) + center;
+      out = max(int32_t(0), min(out, int32_t(16383)));
       prev_out = out;
       prev_offset = servo.offset();
       settle_count = 0;
