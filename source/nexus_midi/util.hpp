@@ -301,13 +301,13 @@ namespace cycfi
    // Noise gate. Returns true if the signal, s, is above or below the given
    // window. For example, if window is 5, the previous signal is 20 and the
    // current signal, s, is within 15 to 25, the function returns false,
-   // otherwise true.
+   // otherwise true. The window is adjustable at runtime.
    ////////////////////////////////////////////////////////////////////////////
-   template <unsigned window, typename T = int>
+   template <typename T = int>
    struct gate
    {
-      gate()
-       : val(0)
+      gate(T window_ = 1)
+       : val(0), window(window_)
       {}
 
       bool operator()(T s)
@@ -321,6 +321,7 @@ namespace cycfi
       }
 
       T val;
+      T window;
    };
 }
 

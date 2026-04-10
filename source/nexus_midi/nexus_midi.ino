@@ -63,7 +63,7 @@ int const aux4 = P2_4; //digital
 int const aux5 = P2_5; //digital
 int const aux6 = P2_6; //digital
 
-int const noise_window = 2;
+constexpr int noise_window = 2;  // CC gate window (10-bit)
 
 ///////////////////////////////////////////////////////////////////////////////
 // The main MIDI out stream
@@ -173,8 +173,9 @@ uint16_t analog_read(uint16_t pin)
    return map(x, min_x, max_x, 0, 1023);
 }
 
-// Timestamp of the last CC message sent. Used by pitch_bend_controller
-// to suppress pitch bend briefly after CC activity to avoid crosstalk.
+
+// Timestamp of the last CC send. Used by pitch_bend_controller to
+// raise its gate threshold during CC activity, suppressing crosstalk.
 uint32_t last_cc_time = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -183,7 +184,7 @@ uint32_t last_cc_time = 0;
 template <midi::cc::controller ctrl>
 struct controller
 {
-   controller() : prev(0xff) {}
+   controller() : prev(0xff), gt(noise_window) {}
 
    void init(uint32_t val)
    {
@@ -209,7 +210,7 @@ struct controller
 
    lowpass<8, int32_t> lp1;
    lowpass<16, int32_t> lp2;
-   gate<noise_window, int32_t> gt;
+   gate<int32_t> gt;
    uint8_t prev;
 };
 
@@ -219,17 +220,21 @@ struct controller
 struct pitch_bend_controller
 {
    // MIDI pitch bend: 14-bit offset binary, center = 8192.
-   static int32_t constexpr center = 8192;
+   static constexpr int32_t center = 8192;
 
    // Hardware deadband: eWhammy ±2.5% around center.
    // Servo only updates within this window so sustained bends
    // are never absorbed as drift.
-   static int32_t constexpr center_window = 16384 / 40;  // 409
+   static constexpr int32_t center_window = 16384 / 40;  // 409
 
-   // CC blanking window. Pitch bend is suppressed for this many ms
-   // after the last CC message. 80 ms covers the observed crosstalk
-   // tail from a fast CC sweep.
-   static uint32_t constexpr cc_blank_ms = 80;
+   // Gate window: normal sensitivity and suppressed (during CC activity).
+   static constexpr int32_t window      = 24;
+   static constexpr int32_t window_high = 48;
+
+   // CC idle time before gate returns to normal window.
+   static constexpr uint32_t cc_idle_ms = 80;
+
+   pitch_bend_controller() : gt(window) {}
 
    void init(uint16_t pin)
    {
@@ -242,7 +247,7 @@ struct pitch_bend_controller
       int32_t val = 0;
       for (int i = 0; i < 200; ++i)
       {
-         val = lp2(lp1(analog_read(pin)));
+         val = lp2(lp1(ma(analog_read(pin))));
          delay(1);
       }
 
@@ -250,13 +255,13 @@ struct pitch_bend_controller
       int32_t s = (val << 4) + (val % 16);
       servo.init(s);
       int32_t out = servo(s) + center;
-      gt(out);
+      gt.val = out;
    }
 
    void operator()(uint32_t val_)
    {
-      // Signal chain: lp1 → lp2 (10-bit output)
-      int32_t val = lp2(lp1(val_));
+      // Signal chain: ma → lp1 → lp2 (10-bit output)
+      int32_t val = lp2(lp1(ma(val_)));
 
       // Expand 10-bit → 14-bit (bit-replicate LSBs for full range)
       int32_t s = (val << 4) + (val % 16);
@@ -270,19 +275,21 @@ struct pitch_bend_controller
       if (out >= (center - center_window) && out <= (center + center_window))
          servo.update(s);
 
-      // Simple gate. If the value changes enough, pass it through.
-      bool hit = gt(out);
-
-      // Blank pitch bend while any CC is active.
-      uint32_t now = millis();
-      if (hit && ((now - last_cc_time) >= cc_blank_ms))
+      int32_t new_window = ((millis() - last_cc_time) < cc_idle_ms)
+         ? window_high : window;
+      if (new_window != gt.window)
+         gt.val = out;   // reseed on transition to prevent zipper
+      gt.window = new_window;
+      if (gt(out))
          midi_out << midi::pitch_bend{0, uint16_t(out)};
    }
 
-   // Signal chain: lp1 → lp2
+   // Signal chain: ma → lp1 → lp2
+   //   ma:  moving average N=8 → ~2.8× noise reduction, 4ms latency.
    //   lp1: leaky integrator k=8  → ~21 Hz at 1 kHz.
    //   lp2: leaky integrator k=16 → ~10 Hz at 1 kHz.
    //        Cascaded lp1+lp2 gives sub-10 Hz combined cutoff.
+   moving_average<3, int16_t> ma;
    lowpass<8, int32_t> lp1;
    lowpass<16, int32_t> lp2;
 
@@ -290,8 +297,7 @@ struct pitch_bend_controller
    // age). Shift=13 → TC ≈ 8 s at 1 kHz. Only updates within deadband.
    offset_servo<13> servo;
 
-   // Simple gate threshold.
-   gate<40, int32_t> gt;
+   gate<int32_t> gt;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
