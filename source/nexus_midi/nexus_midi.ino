@@ -342,14 +342,21 @@ struct pitch_bend_controller
 
    bool handle_startup_blank(int32_t delta, int32_t abs_bend_offset)
    {
-      // Startup blanking is a one-shot startup phase only. Once it ends,
-      // it must never re-arm during normal playing, otherwise pitch bend
-      // becomes unresponsive whenever the signal passes near center.
+      // Startup blanking is a one-shot startup phase only.
+      //
+      // While active, pitch bend output is muted so any initial Hall sensor /
+      // servo settling does not produce stray MIDI pitch bend messages.
+      //
+      // Once startup blanking ends, it must never re-arm during normal playing,
+      // otherwise pitch bend would become unresponsive whenever the signal
+      // passes near center.
       if (!startup_blank)
          return false;
 
-      // A deliberate bend outside the hardware deadband bypasses startup
-      // blanking immediately.
+      // Escape hatch: if the user makes a deliberate bend outside the hardware
+      // deadband around center, treat that as intentional input and disable
+      // startup blanking immediately. This avoids the controller feeling dead
+      // if the player moves the eWhammy before the startup settle phase ends.
       if (abs_bend_offset > center_window)
       {
          startup_blank = false;
@@ -357,6 +364,15 @@ struct pitch_bend_controller
          return false;
       }
 
+      // Automatic settle detection:
+      //
+      // We count consecutive samples only while BOTH conditions are true:
+      //   1. The servo offset is changing very little (delta <= settle_delta)
+      //   2. The bend output is close to center (abs_bend_offset <= settle_window)
+      //
+      // If either condition fails, the counter resets. This means startup
+      // blanking ends only after the controller has been quiet and centered
+      // continuously for long enough.
       if ((delta <= settle_delta) && (abs_bend_offset <= settle_window))
       {
          if (settle_count < settle_count_required)
@@ -367,12 +383,17 @@ struct pitch_bend_controller
          settle_count = 0;
       }
 
+      // Still settling: keep pitch bend muted.
+      //
+      // Force prev_out to center while blanked so there is no stale non-center
+      // state carried into normal operation once startup blanking ends.
       if (settle_count < settle_count_required)
       {
          prev_out = center;
          return true;
       }
 
+      // Settled long enough: permanently exit the one-shot startup blank phase.
       startup_blank = false;
       return false;
    }
