@@ -238,11 +238,16 @@ struct pitch_bend_controller
    // CC idle time before gate returns to normal threshold.
    static constexpr uint32_t cc_idle_ms = 80;
    static constexpr int32_t settle_delta = 1;
-   static constexpr int32_t settle_window = threshold;
+   // Startup settle window must be tighter than the normal PB gate threshold.
+   // Otherwise startup blanking can end while the bend is still hovering near
+   // the gate edge, which then causes repeated gate open/close chatter.
+   static constexpr int32_t settle_window = threshold / 2;
    static constexpr uint16_t settle_count_required = 150;   // ~150 ms at 1 kHz
+   static constexpr int32_t midi_step = threshold / 4;
 
    pitch_bend_controller()
     : prev_out(center)
+    , pb_out(0)
     , prev_offset(0)
     , settle_count(0)
     , startup_blank(true)
@@ -285,7 +290,9 @@ struct pitch_bend_controller
 
       int32_t out = servo(s_last) + center;
       out = max(int32_t(0), min(out, int32_t(16383)));
-      prev_out = out;
+      prev_out = center;
+      pb_out = 0;
+      pb_out_lp.y = 0;
       prev_offset = servo.offset();
       settle_count = 0;
       startup_blank = true;
@@ -405,21 +412,25 @@ struct pitch_bend_controller
 
    void send_pitch_bend(int32_t out)
    {
-      // Noise gate: pass MIDI only when the pitch is significantly bent
-      // away from center. When the gate closes on return to center, send
-      // one final center value so the receiver zeroes out the bend.
-      if (gt(out - center))
+      // Gate target in signed pitch-bend offset form. When the gate is open,
+      // follow the actual bend offset. When the gate is closed, target zero.
+      pb_out = gt(out - center) ? (out - center) : 0;
+
+      // Smooth gate opening/closing and interpolate between discrete steps.
+      int32_t filtered = pb_out_lp(pb_out);
+      int32_t midi_out_val = center + filtered;
+      midi_out_val = max(int32_t(0), min(midi_out_val, int32_t(16383)));
+
+      // Emit only when the filtered value changes by a meaningful amount.
+      // Still allow an exact center snap so the receiver can return fully to 0.
+      int32_t diff = midi_out_val - prev_out;
+      if (diff < 0)
+         diff = -diff;
+
+      if ((diff >= midi_step) || ((midi_out_val == center) && (prev_out != center)))
       {
-         if (out != prev_out)
-         {
-            prev_out = out;
-            midi_out << midi::pitch_bend{0, uint16_t(out)};
-         }
-      }
-      else if (prev_out != center)
-      {
-         prev_out = center;
-         midi_out << midi::pitch_bend{0, uint16_t(center)};
+         prev_out = midi_out_val;
+         midi_out << midi::pitch_bend{0, uint16_t(midi_out_val)};
       }
    }
 
@@ -442,9 +453,11 @@ struct pitch_bend_controller
    offset_servo<13> servo;
 
    int32_t prev_out;
+   int32_t pb_out;
    int32_t prev_offset;
    uint16_t settle_count;
    bool startup_blank;
+   lowpass<8, int32_t> pb_out_lp;
    gate<int32_t> gt;
 };
 
