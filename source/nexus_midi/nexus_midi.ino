@@ -249,6 +249,12 @@ struct pitch_bend_controller
     , gt(threshold)
    {}
 
+   struct sample
+   {
+      int32_t s;
+      int32_t out;
+   };
+
    void init(uint16_t pin)
    {
       // Wait for Hall effect sensor and ADC reference to stabilize.
@@ -289,6 +295,21 @@ struct pitch_bend_controller
 
    void operator()(uint32_t val_)
    {
+      sample x = process_signal(val_);
+      update_servo(x.s, x.out);
+
+      int32_t delta = update_offset_delta();
+      int32_t abs_bend_offset = abs_value(x.out - center);
+
+      if (handle_startup_blank(delta, abs_bend_offset))
+         return;
+
+      update_dynamic_threshold();
+      send_pitch_bend(x.out);
+   }
+
+   sample process_signal(uint32_t val_)
+   {
       // Signal chain: ma → lp1 → lp2 (10-bit output)
       int32_t val = lp2(lp1(ma(val_)));
 
@@ -299,60 +320,72 @@ struct pitch_bend_controller
       // output stays centered at 8192 regardless of sensor drift.
       int32_t out = servo(s) + center;
       out = max(int32_t(0), min(out, int32_t(16383)));
+      return {s, out};
+   }
 
+   void update_servo(int32_t s, int32_t out)
+   {
       // Update servo estimate only within the hardware deadband.
       if (out >= (center - center_window) && out <= (center + center_window))
          servo.update(s);
+   }
 
+   int32_t update_offset_delta()
+   {
       int32_t offset = servo.offset();
       int32_t delta = offset - prev_offset;
       if (delta < 0)
          delta = -delta;
       prev_offset = offset;
+      return delta;
+   }
 
-      int32_t bend_offset = out - center;
-      int32_t abs_bend_offset = bend_offset;
-      if (abs_bend_offset < 0)
-         abs_bend_offset = -abs_bend_offset;
-
+   bool handle_startup_blank(int32_t delta, int32_t abs_bend_offset)
+   {
       // Startup blanking is a one-shot startup phase only. Once it ends,
       // it must never re-arm during normal playing, otherwise pitch bend
       // becomes unresponsive whenever the signal passes near center.
-      if (startup_blank)
+      if (!startup_blank)
+         return false;
+
+      // A deliberate bend outside the hardware deadband bypasses startup
+      // blanking immediately.
+      if (abs_bend_offset > center_window)
       {
-         // A deliberate bend outside the hardware deadband bypasses startup
-         // blanking immediately.
-         if (abs_bend_offset > center_window)
-         {
-            startup_blank = false;
-            settle_count = settle_count_required;
-         }
-         else
-         {
-            if ((delta <= settle_delta) && (abs_bend_offset <= settle_window))
-            {
-               if (settle_count < settle_count_required)
-                  ++settle_count;
-            }
-            else
-            {
-               settle_count = 0;
-            }
-
-            if (settle_count < settle_count_required)
-            {
-               prev_out = center;
-               return;
-            }
-
-            startup_blank = false;
-         }
+         startup_blank = false;
+         settle_count = settle_count_required;
+         return false;
       }
 
+      if ((delta <= settle_delta) && (abs_bend_offset <= settle_window))
+      {
+         if (settle_count < settle_count_required)
+            ++settle_count;
+      }
+      else
+      {
+         settle_count = 0;
+      }
+
+      if (settle_count < settle_count_required)
+      {
+         prev_out = center;
+         return true;
+      }
+
+      startup_blank = false;
+      return false;
+   }
+
+   void update_dynamic_threshold()
+   {
       // Dynamic threshold: wider during CC activity to suppress crosstalk.
       gt.threshold = ((millis() - last_cc_time) < cc_idle_ms)
          ? threshold_high : threshold;
+   }
 
+   void send_pitch_bend(int32_t out)
+   {
       // Noise gate: pass MIDI only when the pitch is significantly bent
       // away from center. When the gate closes on return to center, send
       // one final center value so the receiver zeroes out the bend.
@@ -369,6 +402,11 @@ struct pitch_bend_controller
          prev_out = center;
          midi_out << midi::pitch_bend{0, uint16_t(center)};
       }
+   }
+
+   static int32_t abs_value(int32_t x)
+   {
+      return x < 0 ? -x : x;
    }
 
    // Signal chain: ma → lp1 → lp2
