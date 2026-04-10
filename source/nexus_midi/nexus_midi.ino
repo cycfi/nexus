@@ -237,8 +237,17 @@ struct pitch_bend_controller
 
    // CC idle time before gate returns to normal threshold.
    static constexpr uint32_t cc_idle_ms = 80;
+   static constexpr int32_t settle_delta = 1;
+   static constexpr int32_t settle_window = threshold;
+   static constexpr uint16_t settle_count_required = 150;   // ~150 ms at 1 kHz
 
-   pitch_bend_controller() : prev_out(center), gt(threshold) {}
+   pitch_bend_controller()
+    : prev_out(center)
+    , prev_offset(0)
+    , settle_count(0)
+    , startup_blank(true)
+    , gt(threshold)
+   {}
 
    void init(uint16_t pin)
    {
@@ -273,6 +282,9 @@ struct pitch_bend_controller
       servo.init(s_avg);
       int32_t out = servo(s_avg) + center;
       prev_out = out;
+      prev_offset = servo.offset();
+      settle_count = 0;
+      startup_blank = true;
    }
 
    void operator()(uint32_t val_)
@@ -291,6 +303,51 @@ struct pitch_bend_controller
       // Update servo estimate only within the hardware deadband.
       if (out >= (center - center_window) && out <= (center + center_window))
          servo.update(s);
+
+      int32_t offset = servo.offset();
+      int32_t delta = offset - prev_offset;
+      if (delta < 0)
+         delta = -delta;
+      prev_offset = offset;
+
+      int32_t bend_offset = out - center;
+      int32_t abs_bend_offset = bend_offset;
+      if (abs_bend_offset < 0)
+         abs_bend_offset = -abs_bend_offset;
+
+      // Startup blanking is a one-shot startup phase only. Once it ends,
+      // it must never re-arm during normal playing, otherwise pitch bend
+      // becomes unresponsive whenever the signal passes near center.
+      if (startup_blank)
+      {
+         // A deliberate bend outside the hardware deadband bypasses startup
+         // blanking immediately.
+         if (abs_bend_offset > center_window)
+         {
+            startup_blank = false;
+            settle_count = settle_count_required;
+         }
+         else
+         {
+            if ((delta <= settle_delta) && (abs_bend_offset <= settle_window))
+            {
+               if (settle_count < settle_count_required)
+                  ++settle_count;
+            }
+            else
+            {
+               settle_count = 0;
+            }
+
+            if (settle_count < settle_count_required)
+            {
+               prev_out = center;
+               return;
+            }
+
+            startup_blank = false;
+         }
+      }
 
       // Dynamic threshold: wider during CC activity to suppress crosstalk.
       gt.threshold = ((millis() - last_cc_time) < cc_idle_ms)
@@ -328,6 +385,9 @@ struct pitch_bend_controller
    offset_servo<13> servo;
 
    int32_t prev_out;
+   int32_t prev_offset;
+   uint16_t settle_count;
+   bool startup_blank;
    gate<int32_t> gt;
 };
 
