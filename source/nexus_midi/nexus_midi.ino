@@ -183,265 +183,84 @@ uint32_t last_cc_time = 0;
 template <midi::cc::controller ctrl>
 struct controller
 {
-   // Minimum ADC change required before a CC is transmitted.
-   // Filters out noise and small jitter on the 10-bit ADC signal.
-   static constexpr int cc_threshold = 2;
-
-   controller() : prev(0xff), prev_raw(0), gt(cc_threshold) {}
+   controller() : prev(0xff) {}
 
    void init(uint32_t val)
    {
       lp1.y = val * 8;
       lp2.y = val * 16;
-      prev_raw = val;
       prev = uint8_t(val >> 3);
    }
 
    void operator()(uint32_t val_)
    {
       uint32_t val = lp2(lp1(val_));
-      uint32_t delta = val > prev_raw ? val - prev_raw : prev_raw - val;
-      if (gt(delta))
+      uint8_t cc = uint8_t(val >> 3);
+      if (cc != prev)
       {
-         prev_raw = val;
-         uint8_t cc = uint8_t(val >> 3);
-         if (cc != prev)
-         {
-            prev = cc;
-            last_cc_time = millis();
-            midi_out << midi::control_change{0, ctrl, cc};
-         }
+         prev = cc;
+         last_cc_time = millis();
+         midi_out << midi::control_change{0, ctrl, cc};
       }
    }
 
-   lowpass<8, int32_t> lp1;
+   lowpass<8, int32_t>  lp1;
    lowpass<16, int32_t> lp2;
-   gate<uint32_t> gt;
-   uint32_t prev_raw;
-   uint8_t prev;
+   uint8_t              prev;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Pitch bend controller
 ///////////////////////////////////////////////////////////////////////////////
+struct adc_sampler
+{
+   void init(uint16_t pin_)
+   {
+      pin = pin_;
+      int32_t seed = adc_read();
+      ma.init(int16_t(seed));
+      lp1.y = seed * 8;    // lowpass<8>:  output = y/8
+      lp2.y = seed * 16;   // lowpass<16>: output = y/16
+   }
+
+   uint16_t adc_read() const
+   {
+      return analogRead(pin);
+   }
+
+   int32_t operator()()
+   {
+      int32_t val = lp2(lp1(ma(adc_read())));
+      return (val << 4) + (val % 16);
+   }
+
+   uint16_t pin;
+   moving_average<4, int16_t>    ma;
+   lowpass<8, int32_t>           lp1;
+   lowpass<16, int32_t>          lp2;
+};
+
 struct pitch_bend_controller
 {
-   // MIDI pitch bend: 14-bit offset binary, center = 8192.
-   static constexpr int32_t center = 8192;
-
-   // Hardware deadband: eWhammy ±2.5% around center.
-   // Servo only updates within this window so sustained bends
-   // are never absorbed as drift.
-   static constexpr int32_t center_window = 16384 / 40;  // 409
-
-   // Gate threshold: normal sensitivity and suppressed (during CC activity).
-   static constexpr int32_t threshold      = 32;
-   static constexpr int32_t threshold_high = 64;
-
-   // CC idle time before gate returns to normal threshold.
-   static constexpr uint32_t cc_idle_ms = 80;
-
-   // Maximum per-sample change in servo offset (14-bit units) that still
-   // counts as "settled".  At 1 kHz, 1 unit/sample = 1000 units/s drift.
-   static constexpr int32_t settle_delta = 1;
-
-   // Startup settle window must be tighter than the normal PB gate threshold.
-   // Otherwise startup blanking can end while the bend is still hovering near
-   // the gate edge, which then causes repeated gate open/close chatter.
-   static constexpr int32_t settle_window = threshold / 2;
-   static constexpr uint16_t settle_count_required = 150;   // ~150 ms at 1 kHz
-   static constexpr int32_t midi_step = threshold / 4;
-
    pitch_bend_controller()
-    : prev_out(center)
-    , prev_offset(0)
-    , settle_count(0)
-    , startup_blank(true)
-    , gt(threshold)
    {}
 
    void init(uint16_t pin)
    {
-      // Wait for Hall effect sensor and ADC reference to stabilize.
       delay(100);
-
-      // Pre-seed all filters with the first live reading so there is no
-      // filter ramp-up transient (filters start in a pre-converged state).
-      // lowpass<k> stores the accumulator y = output * k, so seed y = seed * k.
-      int32_t seed = analog_read(pin);
-      ma.init(int16_t(seed));
-      lp1.y = seed * 8;    // lowpass<8>:  output = y/8
-      lp2.y = seed * 16;   // lowpass<16>: output = y/16
-
-      // Fast-convergence burn-in: drive the servo to the sensor's startup
-      // resting value with TC = 64 samples (fast_shift = 6) instead of the
-      // normal TC = 8192 samples.  500 iterations ≈ 500 ms → >99.9% converged.
-      // This replaces the old IIR s_avg estimate which undershot because the
-      // IIR started from 0 and only 200 samples were collected.
-      int32_t s_last = (seed << 4) + (seed % 16);
-      servo.init(s_last);
-      for (int i = 0; i < 500; ++i)
-      {
-         int32_t val = lp2(lp1(ma(analog_read(pin))));
-         s_last = (val << 4) + (val % 16);
-         servo.fast_update(s_last, 6);
-         delay(1);
-      }
-
-      prev_out = center;
-      prev_offset = servo.offset();
-      settle_count = 0;
-      startup_blank = true;
+      adc.init(pin);
+      gt.init(adc());
    }
 
-   void operator()(uint32_t val_)
+   void operator()()
    {
-      int32_t s, out;
-      process_signal(val_, s, out);
-      update_servo(s, out);
-
-      int32_t delta = update_offset_delta();
-      int32_t abs_bend_offset = out > center ? out - center : center - out;
-
-      if (handle_startup_blank(delta, abs_bend_offset))
-         return;
-
-      // Dynamic threshold: wider during CC activity to suppress crosstalk.
-      gt.threshold = ((millis() - last_cc_time) < cc_idle_ms)
-         ? threshold_high : threshold;
-
-      send_pitch_bend(out);
+      auto val = adc();
+      if (gt(val))
+         midi_out << midi::pitch_bend{0, uint16_t(val)};
    }
 
-   void process_signal(uint32_t val_, int32_t& s, int32_t& out)
-   {
-      // Signal chain: ma → lp1 → lp2 (10-bit output)
-      int32_t val = lp2(lp1(ma(val_)));
-
-      // Expand 10-bit → 14-bit (bit-replicate LSBs for full range)
-      s = (val << 4) + (val % 16);
-
-      // Apply drift compensation: servo removes slow DC offset so the
-      // output stays centered at 8192 regardless of sensor drift.
-      out = servo(s) + center;
-      out = max(int32_t(0), min(out, int32_t(16383)));
-   }
-
-   void update_servo(int32_t s, int32_t out)
-   {
-      // Update servo estimate only within the hardware deadband.
-      if (out >= (center - center_window) && out <= (center + center_window))
-         servo.update(s);
-   }
-
-   int32_t update_offset_delta()
-   {
-      int32_t offset = servo.offset();
-      int32_t delta = offset - prev_offset;
-      if (delta < 0)
-         delta = -delta;
-      prev_offset = offset;
-      return delta;
-   }
-
-   bool handle_startup_blank(int32_t delta, int32_t abs_bend_offset)
-   {
-      // Startup blanking is a one-shot startup phase only.
-      //
-      // While active, pitch bend output is muted so any initial Hall sensor /
-      // servo settling does not produce stray MIDI pitch bend messages.
-      //
-      // Once startup blanking ends, it must never re-arm during normal playing,
-      // otherwise pitch bend would become unresponsive whenever the signal
-      // passes near center.
-      if (!startup_blank)
-         return false;
-
-      // Escape hatch: if the user makes a deliberate bend outside the hardware
-      // deadband around center, treat that as intentional input and disable
-      // startup blanking immediately. This avoids the controller feeling dead
-      // if the player moves the eWhammy before the startup settle phase ends.
-      if (abs_bend_offset > center_window)
-      {
-         startup_blank = false;
-         settle_count = settle_count_required;
-         return false;
-      }
-
-      // Automatic settle detection:
-      //
-      // We count consecutive samples only while BOTH conditions are true:
-      //   1. The servo offset is changing very little (delta <= settle_delta)
-      //   2. The bend output is close to center (abs_bend_offset <= settle_window)
-      //
-      // If either condition fails, the counter resets. This means startup
-      // blanking ends only after the controller has been quiet and centered
-      // continuously for long enough.
-      if ((delta <= settle_delta) && (abs_bend_offset <= settle_window))
-      {
-         if (settle_count < settle_count_required)
-            ++settle_count;
-      }
-      else
-      {
-         settle_count = 0;
-      }
-
-      // Still settling: keep pitch bend muted.
-      //
-      // Force prev_out to center while blanked so there is no stale non-center
-      // state carried into normal operation once startup blanking ends.
-      if (settle_count < settle_count_required)
-      {
-         prev_out = center;
-         return true;
-      }
-
-      // Settled long enough: permanently exit the one-shot startup blank phase.
-      startup_blank = false;
-      return false;
-   }
-
-   void send_pitch_bend(int32_t out)
-   {
-      // Gate target in signed pitch-bend offset form. When the gate is open,
-      // follow the actual bend offset. When the gate is closed, target zero.
-      int32_t pb_out = gt(out - center) ? (out - center) : 0;
-
-      int32_t midi_out_val = center + pb_out;
-      midi_out_val = max(int32_t(0), min(midi_out_val, int32_t(16383)));
-
-      // Emit only when the filtered value changes by a meaningful amount.
-      // Still allow an exact center snap so the receiver can return fully to 0.
-      int32_t diff = midi_out_val - prev_out;
-      if (diff < 0)
-         diff = -diff;
-
-      if ((diff >= midi_step) || ((midi_out_val == center) && (prev_out != center)))
-      {
-         prev_out = midi_out_val;
-         midi_out << midi::pitch_bend{0, uint16_t(midi_out_val)};
-      }
-   }
-
-   // Signal chain: ma → lp1 → lp2
-   //   ma:  moving average N=16 → ~4× noise reduction, 8ms latency.
-   //   lp1: leaky integrator k=8  → ~21 Hz at 1 kHz.
-   //   lp2: leaky integrator k=16 → ~10 Hz at 1 kHz.
-   //        Cascaded lp1+lp2 gives sub-10 Hz combined cutoff.
-   moving_average<4, int16_t> ma;
-   lowpass<8, int32_t> lp1;
-   lowpass<16, int32_t> lp2;
-
-   // Drift compensation: tracks slow Hall effect sensor offset (temperature,
-   // age). Shift=13 → TC ≈ 8 s at 1 kHz. Only updates within deadband.
-   offset_servo<13> servo;
-
-   int32_t prev_out;
-   int32_t prev_offset;
-   uint16_t settle_count;
-   bool startup_blank;
-   gate<int32_t> gt;
+   adc_sampler             adc;
+   delta_gate<40, int16_t> gt;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -676,7 +495,7 @@ void loop()
       volume_control(analog_read(ch10));
       fx1_control(analog_read(ch11));
       fx2_control(analog_read(ch12));
-      pitch_bend(analog_read(ch13));
+      pitch_bend();
       program_change(analog_read(ch14));
       modulation_control(analog_read(ch15));
 

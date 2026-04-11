@@ -307,29 +307,35 @@ namespace cycfi
    };
 
    ////////////////////////////////////////////////////////////////////////////
-   // gate: Stateless dead-zone gate. Returns true if s lies outside the
-   // dead-zone around zero (i.e. the signal is not near zero).
-   // Bipolar for signed T:    passes if s < -threshold or s > threshold.
-   // Unipolar for unsigned T: passes if s > threshold.
-   // Signedness is detected automatically via T(-1) < T(0).
-   //
-   // Usage: pass the signal offset from its rest/center value. For example,
-   // pass (out - center) for a pitch-bend noise gate, or the absolute change
-   // |val - prev| for a CC change threshold.
+   // Delta gate. Returns true if the signal, s, is above or below the given
+   // window. For example, if window is 5, the previous signal is 20 and the
+   // current signal, s, is within 15 to 25, the function returns false,
+   // otherwise true.
    ////////////////////////////////////////////////////////////////////////////
-   template <typename T = int>
-   struct gate
+   template <unsigned window, typename T = int>
+   struct delta_gate
    {
-      gate(T threshold_ = 1)
-       : threshold(threshold_)
+      delta_gate()
+       : val(0)
       {}
+
+      void init(T s)
+      {
+         val = s;
+      }
 
       bool operator()(T s)
       {
-         return s > threshold || (T(-1) < T(0) && s < -threshold);
+         T delta = s > val ? s - val : val - s;
+         if (delta > window)
+         {
+            val = s;
+            return true;
+         }
+         return false;
       }
 
-      T threshold;
+      T val;
    };
 }
 
