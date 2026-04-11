@@ -267,7 +267,6 @@ struct pitch_centering_servo
 struct pitch_bend_controller
 {
    static constexpr int32_t center = pitch_centering_servo::center;
-   static constexpr int16_t center_snap_window = 40;
    static constexpr int16_t pb_window = 40;
    static constexpr int16_t pb_window_high = 80;
    static constexpr uint32_t cc_idle_ms = 100;
@@ -283,14 +282,14 @@ struct pitch_bend_controller
       delay(100);
       adc.init(pin);
       servo.init(adc());
-      gt.init(snap_center(servo(adc())));
+      gt.init(servo(adc()));
       prev_out = center;
       blank_until = millis() + startup_blank_ms;
    }
 
    void operator()()
    {
-      auto val = snap_center(servo(adc()));
+      auto val = servo(adc());
       gt.set_window(((millis() - last_cc_time) < cc_idle_ms)
          ? pb_window_high : pb_window);
 
@@ -301,7 +300,7 @@ struct pitch_bend_controller
          return;
       }
 
-      if (val == center)
+      if (is_centered(val))
       {
          gt.init(center);
          if (prev_out != center)
@@ -319,12 +318,12 @@ struct pitch_bend_controller
       }
    }
 
-   int32_t snap_center(int32_t val)
+   bool is_centered(int32_t val)
    {
       int32_t delta = val - center;
       if (delta < 0)
          delta = -delta;
-      return (delta <= center_snap_window) ? center : val;
+      return delta <= pb_window;
    }
 
    adc_sampler             adc;
