@@ -240,33 +240,98 @@ struct adc_sampler
    lowpass<16, int32_t>          lp2;
 };
 
+struct pitch_centering_servo
+{
+   static constexpr int32_t center = 8192;
+   static constexpr int32_t center_window = 16384 / 40;  // +/-2.5%
+
+   void init(int32_t val)
+   {
+      servo.init(val);
+   }
+
+   int32_t operator()(int32_t val)
+   {
+      int32_t out = servo(val) + center;
+      out = max(int32_t(0), min(out, int32_t(16383)));
+
+      if (out >= (center - center_window) && out <= (center + center_window))
+         servo.update(val);
+
+      return out;
+   }
+
+   offset_servo<13> servo;
+};
+
 struct pitch_bend_controller
 {
+   static constexpr int32_t center = pitch_centering_servo::center;
+   static constexpr int16_t center_snap_window = 40;
    static constexpr int16_t pb_window = 40;
    static constexpr int16_t pb_window_high = 80;
    static constexpr uint32_t cc_idle_ms = 100;
+   static constexpr uint32_t startup_blank_ms = 300;
 
    pitch_bend_controller()
+    : prev_out(center)
+    , blank_until(0)
    {}
 
    void init(uint16_t pin)
    {
       delay(100);
       adc.init(pin);
-      gt.init(adc());
+      servo.init(adc());
+      gt.init(snap_center(servo(adc())));
+      prev_out = center;
+      blank_until = millis() + startup_blank_ms;
    }
 
    void operator()()
    {
-      auto val = adc();
+      auto val = snap_center(servo(adc()));
       gt.set_window(((millis() - last_cc_time) < cc_idle_ms)
          ? pb_window_high : pb_window);
+
+      if (millis() < blank_until)
+      {
+         gt.init(val);
+         prev_out = center;
+         return;
+      }
+
+      if (val == center)
+      {
+         gt.init(center);
+         if (prev_out != center)
+         {
+            prev_out = center;
+            midi_out << midi::pitch_bend{0, uint16_t(center)};
+         }
+         return;
+      }
+
       if (gt(val))
+      {
+         prev_out = val;
          midi_out << midi::pitch_bend{0, uint16_t(val)};
+      }
+   }
+
+   int32_t snap_center(int32_t val)
+   {
+      int32_t delta = val - center;
+      if (delta < 0)
+         delta = -delta;
+      return (delta <= center_snap_window) ? center : val;
    }
 
    adc_sampler             adc;
+   pitch_centering_servo   servo;
    delta_gate<40, int16_t> gt;
+   int32_t                 prev_out;
+   uint32_t                blank_until;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
