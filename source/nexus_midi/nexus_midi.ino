@@ -289,7 +289,6 @@ struct pitch_bend_controller
       }
 
       prev_out = center;
-      pb_out_ma.init(0);
       prev_offset = servo.offset();
       settle_count = 0;
       startup_blank = true;
@@ -409,9 +408,7 @@ struct pitch_bend_controller
       // follow the actual bend offset. When the gate is closed, target zero.
       int32_t pb_out = gt(out - center) ? (out - center) : 0;
 
-      // Smooth gate opening/closing with a short moving average.
-      int32_t filtered = pb_out_ma(pb_out);
-      int32_t midi_out_val = center + filtered;
+      int32_t midi_out_val = center + pb_out;
       midi_out_val = max(int32_t(0), min(midi_out_val, int32_t(16383)));
 
       // Emit only when the filtered value changes by a meaningful amount.
@@ -444,7 +441,6 @@ struct pitch_bend_controller
    int32_t prev_offset;
    uint16_t settle_count;
    bool startup_blank;
-   moving_average<2, int32_t> pb_out_ma;
    gate<int32_t> gt;
 };
 
