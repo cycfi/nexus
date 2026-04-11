@@ -312,16 +312,22 @@ namespace cycfi
    // current signal, s, is within 15 to 25, the function returns false,
    // otherwise true.
    ////////////////////////////////////////////////////////////////////////////
-   template <unsigned window, typename T = int>
+   template <unsigned default_window, typename T = int>
    struct delta_gate
    {
       delta_gate()
        : val(0)
+       , window(default_window)
       {}
 
       void init(T s)
       {
          val = s;
+      }
+
+      void set_window(T window_)
+      {
+         window = window_;
       }
 
       bool operator()(T s)
@@ -336,6 +342,7 @@ namespace cycfi
       }
 
       T val;
+      T window;
    };
 }
 

@@ -242,6 +242,10 @@ struct adc_sampler
 
 struct pitch_bend_controller
 {
+   static constexpr int16_t pb_window = 40;
+   static constexpr int16_t pb_window_high = 80;
+   static constexpr uint32_t cc_idle_ms = 100;
+
    pitch_bend_controller()
    {}
 
@@ -255,6 +259,8 @@ struct pitch_bend_controller
    void operator()()
    {
       auto val = adc();
+      gt.set_window(((millis() - last_cc_time) < cc_idle_ms)
+         ? pb_window_high : pb_window);
       if (gt(val))
          midi_out << midi::pitch_bend{0, uint16_t(val)};
    }
