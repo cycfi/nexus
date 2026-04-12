@@ -212,11 +212,14 @@ struct controller
 ///////////////////////////////////////////////////////////////////////////////
 // Pitch bend controller
 ///////////////////////////////////////////////////////////////////////////////
+// Pitch bend uses the raw ADC range, not analog_read(), because the eWhammy
+// center/deadband behavior matters more than remapping the pot travel endpoints.
 struct adc_sampler
 {
    void init(uint16_t pin_)
    {
       pin = pin_;
+      // Seed the filters from the live input so startup does not ramp from 0.
       int32_t seed = adc_read();
       ma.init(int16_t(seed));
       lp1.y = seed * 8;    // lowpass<8>:  output = y/8
@@ -231,6 +234,8 @@ struct adc_sampler
    int32_t operator()()
    {
       int32_t val = lp2(lp1(ma(adc_read())));
+      // Expand 10-bit ADC space into 14-bit MIDI pitch bend space by
+      // replicating the low bits, preserving the full 0..16383 range.
       return (val << 4) + (val % 16);
    }
 
@@ -243,6 +248,9 @@ struct adc_sampler
 struct pitch_centering_servo
 {
    static constexpr int32_t center = 8192;
+
+   // eWhammy mechanical center/deadband is about +/-2.5%.  The servo is only
+   // allowed to learn drift here, so sustained bends are not pulled to center.
    static constexpr int32_t center_window = 16384 / 40;  // +/-2.5%
 
    void init(int32_t val)
@@ -252,6 +260,8 @@ struct pitch_centering_servo
 
    int32_t operator()(int32_t val)
    {
+      // offset_servo removes slow Hall sensor drift; adding MIDI center turns
+      // the signed offset back into the 14-bit pitch bend value.
       int32_t out = servo(val) + center;
       out = max(int32_t(0), min(out, int32_t(16383)));
 
@@ -267,7 +277,13 @@ struct pitch_centering_servo
 struct pitch_bend_controller
 {
    static constexpr int32_t center = pitch_centering_servo::center;
+
+   // Normal pitch-bend gate window. Values inside this window are considered
+   // centered and also reset the delta gate to avoid center chatter.
    static constexpr int16_t pb_window = 40;
+
+   // Wider gate while nearby CC controls are moving; those controls can couple
+   // into the pitch ADC briefly, so require a larger movement before sending PB.
    static constexpr int16_t pb_window_high = 80;
    static constexpr uint32_t cc_idle_ms = 100;
    static constexpr uint32_t startup_blank_ms = 300;
@@ -279,6 +295,8 @@ struct pitch_bend_controller
 
    void init(uint16_t pin)
    {
+      // Give the Hall sensor/reference a short settling time before seeding the
+      // ADC filters and servo from the live hardware state.
       delay(100);
       adc.init(pin);
       servo.init(adc());
@@ -290,11 +308,15 @@ struct pitch_bend_controller
    void operator()()
    {
       auto val = servo(adc());
+      // CC movement widens the pitch-bend gate for a short window to suppress
+      // crosstalk without permanently making pitch bend feel less responsive.
       gt.set_window(((millis() - last_cc_time) < cc_idle_ms)
          ? pb_window_high : pb_window);
 
       if (millis() < blank_until)
       {
+         // During startup blanking, keep the delta gate tracking the live value
+         // but force logical output state to center so no stale bend escapes.
          gt.init(val);
          prev_out = center;
          return;
@@ -302,6 +324,8 @@ struct pitch_bend_controller
 
       if (is_centered(val))
       {
+         // A centered reading closes the gate and emits one trailing exact
+         // center value if the last transmitted value was off-center.
          gt.init(center);
          if (prev_out != center)
          {
