@@ -278,9 +278,11 @@ struct pitch_bend_controller
 {
    static constexpr int32_t center = pitch_centering_servo::center;
 
-   // Normal pitch-bend gate window. Values inside this window are considered
-   // centered and also reset the delta gate to avoid center chatter.
+   // Normal pitch-bend delta gate window. The separate center window is kept
+   // much smaller so light vibrato can cross zero without being muted.
    static constexpr int16_t pb_window = 40;
+   static constexpr int16_t center_window = 12;
+   static constexpr uint32_t center_idle_ms = 30;
 
    // Wider gate while nearby CC controls are moving; those controls can couple
    // into the pitch ADC briefly, so require a larger movement before sending PB.
@@ -290,6 +292,9 @@ struct pitch_bend_controller
 
    pitch_bend_controller()
     : prev_out(center)
+    , pitch_active(false)
+    , center_pending(false)
+    , center_time(0)
     , blank_until(0)
    {}
 
@@ -300,8 +305,12 @@ struct pitch_bend_controller
       delay(100);
       adc.init(pin);
       servo.init(adc());
-      gt.init(servo(adc()));
+      int32_t val = servo(adc());
+      post_lp.y = val * 8;  // lowpass<8>: ~20 Hz at the 1 kHz loop rate
+      gt.init(val);
       prev_out = center;
+      pitch_active = false;
+      center_pending = false;
       blank_until = millis() + startup_blank_ms;
    }
 
@@ -318,28 +327,43 @@ struct pitch_bend_controller
          // During startup blanking, keep the delta gate tracking the live value
          // but force logical output state to center so no stale bend escapes.
          gt.init(val);
+         post_lp.y = center * 8;
          prev_out = center;
+         pitch_active = false;
+         center_pending = false;
          return;
       }
 
       if (is_centered(val))
       {
-         // A centered reading closes the gate and emits one trailing exact
-         // center value if the last transmitted value was off-center.
-         gt.init(center);
-         if (prev_out != center)
+         // Do not close on a brief zero crossing; light vibrato passes through
+         // center every cycle. Close only after the input dwells at center.
+         if (!center_pending)
          {
-            prev_out = center;
-            midi_out << midi::pitch_bend{0, uint16_t(center)};
+            center_pending = true;
+            center_time = millis();
          }
+
+         if ((millis() - center_time) < center_idle_ms)
+         {
+            if (pitch_active)
+               send_pitch_bend(center);
+            return;
+         }
+
+         gt.init(center);
+         pitch_active = false;
+         send_pitch_bend(center);
          return;
       }
 
+      center_pending = false;
+
       if (gt(val))
-      {
-         prev_out = val;
-         midi_out << midi::pitch_bend{0, uint16_t(val)};
-      }
+         pitch_active = true;
+
+      if (pitch_active)
+         send_pitch_bend(val);
    }
 
    bool is_centered(int32_t val)
@@ -347,13 +371,27 @@ struct pitch_bend_controller
       int32_t delta = val - center;
       if (delta < 0)
          delta = -delta;
-      return delta <= pb_window;
+      return delta <= center_window;
+   }
+
+   void send_pitch_bend(int32_t val)
+   {
+      int32_t out = post_lp(val);
+      if (out != prev_out)
+      {
+         prev_out = out;
+         midi_out << midi::pitch_bend{0, uint16_t(out)};
+      }
    }
 
    adc_sampler             adc;
    pitch_centering_servo   servo;
+   lowpass<8, int32_t>     post_lp;
    delta_gate<40, int16_t> gt;
    int32_t                 prev_out;
+   bool                    pitch_active;
+   bool                    center_pending;
+   uint32_t                center_time;
    uint32_t                blank_until;
 };
 
