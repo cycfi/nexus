@@ -304,6 +304,7 @@ struct pitch_bend_controller
    // Normal pitch-bend delta gate window. The separate center window is kept
    // much smaller so light vibrato can cross zero without being muted.
    static constexpr int16_t pb_window = 40;
+   static constexpr int16_t arm_center_window = 80;
    static constexpr int16_t center_window = 12;
    static constexpr uint32_t center_idle_ms = 30;
 
@@ -311,17 +312,13 @@ struct pitch_bend_controller
    // into the pitch ADC briefly, so require a larger movement before sending PB.
    static constexpr int16_t pb_window_high = 80;
    static constexpr uint32_t cc_idle_ms = 100;
-   static constexpr uint32_t startup_blank_ms = 300;
-   static constexpr int16_t startup_center_window = pb_window;
-   static constexpr uint32_t startup_center_idle_ms = 2000;
 
    pitch_bend_controller()
     : prev_out(center)
     , pitch_active(false)
-    , startup_armed(false)
+    , startup_guard(true)
     , center_pending(false)
     , center_time(0)
-    , blank_until(0)
    {}
 
    void init(uint16_t pin)
@@ -336,9 +333,8 @@ struct pitch_bend_controller
       gt.init(val);
       prev_out = center;
       pitch_active = false;
-      startup_armed = false;
+      startup_guard = true;
       center_pending = false;
-      blank_until = millis() + startup_blank_ms;
    }
 
    void operator()()
@@ -348,50 +344,6 @@ struct pitch_bend_controller
       // crosstalk without permanently making pitch bend feel less responsive.
       gt.set_window(((millis() - last_cc_time) < cc_idle_ms)
          ? pb_window_high : pb_window);
-
-      if (millis() < blank_until)
-      {
-         // During startup blanking, keep the delta gate tracking the live value
-         // but force logical output state to center so no stale bend escapes.
-         gt.init(val);
-         post_lp.y = center * 4;
-         prev_out = center;
-         pitch_active = false;
-         center_pending = false;
-         return;
-      }
-
-      if (!startup_armed)
-      {
-         // Keep pitch bend muted until the centered sensor has stopped
-         // wandering. Otherwise slow startup drift can accumulate past the
-         // pitch gate and arm a small bend on noisy boards.
-         gt.init(val);
-         post_lp.y = center * 4;
-         prev_out = center;
-         pitch_active = false;
-
-         if (is_within_center(val, startup_center_window))
-         {
-            if (!center_pending)
-            {
-               center_pending = true;
-               center_time = millis();
-            }
-
-            if ((millis() - center_time) >= startup_center_idle_ms)
-            {
-               startup_armed = true;
-               center_pending = false;
-               gt.init(val);
-            }
-         }
-         else
-         {
-            center_pending = false;
-         }
-         return;
-      }
 
       if (is_centered(val))
       {
@@ -417,6 +369,18 @@ struct pitch_bend_controller
       }
 
       center_pending = false;
+
+      if (startup_guard)
+      {
+         if (is_within_center(val, arm_center_window))
+         {
+            gt.init(val);
+            post_lp.y = center * 4;
+            prev_out = center;
+            return;
+         }
+         startup_guard = false;
+      }
 
       if (gt(val))
          pitch_active = true;
@@ -454,10 +418,9 @@ struct pitch_bend_controller
    delta_gate<40, int16_t> gt;
    int32_t                 prev_out;
    bool                    pitch_active;
-   bool                    startup_armed;
+   bool                    startup_guard;
    bool                    center_pending;
    uint32_t                center_time;
-   uint32_t                blank_until;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
