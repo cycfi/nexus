@@ -183,18 +183,40 @@ uint32_t last_cc_time = 0;
 template <midi::cc::controller ctrl>
 struct controller
 {
-   controller() : prev(0xff) {}
+   // Gate in 10-bit space before shifting down to 7-bit MIDI CC. Otherwise
+   // noise around a CC boundary can chatter, e.g. 126, 127, 126, 127.
+   static constexpr uint16_t cc_window = 8;
+   static constexpr uint16_t endpoint_snap = 0x07;
+   static constexpr uint16_t endpoint_release = 0x0f;
+
+   controller()
+    : prev(0xff)
+    , prev_val(0)
+   {}
 
    void init(uint32_t val)
    {
       lp1.y = val * 8;
       lp2.y = val * 16;
+      prev_val = val;
       prev = uint8_t(val >> 3);
    }
 
    void operator()(uint32_t val_)
    {
       uint32_t val = lp2(lp1(val_));
+      if (val <= endpoint_snap || (prev == 0 && val <= endpoint_release))
+         val = 0;
+      else if (
+         val >= (0x3ff - endpoint_snap)
+         || (prev == 127 && val >= (0x3ff - endpoint_release)))
+         val = 0x3ff;
+
+      uint32_t delta = val > prev_val ? val - prev_val : prev_val - val;
+      if (delta <= cc_window)
+         return;
+
+      prev_val = val;
       uint8_t cc = uint8_t(val >> 3);
       if (cc != prev)
       {
@@ -206,6 +228,7 @@ struct controller
 
    lowpass<8, int32_t>  lp1;
    lowpass<16, int32_t> lp2;
+   uint32_t             prev_val;
    uint8_t              prev;
 };
 
@@ -289,10 +312,13 @@ struct pitch_bend_controller
    static constexpr int16_t pb_window_high = 80;
    static constexpr uint32_t cc_idle_ms = 100;
    static constexpr uint32_t startup_blank_ms = 300;
+   static constexpr int16_t startup_center_window = pb_window;
+   static constexpr uint32_t startup_center_idle_ms = 2000;
 
    pitch_bend_controller()
     : prev_out(center)
     , pitch_active(false)
+    , startup_armed(false)
     , center_pending(false)
     , center_time(0)
     , blank_until(0)
@@ -306,10 +332,11 @@ struct pitch_bend_controller
       adc.init(pin);
       servo.init(adc());
       int32_t val = servo(adc());
-      post_lp.y = val * 8;  // lowpass<8>: ~20 Hz at the 1 kHz loop rate
+      post_lp.y = val * 4;  // lowpass<4>: ~40 Hz at the 1 kHz loop rate
       gt.init(val);
       prev_out = center;
       pitch_active = false;
+      startup_armed = false;
       center_pending = false;
       blank_until = millis() + startup_blank_ms;
    }
@@ -327,10 +354,42 @@ struct pitch_bend_controller
          // During startup blanking, keep the delta gate tracking the live value
          // but force logical output state to center so no stale bend escapes.
          gt.init(val);
-         post_lp.y = center * 8;
+         post_lp.y = center * 4;
          prev_out = center;
          pitch_active = false;
          center_pending = false;
+         return;
+      }
+
+      if (!startup_armed)
+      {
+         // Keep pitch bend muted until the centered sensor has stopped
+         // wandering. Otherwise slow startup drift can accumulate past the
+         // pitch gate and arm a small bend on noisy boards.
+         gt.init(val);
+         post_lp.y = center * 4;
+         prev_out = center;
+         pitch_active = false;
+
+         if (is_within_center(val, startup_center_window))
+         {
+            if (!center_pending)
+            {
+               center_pending = true;
+               center_time = millis();
+            }
+
+            if ((millis() - center_time) >= startup_center_idle_ms)
+            {
+               startup_armed = true;
+               center_pending = false;
+               gt.init(val);
+            }
+         }
+         else
+         {
+            center_pending = false;
+         }
          return;
       }
 
@@ -368,10 +427,15 @@ struct pitch_bend_controller
 
    bool is_centered(int32_t val)
    {
+      return is_within_center(val, center_window);
+   }
+
+   bool is_within_center(int32_t val, int16_t window)
+   {
       int32_t delta = val - center;
       if (delta < 0)
          delta = -delta;
-      return delta <= center_window;
+      return delta <= window;
    }
 
    void send_pitch_bend(int32_t val)
@@ -386,10 +450,11 @@ struct pitch_bend_controller
 
    adc_sampler             adc;
    pitch_centering_servo   servo;
-   lowpass<8, int32_t>     post_lp;
+   lowpass<4, int32_t>     post_lp;
    delta_gate<40, int16_t> gt;
    int32_t                 prev_out;
    bool                    pitch_active;
+   bool                    startup_armed;
    bool                    center_pending;
    uint32_t                center_time;
    uint32_t                blank_until;
