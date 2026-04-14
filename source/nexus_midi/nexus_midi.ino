@@ -345,31 +345,17 @@ struct pitch_bend_controller
       gt.set_window(((millis() - last_cc_time) < cc_idle_ms)
          ? pb_window_high : pb_window);
 
-      if (is_centered(val))
-      {
-         // Do not close on a brief zero crossing; light vibrato passes through
-         // center every cycle. Close only after the input dwells at center.
-         if (!center_pending)
-         {
-            center_pending = true;
-            center_time = millis();
-         }
-
-         if ((millis() - center_time) < center_idle_ms)
-         {
-            if (pitch_active)
-               send_pitch_bend(center);
-            return;
-         }
-
-         gt.init(center);
-         pitch_active = false;
-         send_pitch_bend(center);
+      // Centered samples are a separate state: they may be a zero crossing in
+      // active vibrato, or a real return to rest after a short dwell.
+      if (process_center_dwell(val))
          return;
-      }
 
+      // Any non-centered sample cancels a pending return-to-center dwell.
       center_pending = false;
 
+      // At boot, ignore near-center sensor drift until the first deliberate
+      // movement. Once movement escapes this band, normal center handling takes
+      // over for the rest of the run.
       if (startup_guard)
       {
          if (is_within_center(val, arm_center_window))
@@ -382,6 +368,8 @@ struct pitch_bend_controller
          startup_guard = false;
       }
 
+      // The delta gate arms pitch bend only after a meaningful movement, then
+      // all later samples are sent until the center dwell above disarms it.
       if (gt(val))
          pitch_active = true;
 
@@ -389,12 +377,38 @@ struct pitch_bend_controller
          send_pitch_bend(val);
    }
 
-   bool is_centered(int32_t val)
+   bool process_center_dwell(int32_t val)
+   {
+      if (!is_centered(val))
+         return false;
+
+      // Do not close on a brief zero crossing; light vibrato passes through
+      // center every cycle. Close only after the input dwells at center.
+      if (!center_pending)
+      {
+         center_pending = true;
+         center_time = millis();
+      }
+
+      if ((millis() - center_time) < center_idle_ms)
+      {
+         if (pitch_active)
+            send_pitch_bend(center);
+         return true;
+      }
+
+      gt.init(center);
+      pitch_active = false;
+      send_pitch_bend(center);
+      return true;
+   }
+
+   static bool is_centered(int32_t val)
    {
       return is_within_center(val, center_window);
    }
 
-   bool is_within_center(int32_t val, int16_t window)
+   static bool is_within_center(int32_t val, int16_t window)
    {
       int32_t delta = val - center;
       if (delta < 0)
