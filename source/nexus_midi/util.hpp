@@ -41,6 +41,12 @@ namespace cycfi
          return result;
       }
 
+      void init(bool sw)
+      {
+         counter = sw ? samples : 0;
+         result = sw;
+      }
+
    private:
 
       int counter;
@@ -68,6 +74,12 @@ namespace cycfi
             return curr ? 1 : -1;
          }
          return 0;
+      }
+
+      void init(bool sw)
+      {
+         base_type::init(sw);
+         prev = sw;
       }
 
    private:

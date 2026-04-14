@@ -200,6 +200,8 @@ struct controller
       lp2.y = val * 16;
       prev_val = val;
       prev = uint8_t(val >> 3);
+      // Publish the seeded startup value.
+      midi_out << midi::control_change{0, ctrl, prev};
    }
 
    void operator()(uint32_t val_)
@@ -335,6 +337,8 @@ struct pitch_bend_controller
       pitch_active = false;
       startup_guard = true;
       center_pending = false;
+      // Publish neutral startup pitch bend.
+      midi_out << midi::pitch_bend{0, uint16_t(center)};
    }
 
    void operator()()
@@ -540,6 +544,14 @@ struct program_change_controller
 ///////////////////////////////////////////////////////////////////////////////
 struct sustain_controller
 {
+   void init(bool sw)
+   {
+      // Avoid a duplicate startup edge and publish the initial state.
+      edge.init(sw);
+      midi_out << midi::control_change{
+         0, midi::cc::sustain, uint8_t(sw ? 0 : 127)};
+   }
+
    void operator()(bool sw)
    {
       int state = edge(sw);
@@ -639,21 +651,22 @@ void setup()
    pinMode(aux5, INPUT_PULLUP);
    pinMode(aux6, INPUT_PULLUP);
 
+   // Load the program_change and bank_select_control states from flash
+   program_change.load();
+   bank_select_control.load();
+
+   program_change.transmit();
+   bank_select_control.transmit();
+
    // Prime controller filters from the live hardware state so the first loop
-   // iteration does not ramp from zero.
+   // iteration does not ramp from zero. Each init() also transmits the seeded
+   // startup state.
+   sustain_control.init(digitalRead(ch9));
    volume_control.init(analog_read(ch10));
    fx1_control.init(analog_read(ch11));
    fx2_control.init(analog_read(ch12));
    pitch_bend.init(ch13);
    modulation_control.init(analog_read(ch15));
-
-   // Load the program_change and bank_select_control states from flash
-   program_change.load();
-   bank_select_control.load();
-
-   // Transmit the current program_change and bank select state
-   program_change.transmit();
-   bank_select_control.transmit();
 
 }
 
