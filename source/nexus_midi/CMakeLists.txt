@@ -22,6 +22,14 @@ if(NEXUS_SIM)
    add_compile_definitions(NEXUS_SIM)
 endif()
 
+# Spike-triggered SysEx telemetry for the pitch bend (off in production): on a big
+# one-loop jump in the firmware's own output, emit one decodable snapshot of
+# raw/pos/output. Localizes glitches to firmware-vs-link. See nexus_controls.hpp.
+option(NEXUS_DIAG "Telemeter pitch-bend spikes/state over SysEx" OFF)
+if(NEXUS_DIAG)
+   add_compile_definitions(NEXUS_DIAG)
+endif()
+
 set(IDE_VERSION 10811)               # Energia 1.8.11 -> runtime.ide.version
 add_compile_definitions(
    F_CPU=16000000L

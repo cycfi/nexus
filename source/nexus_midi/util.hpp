@@ -173,6 +173,59 @@ namespace cycfi
    };
 
    //////////////////////////////////////////////////////////////////////////////
+   // dynamic_smoother: an adaptive lowpass. Fixed-point (Q8) integer port of the
+   // Q DSP dynamic_smoother (Andrew Simper, "Dynamic Smoothing Using Self
+   // Modulating Filter", Cytomic, 2016). Two one-pole integrators (low1, low2)
+   // whose shared cutoff g is opened by the bandpass magnitude |low1 - low2|, so
+   // it tracks fast transients with little lag but smooths hard when stable.
+   // State is kept in Q8 (x256) for sub-LSB precision.
+   //
+   //    G0:    base cutoff in Q8 [0..256] (g = G0/256 at rest). Lower = more
+   //           smoothing / more lag at rest.
+   //    Sense: how strongly the bandpass opens the cutoff on a move; 0 = a plain
+   //           fixed two-pole lowpass at cutoff G0. A power of two compiles the
+   //           sense term to a shift.
+   //////////////////////////////////////////////////////////////////////////////
+   template <int G0, int Sense, typename T = int32_t>
+   struct dynamic_smoother
+   {
+      dynamic_smoother()
+       : low1(0), low2(0)
+      {}
+
+      // Seed both integrators to a known 10-bit value (e.g. at startup).
+      dynamic_smoother& operator=(T s)
+      {
+         low1 = low2 = s << 8;
+         return *this;
+      }
+
+      T operator()(T s)
+      {
+         T band = low1 - low2;
+         if (band < 0)
+            band = -band;
+         int32_t g = G0 + ((int32_t(Sense) * (band >> 8)) >> 8);
+         if (g > 256)
+            g = 256;
+         low1 += int32_t(g) * ((s << 8) - low1) >> 8;
+         low2 += int32_t(g) * (low1 - low2) >> 8;
+         return low2 >> 8;
+      }
+
+      // |low1 - low2| (Q8): the bandpass magnitude -- ~0 at rest, large on a move. A
+      // ready-made velocity signal (e.g. to gate a center detent off during vibrato).
+      T band() const
+      {
+         T b = low1 - low2;
+         return b < 0 ? -b : b;
+      }
+
+      T low1;
+      T low2;
+   };
+
+   //////////////////////////////////////////////////////////////////////////////
    // offset_servo: Tracks and removes slow offset drift near the center.
    //////////////////////////////////////////////////////////////////////////////
    template <int Shift, typename T = int32_t>
@@ -196,6 +249,8 @@ namespace cycfi
       {
          return s - (_i >> Shift);
       }
+
+      T offset() const { return _i >> Shift; }   // current integer offset
 
       T _i;
    };
@@ -236,6 +291,43 @@ namespace cycfi
       }
 
       T   _buf[size];
+      T   _sum;
+      int _index;
+   };
+
+   ////////////////////////////////////////////////////////////////////////////
+   // moving_average_n: boxcar FIR over any N samples (not restricted to a power
+   // of two). Costs a divide by N per sample, so prefer moving_average<Shift>
+   // when N can be a power of two (it uses a shift). Latency is (N-1)/2 samples.
+   ////////////////////////////////////////////////////////////////////////////
+   template <int Taps, typename T = int32_t>
+   struct moving_average_n
+   {
+      moving_average_n() : _sum(0), _index(0)
+      {
+         for (int i = 0; i != Taps; ++i)
+            _buf[i] = 0;
+      }
+
+      void init(T s)
+      {
+         for (int i = 0; i != Taps; ++i)
+            _buf[i] = s;
+         _sum = s * Taps;
+         _index = 0;
+      }
+
+      T operator()(T s)
+      {
+         _sum -= _buf[_index];
+         _buf[_index] = s;
+         _sum += s;
+         if (++_index == Taps)
+            _index = 0;
+         return _sum / Taps;
+      }
+
+      T   _buf[Taps];
       T   _sum;
       int _index;
    };

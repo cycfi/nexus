@@ -34,5 +34,7 @@ fp-info-cache
 *panel.kicad_pro
 /breakout_box/main_board/single/
 /source/nexus_midi/build/
+/source/nexus_midi/build_diag/
+/source/nexus_midi/build_sim/
 /source/.claude/
 /source/nexus_midi/test/build/

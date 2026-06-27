@@ -26,7 +26,7 @@ using namespace cycfi;
 // The main MIDI out stream.
 midi::midi_stream midi_out;
 
-// We use SEGMENT_B and SEGMENT_C to store program change and bank select data
+// We use SEGMENT_B and SEGMENT_C to store program change and bank select data.
 flash flash_b(SEGMENT_B);
 flash flash_c(SEGMENT_C);
 

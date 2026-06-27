@@ -27,4 +27,4 @@ target_include_directories(host_sim PRIVATE
 )
 
 enable_testing()
-add_test(NAME host_sim COMMAND host_sim 200 -q)
+add_test(NAME host_sim COMMAND host_sim)
