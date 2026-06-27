@@ -457,11 +457,13 @@ struct pitch_bend_controller
 ///////////////////////////////////////////////////////////////////////////////
 // Notes (pitch_bend_controller)
 //
-// 1. Fixed k (no online learning). k is a compile-time per-unit constant, not adapted at
-//    runtime. An earlier build learned k from "landings"; replaying real sessions showed
-//    it did not help (a wash, slightly worse with the servo on), never converged to a
-//    stable value, and fired rarely -- the C0 servo (note 4) does the real centering, so k
-//    only has to be roughly right. The learner and the k flash persistence were removed.
+// 1. Fixed k (no runtime learning, for now). k is a compile-time per-unit constant. An
+//    earlier build learned it online but sampled the OUTPUT (`corrected`), which the C0
+//    servo + post-corrector have already nulled -- so it almost never saw the error and
+//    never converged. Learning belongs in the INPUT domain (`dev_m`, off the fixed seed),
+//    across varied depths so C0 cancels -- which is what a one-shot bring-up cal (note 2)
+//    does deterministically. k only has to be roughly right anyway: the servo + post-
+//    corrector do the real centering. Autopsy + redesign in the KB (k_learning.md).
 //
 // 2. Per-unit calibration. k_num ~0.043 is fine for most units since the servo absorbs the
 //    rest. To set a unit exactly: a full dive and a full pull, each released and settled;
