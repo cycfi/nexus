@@ -9,6 +9,7 @@
 
 #include "midi.hpp"
 #include "util.hpp"
+#include "nexus_adc.hpp"
 #include "MspFlash.h"
 #ifdef NEXUS_SIM
 #include "sim/nexus_sim.hpp"
@@ -148,23 +149,34 @@ namespace cycfi
 {
 
 ///////////////////////////////////////////////////////////////////////////////
-// ADC seam. Production reads the hardware; a NEXUS_SIM build injects synthetic,
-// time-driven test data so every control -- including pitch bend, which
-// bypasses analog_read() -- can be stress-tested without moving a knob.
+// ADC seam. Production reads the background oversampler (nexus_adc.hpp): a
+// (10 + os_shift)-bit value per channel, refreshed faster than the loop. A
+// NEXUS_SIM build injects synthetic data (shifted up by os_shift so the whole
+// pipeline runs at the same bit depth as the device).
 ///////////////////////////////////////////////////////////////////////////////
+
+// Map a wired analog pin to its ADC10 input channel (A0, A3..A7).
+inline uint8_t adc_channel_of(uint16_t pin)
+{
+   return pin == ch10 ? 0 : pin == ch11 ? 3 : pin == ch12 ? 4
+        : pin == ch14 ? 6 : pin == ch15 ? 7 : 5;   // default A5 = pitch (ch13)
+}
+
 inline uint16_t raw_adc(uint16_t pin)
 {
 #ifdef NEXUS_SIM
-   return nexus_sim::sample(pin, millis());
+   return uint16_t(nexus_sim::sample(pin, millis()) << adc::os_shift);  // 10-bit sim -> os bits
 #else
-   return analogRead(pin);
+   return adc::read_os(adc_channel_of(pin));   // blocking oversampled read
 #endif
 }
 
-// Pots don't travel to the physical ends of their range; clamp to the
-// effective 2%–98% travel window and remap to the full 0–1023 range.
-constexpr uint16_t min_x = 1024 * 0.02;
-constexpr uint16_t max_x = 1024 * 0.98;
+// Pots don't travel to the physical ends of their range; clamp to the effective
+// 2%-98% travel window and remap to the full 0-1023 range (the CC controllers
+// stay 10-bit; the oversampling just cleans the input).
+constexpr uint16_t adc_full = 1024 << adc::os_shift;
+constexpr uint16_t min_x = uint16_t(adc_full * 0.02);
+constexpr uint16_t max_x = uint16_t(adc_full * 0.98);
 
 inline uint16_t analog_read(uint16_t pin)
 {
@@ -189,8 +201,8 @@ struct controller
    // Gate in 10-bit space before shifting down to 7-bit MIDI CC. Otherwise
    // noise around a CC boundary can chatter, e.g. 126, 127, 126, 127.
    static constexpr uint16_t cc_window = 8;
-   static constexpr uint16_t endpoint_snap = 0x07;
-   static constexpr uint16_t endpoint_release = 0x0f;
+   static constexpr uint16_t endpoint_snap = 0x0f;     // snap to 0 / 0x3ff within this
+   static constexpr uint16_t endpoint_release = 0x1f;  // hysteresis out of the snap (> snap)
 
    controller()
     : prev(0xff)
@@ -199,8 +211,7 @@ struct controller
 
    void init(uint32_t val)
    {
-      lp1.y = val * 8;
-      lp2.y = val * 16;
+      smoother = int32_t(val);
       prev_val = val;
       prev = uint8_t(val >> 3);
       // Publish the seeded startup value.
@@ -209,7 +220,7 @@ struct controller
 
    void operator()(uint32_t val_)
    {
-      uint32_t val = lp2(lp1(val_));
+      uint32_t val = uint32_t(smoother(int32_t(val_)));
       if (val <= endpoint_snap || (prev == 0 && val <= endpoint_release))
          val = 0;
       else if (
@@ -231,10 +242,9 @@ struct controller
       }
    }
 
-   lowpass<8, int32_t>  lp1;
-   lowpass<16, int32_t> lp2;
-   uint32_t             prev_val;
-   uint8_t              prev;
+   dynamic_smoother<24, 512> smoother;   // adaptive (fast on moves, calm at rest)
+   uint32_t                  prev_val;
+   uint8_t                   prev;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -268,16 +278,20 @@ struct constants
 {
    static constexpr int32_t  center  = 8192;
    static constexpr int32_t  pb_max  = 2 * center - 1;   // 16383, 14-bit MIDI ceiling
-   static constexpr int32_t  scale   = 16;      // one 10-bit step -> 14-bit
-   static constexpr int32_t  nominal = 512;     // ADC nominal center
+   // Input is (10 + adc::os_shift) bits (the oversampler); scale/nominal rescale
+   // with it so the 14-bit DEFLECTION domain (and downstream) is unchanged.
+   static constexpr int32_t  scale   = 16 >> adc::os_shift;   // input step -> 14-bit
+   static constexpr int32_t  nominal = 512 << adc::os_shift;  // ADC nominal center
 
    // Input smoothing (adaptive dynamic_smoother): fast on moves, heavy at rest.
    static constexpr int      sm_g0    = 24;
-   static constexpr int      sm_sense = 512;    // power of two -> sense term is a shift
+   static constexpr int      sm_sense = 512 >> adc::os_shift;  // input-scaled
 
    // Input slew gate: reject raw steps faster than the arm can move (~4 LSB/ms; a
    // programmer-contact glitch is ~10x faster). Holds the last good reading (note 4).
-   static constexpr int      slew_rate = 6, slew_slack = 4, slew_dt_max = 6;
+   static constexpr int      slew_rate   = 6 << adc::os_shift;
+   static constexpr int      slew_slack  = 4 << adc::os_shift;
+   static constexpr int      slew_dt_max = 6;
 
    // C0 DC servo: VERY slow (tau 2^16 ms ~ 65 s), frozen past the gate, clipped to the
    // max physical DC wander (note 4).
@@ -286,7 +300,7 @@ struct constants
    static constexpr int32_t  c0_clip  = 736;    // +/-46 LSB (~1.3 ST): max physical DC wander
 
    // Stillness, by displacement-over-time: within still_band for still_dwell ms.
-   static constexpr int32_t  still_band  = 2 * scale;
+   static constexpr int32_t  still_band  = 32;  // ~2 LSB (14-bit deflection, fixed)
    static constexpr uint32_t still_dwell = 400;
 
    static constexpr int32_t  dt_max  = 32;      // clamp ms/loop (creep/servo are real-time)
@@ -350,9 +364,9 @@ struct post_corrector
 // when snapped (the caller adds the center offset).
 struct center_detent
 {
-   static constexpr int32_t  snap        = 2 * constants::scale;   // ~+/-2 LSB rest band
-   static constexpr int32_t  release     = 5 * constants::scale;   // un-center hysteresis
-   static constexpr int32_t  band_thresh = 256;   // smoother band above this = moving -> no snap
+   static constexpr int32_t  snap        = 32;    // ~+/-2 LSB rest band (14-bit)
+   static constexpr int32_t  release     = 80;    // un-center hysteresis (14-bit)
+   static constexpr int32_t  band_thresh = 256 << adc::os_shift;  // band: moving above
    static constexpr uint32_t dwell_ms    = 50;    // stillness must hold this long to latch
 
    center_detent() : centered(true), since(0) {}
@@ -389,8 +403,9 @@ struct output_stage
 // AND at least `holdoff` ms since boot. Any move / out-of-band restarts the wait (note 6).
 struct settle_gate
 {
-   static constexpr int32_t  valid_lo = 400, valid_hi = 640;   // plausible rest band
-   static constexpr int32_t  settle_lsb = 6;    // "settled" = pos within this of itself ...
+   static constexpr int32_t  valid_lo = 400 << adc::os_shift;  // plausible rest band
+   static constexpr int32_t  valid_hi = 640 << adc::os_shift;  // (input units)
+   static constexpr int32_t  settle_lsb = 6 << adc::os_shift;  // "settled" within this
    static constexpr uint32_t settle_ms  = 300;  // ... for this long (past the hold-off)
 
    settle_gate() : ref(0), since(0) {}

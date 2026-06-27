@@ -82,6 +82,10 @@ void setup()
    pinMode(aux5, INPUT_PULLUP);
    pinMode(aux6, INPUT_PULLUP);
 
+   // Start the background ADC oversampler before any analog read (it fills the
+   // per-channel values during the flash load / transmit below, no-op on host).
+   adc::start();
+
    // Load the program_change and bank_select_control states from flash
    program_change.load();
    bank_select_control.load();

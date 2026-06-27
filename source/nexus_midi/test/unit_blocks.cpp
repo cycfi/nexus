@@ -147,7 +147,8 @@ static void test_center_detent()
 
    d.init(0);
    d(200, 0, 600);                          // un-center
-   CHECK(d(10, 300, 700) == 10, "near-zero but band > thresh (moving): lobe passes, not snapped");
+   CHECK(d(10, center_detent::band_thresh + 100, 700) == 10,
+         "near-zero but band > thresh (moving): lobe passes, not snapped");
 
    d.init(0);
    CHECK(d(50, 0, 800) == 0, "rest at 50 <= release while centered: stays centered");
@@ -180,23 +181,38 @@ static void test_output_stage()
 // out-of-band reading never fires.
 static void test_settle_gate()
 {
-   settle_gate g;   // band [400,640], settle 6 LSB / 300 ms (in-class constexpr)
+   settle_gate g;   // rest band [valid_lo,valid_hi], settle settle_lsb / 300 ms (in-class)
    const uint32_t boot = 0, holdoff = 5000;
+   const int32_t in  = (settle_gate::valid_lo + settle_gate::valid_hi) / 2;  // mid rest band
+   const int32_t out = settle_gate::valid_hi + 100;                          // out of band
+   const int32_t jit = settle_gate::settle_lsb + 5;                          // a move > settle_lsb
 
-   g.init(512, 0);
+   g.init(in, 0);
    bool ready = false;
-   for (uint32_t t = 1; t <= 400; ++t) ready |= g(500 + t / 10, 6000 + t, boot, holdoff);
-   CHECK(!ready, "a climbing input never reads settled");
+   for (uint32_t t = 1; t <= 400; ++t)
+      ready |= g(in + (t & 1 ? jit : 0), 6000 + t, boot, holdoff);   // always moving -> never settles
+   CHECK(!ready, "a moving input never reads settled");
 
-   g.init(512, 0);
-   CHECK(!g(512, 400, boot, holdoff), "settled 300+ ms but before the 5 s hold-off: not ready");
+   g.init(in, 0);
+   CHECK(!g(in, 400, boot, holdoff), "settled 300+ ms but before the 5 s hold-off: not ready");
 
-   g.init(512, 6000);
-   CHECK(!g(512, 6200, boot, holdoff), "in band but the settle dwell not yet met (200 < 300 ms)");
-   CHECK(g(512, 6400, boot, holdoff), "held in band 300+ ms past the hold-off -> ready");
+   g.init(in, 6000);
+   CHECK(!g(in, 6200, boot, holdoff), "in band but the settle dwell not yet met (200 < 300 ms)");
+   CHECK(g(in, 6400, boot, holdoff), "held in band 300+ ms past the hold-off -> ready");
 
-   g.init(800, 6000);
-   CHECK(!g(800, 9000, boot, holdoff), "out of the rest band (800 > 640): never ready");
+   g.init(out, 6000);
+   CHECK(!g(out, 9000, boot, holdoff), "out of the rest band: never ready");
+}
+
+//----------------------------------------------------------------------------
+// adc::decimate: os_ratio (= 4^os_shift) raw 10-bit samples sum -> a value
+// os_shift bits wider (same physical level, +os_shift real bits via dither).
+static void test_adc_decimate()
+{
+   using namespace cycfi::adc;
+   CHECK(decimate(os_ratio * 512) == (512 << os_shift), "oversample of 10-bit 512 -> +os_shift bits");
+   CHECK(decimate(os_ratio * 1023) == (1023 << os_shift), "oversample of full scale -> +os_shift bits");
+   CHECK(decimate(0) == 0, "zero -> zero");
 }
 
 int main()
@@ -209,9 +225,8 @@ int main()
    test_center_detent();
    test_output_stage();
    test_settle_gate();
+   test_adc_decimate();
    if (g_fail) { std::printf("unit_blocks: %d CHECK(s) FAILED\n", g_fail); return 1; }
-   std::printf("unit_blocks: PASSED (8 processor blocks: slew_gate, stillness, "
-               "hysteresis_predictor, dc_servo, post_corrector, center_detent, output_stage, "
-               "settle_gate)\n");
+   std::printf("unit_blocks: PASSED (8 blocks + adc::decimate)\n");
    return 0;
 }
