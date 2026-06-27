@@ -172,70 +172,6 @@ namespace cycfi
       T y;
    };
 
-   ////////////////////////////////////////////////////////////////////////////
-   // dynamic_smoother: Adaptive lowpass filter. Integer port of the Q DSP
-   // dynamic_smoother (Andrew Simper, Cytomic, 2016). The bandpass output
-   // (low1 - low2) modulates the cutoff, giving fast tracking on transients
-   // and heavy smoothing when the signal is stable.
-   //
-   // State is stored in Q8 (×256) for sub-integer precision.
-   // G0:    base gain in Q8 [0..256]. Analogous to g0 = 2·tan(π·fc/fs).
-   //        E.g. G0=16 → g≈0.06, ~10 Hz base cutoff at 1 kHz.
-   // Sense: sensitivity. Scales the 10-bit band magnitude before adding to
-   //        g (also Q8). Analogous to sense = sensitivity × 4 in the float
-   //        version but expressed for a 10-bit signal.
-   ////////////////////////////////////////////////////////////////////////////
-   template <int G0, int Sense, int OutShift = 8, typename T = int32_t>
-   struct dynamic_smoother
-   {
-      T operator()(T s)
-      {
-         T const low1z = low1;
-         T const low2z = low2;
-         T band = low1z - low2z;
-         if (band < 0)
-            band = -band;
-
-         // band is Q8; >> 8 converts to 10-bit units, second >> 8 applies Q8 scale
-         int32_t g = G0 + ((int32_t(Sense) * (band >> 8)) >> 8);
-         if (g > 256)
-            g = 256;
-
-         low1 = low1z + (int32_t(g) * ((s << 8) - low1z) >> 8);
-         low2 = low2z + (int32_t(g) * (low1 - low2z) >> 8);
-         return low2 >> OutShift;
-      }
-
-      dynamic_smoother() : low1(0), low2(0) {}
-
-      T low1;
-      T low2;
-   };
-
-   ////////////////////////////////////////////////////////////////////////////
-   // dc_block: High-pass (DC blocking) filter. Removes slow DC offset/drift.
-   // K is the time constant in samples; use powers of 2 for efficiency
-   // (division becomes a shift). TC = K / sample_rate.
-   // E.g. K=8192 at 1 kHz → TC ≈ 8.2 s.
-   ////////////////////////////////////////////////////////////////////////////
-   template <int Shift, typename T = int32_t>
-   struct dc_block
-   {
-      // TC = 2^Shift / sample_rate. E.g. Shift=16 at 1 kHz → TC ≈ 65.5 s.
-      dc_block() : _lp(0) {}
-
-      // Pre-load the DC estimate so the filter starts converged.
-      void init(T s) { _lp = s << Shift; }
-
-      T operator()(T s)
-      {
-         _lp += s - (_lp >> Shift);
-         return s - (_lp >> Shift);
-      }
-
-      T _lp;
-   };
-
    //////////////////////////////////////////////////////////////////////////////
    // offset_servo: Tracks and removes slow offset drift near the center.
    //////////////////////////////////////////////////////////////////////////////
@@ -256,23 +192,9 @@ namespace cycfi
          _i += s - (_i >> Shift);
       }
 
-      // Fast-convergence update for use during init() only.
-      // Drives _i toward s<<Shift with TC = 2^fast_shift samples
-      // (fast_shift < Shift).  Once init completes, normal update()
-      // resumes with TC = 2^Shift.
-      void fast_update(T s, int fast_shift)
-      {
-         _i += ((s << Shift) - _i) >> fast_shift;
-      }
-
       T operator()(T s) const
       {
          return s - (_i >> Shift);
-      }
-
-      T offset() const
-      {
-         return _i >> Shift;
       }
 
       T _i;
