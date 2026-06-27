@@ -26,5 +26,16 @@ target_include_directories(host_sim PRIVATE
    ${CMAKE_CURRENT_SOURCE_DIR}/..        # nexus_midi.ino, nexus_controls.hpp, sim/
 )
 
+# Per-block unit tests: each processor block (general ones in util.hpp, pitch-specific
+# ones in nexus_controls.hpp) exercised in isolation. No NEXUS_SIM needed.
+add_executable(unit_blocks unit_blocks.cpp)
+target_compile_definitions(unit_blocks PRIVATE NEXUS_HOST)
+target_compile_options(unit_blocks PRIVATE -Wno-c++11-narrowing)
+target_include_directories(unit_blocks PRIVATE
+   ${CMAKE_CURRENT_SOURCE_DIR}/mock
+   ${CMAKE_CURRENT_SOURCE_DIR}/..
+)
+
 enable_testing()
 add_test(NAME host_sim COMMAND host_sim)
+add_test(NAME unit_blocks COMMAND unit_blocks)

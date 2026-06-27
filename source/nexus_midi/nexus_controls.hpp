@@ -176,18 +176,8 @@ inline uint16_t analog_read(uint16_t pin)
    return map(x, min_x, max_x, 0, 1023);
 }
 
-// Small signed-integer helpers (constexpr implies inline).
-constexpr int32_t iabs(int32_t x)
-{
-   return x < 0 ? -x : x;
-}
-
-// Branch-free clamp. Assumes lo <= hi with small operands (no subtraction overflow), which
-// holds at every call site. Adds the low correction when x < lo, the high one when x > hi.
-constexpr int32_t clamp(int32_t x, int32_t lo, int32_t hi)
-{
-   return x + ((lo - x) & -int32_t(x < lo)) + ((hi - x) & -int32_t(x > hi));
-}
+// iabs / clamp live in util.hpp, shared with the general processor blocks (slew_gate, stillness,
+// dc_servo, ...). The pitch-specific blocks are defined just above this controller.
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -263,87 +253,159 @@ struct controller
 //               ~16 s (the persistent creep -- it settles at 2/3 and STAYS)
 //   corrected = dev - k*M                     hysteresis removed -> centers on release
 //
-// C0 (the only per-unit term) is a SLOW DC servo, gated to near-center output so a
-// held bend can't drag it. A watchdog re-seeds C0 if the output is stuck off-center
-// past a timeout. See the numbered notes after the class for per-field rationale.
+// C0 (the only per-unit term) is a VERY slow DC servo (the Pre-DC servo block), gated to
+// still + near-center and hard-clipped to +/- the max physical wander, so a held bend can't
+// drag it and a slip can't strand a release. See the numbered notes after the class.
 ///////////////////////////////////////////////////////////////////////////////
-struct pitch_bend_controller
+
+///////////////////////////////////////////////////////////////////////////////
+// Common constants -- shared by pitch_bend_controller and 2+ of its aux blocks,
+// plus the tuning for the GENERAL util.hpp blocks the controller instantiates
+// (slew_gate, stillness, dc_servo, dynamic_smoother). Each pitch-specific aux
+// block below keeps its OWN constants in-class.
+///////////////////////////////////////////////////////////////////////////////
+struct constants
 {
    static constexpr int32_t  center  = 8192;
    static constexpr int32_t  pb_max  = 2 * center - 1;   // 16383, 14-bit MIDI ceiling
    static constexpr int32_t  scale   = 16;      // one 10-bit step -> 14-bit
    static constexpr int32_t  nominal = 512;     // ADC nominal center
 
-   // Input smoothing: an adaptive dynamic_smoother replaces the old lp1<8>+lp2<16>
-   // cascade -- fast tracking on moves, heavy smoothing at rest. Tuned on recorded
-   // gestures (deep-bend lag 22 -> 11 ms); G0 ~ the old rest smoothing.
-   static constexpr int  sm_g0    = 24;
-   static constexpr int  sm_sense = 512;        // power of two -> sense term is a shift
+   // Input smoothing (adaptive dynamic_smoother): fast on moves, heavy at rest.
+   static constexpr int      sm_g0    = 24;
+   static constexpr int      sm_sense = 512;    // power of two -> sense term is a shift
 
-   // Hysteresis slope k = k_num / k_den. A FIXED per-unit compile-time constant (note 1):
-   // the C0 servo does the adaptive centering, so k only removes the bulk hysteresis and
-   // only has to be roughly right. Set it per unit at build time (note 2).
-   static constexpr int32_t  k_den = 4096;
-   static constexpr int32_t  k_num = 176;       // ~0.043 (per-unit; see calibration note)
+   // Input slew gate: reject raw steps faster than the arm can move (~4 LSB/ms; a
+   // programmer-contact glitch is ~10x faster). Holds the last good reading (note 4).
+   static constexpr int      slew_rate = 6, slew_slack = 4, slew_dt_max = 6;
 
-   // M creep memory: tau ~ 2^14 ms ~ 16 s, decays to a 2/3-of-peak floor (note 3).
-   static constexpr int      mem_shift = 14;
-   static constexpr int32_t  mem_one   = 1 << mem_shift;
-   static constexpr int      floor_num = 2;
-   static constexpr int      floor_den = 3;
-
-   // C0 DC servo: tau ~ 2^11 ms ~ 2 s, frozen when |deflection| > c0_gate (note 4).
+   // C0 DC servo: VERY slow (tau 2^16 ms ~ 65 s), frozen past the gate, clipped to the
+   // max physical DC wander (note 4).
    static constexpr int      c0_shift = 16;
-   static constexpr int32_t  c0_one   = 1 << c0_shift;
-   static constexpr int32_t  c0_clip  = 736;    // +/-46 LSB (~1.3 ST): the max physical DC wander
-                                                // (hysteresis + thermal); C0 is hard-clamped here
    static constexpr int32_t  c0_gate  = 546;    // ~0.8 ST: a real bend (>1 ST) freezes C0
+   static constexpr int32_t  c0_clip  = 736;    // +/-46 LSB (~1.3 ST): max physical DC wander
 
-   // Post error-correction (note 4): nulls the predictor's leftover at a SETTLED rest. Fast
-   // (tau ~ 2^post_shift ms ~ 2 s) but bounded to +/- post_clip authority and gated on stillness,
-   // so it never chases a live bend and never holds a standing offset (it relaxes to 0 off-rest).
-   // It does the rest-nulling the now-very-slow C0 servo can't, WITHOUT re-coupling to the bend.
-   static constexpr int      post_shift  = 11;
-   static constexpr int32_t  post_clip   = 460;  // ~0.8 ST: the post stage's hard authority limit
-   static constexpr int32_t  still_band  = 2 * scale; // "still" = bar within ~2 LSB ...
-   static constexpr uint32_t still_dwell = 400;       // ... for this long (displacement-over-time)
+   // Stillness, by displacement-over-time: within still_band for still_dwell ms.
+   static constexpr int32_t  still_band  = 2 * scale;
+   static constexpr uint32_t still_dwell = 400;
 
-   static constexpr int32_t  pb_window = 16;    // output send deadband (1 step)
-   // Schmitt center detent: snap-in < release so a rest at the edge can't ping-pong (note 5).
-   static constexpr int32_t  detent_snap    = 2 * scale;
-   static constexpr int32_t  detent_release = 5 * scale;
-   static constexpr int32_t  band_thresh    = 256;  // smoother band (Q8) above this = moving -> no detent
-                                                    // (256 keeps the vibrato lobes; the residual center
-                                                    // toggle it leaves is softened by out_ma below)
-   static constexpr uint32_t engage_dwell_ms = 50;  // stillness must hold this long before the detent
-                                                    // latches -- a brief mild-vibrato crossing slips
-                                                    // through un-clipped; a real rest still snaps
-   static constexpr int32_t  dt_max = 32;       // clamp ms/loop (creep/servo are real-time)
+   static constexpr int32_t  dt_max  = 32;      // clamp ms/loop (creep/servo are real-time)
+   static constexpr uint32_t diag_ms = 100;     // NEXUS_DIAG telemetry interval (note 8)
+};
 
-   // Input slew gate. The arm tops out ~4 LSB/ms (measured); a programmer-contact glitch shifts
-   // the ADC reference ~10x faster (a ~40 LSB jump in one ~1 ms loop). Reject any raw step faster
-   // than this and hold the last good reading -- since a glitched level is SUSTAINED, every reading
-   // stays a too-fast jump from the held value, so it is rejected for the whole event and never
-   // reaches the predictor. Prevents the off-center servo latch at the source. dt is clamped so a
-   // long loop (e.g. the first one after muting) can't widen the allowance enough to let one through.
-   static constexpr int32_t  slew_rate   = 6;   // max physical |d raw| per ms (LSB); arm peaks ~4
-   static constexpr int32_t  slew_slack  = 4;   // always allow this much (noise floor, tiny-dt loops)
-   static constexpr int32_t  slew_dt_max = 6;   // clamp the per-step ms in the allowance
+///////////////////////////////////////////////////////////////////////////////
+// Pitch-specific aux blocks -- used only by pitch_bend_controller, declared here
+// just before it. Non-template (the tuning is in-class constexpr; shared values
+// come from `constants` above); operator() bodies are out-of-line below. The
+// general, reusable blocks (slew_gate, stillness, dc_servo, dynamic_smoother,
+// moving_average_n) stay templated in util.hpp. Unit-tested in unit_blocks.cpp.
+///////////////////////////////////////////////////////////////////////////////
 
-   // Output gain: scale the (linear, sub-full-scale) sensor swing up, symmetric so dive
-   // and pull feel the same, and let the pitch clamp take the overshoot (note 7).
-   static constexpr int32_t  out_num = 307;     // x1.2 (256 = x1.0)
-   static constexpr int32_t  out_den = 256;
+// hysteresis_predictor: the feed-forward creep memory. M is a reversal-aware peak
+// detector of the input deflection -- fast-attack to each new extreme, then a leaky
+// decay toward sign(M) * (floor_num/floor_den) * peak, where it PERSISTS (the spring
+// steel hysteresis settles at ~2/3 of peak and stays). operator() advances M by the
+// elapsed dt and returns the predicted hysteresis k*M (k = k_num/k_den). Driven off
+// the FIXED seed deflection, never the live center (notes 1-4).
+struct hysteresis_predictor
+{
+   static constexpr int      mem_shift = 14;    // tau ~ 2^14 ms ~ 16 s
+   static constexpr int32_t  k_num = 176, k_den = 4096;   // k ~ 0.043 (per-unit, notes 1-2)
+   static constexpr int      floor_num = 2, floor_den = 3;   // 2/3-of-peak persistent floor
 
-   // Startup / validity gate: mute until a valid settled rest (note 6).
-   static constexpr int32_t  valid_lo   = 400;  // plausible REST band around sensor center
-   static constexpr int32_t  valid_hi   = 640;  // (~512); outside = rail / disconnect / bend
+   hysteresis_predictor() : m_acc(0), peak(0) {}
+   void init() { m_acc = 0; peak = 0; }
+
+   int32_t operator()(int32_t dev, int32_t dt);   // advance M by dt, return k*M
+
+   int32_t hyst() const { return ((m_acc >> mem_shift) * k_num) / k_den; }   // k * M
+   int32_t M() const    { return m_acc >> mem_shift; }
+
+   int32_t m_acc;
+   int32_t peak;
+};
+
+// post_corrector: nulls the predictor's leftover at a SETTLED rest -- the fast rest
+// nulling the slow dc_servo can't do, off the servo loop. Still + inside authority ->
+// integrate the leftover away; else RELAX to 0. Bounded to +/-post_clip (note 4).
+struct post_corrector
+{
+   static constexpr int      post_shift = 11;   // tau ~ 2^11 ms ~ 2 s
+   static constexpr int32_t  post_clip  = 460;  // ~0.8 ST: hard authority limit
+   // int32_t(post_clip): a bare post_clip<<post_shift overflows the device's 16-bit int.
+   static constexpr int32_t  lim = int32_t(post_clip) << post_shift;
+   static_assert((lim >> post_shift) == post_clip, "post_corrector authority overflows int32_t");
+
+   post_corrector() : acc(0) {}
+   void init() { acc = 0; }
+
+   int32_t operator()(int32_t corrected, bool still, int32_t dt);   // -> offset to subtract
+
+   int32_t acc;
+};
+
+// center_detent: a velocity+dwell-gated Schmitt detent that snaps a small rest band to
+// EXACT center. Amplitude-only release with hysteresis (release > snap, note 5); re-engage
+// needs a low smoother band AND dwell_ms of stillness. Returns the corrected value, or 0
+// when snapped (the caller adds the center offset).
+struct center_detent
+{
+   static constexpr int32_t  snap        = 2 * constants::scale;   // ~+/-2 LSB rest band
+   static constexpr int32_t  release     = 5 * constants::scale;   // un-center hysteresis
+   static constexpr int32_t  band_thresh = 256;   // smoother band above this = moving -> no snap
+   static constexpr uint32_t dwell_ms    = 50;    // stillness must hold this long to latch
+
+   center_detent() : centered(true), since(0) {}
+   void init(uint32_t now) { centered = true; since = now; }
+
+   int32_t operator()(int32_t corrected, int32_t band, uint32_t now);   // corrected, or 0 if snapped
+
+   bool     centered;
+   uint32_t since;
+};
+
+// output_stage: the send-deadband + the symmetric output gain (note 7). The gain hits ONLY
+// the value handed to MIDI; prev (the deadband ref) stays un-scaled. operator() returns true
+// + writes the gained MIDI value when the pitch should send (changed by > window), false to
+// suppress -- but a center snap is never swallowed.
+struct output_stage
+{
+   static constexpr int32_t  out_num = 307, out_den = 256;   // x1.2 (256 = x1.0)
+   static constexpr int32_t  window  = 16;      // output send deadband (1 step)
+
+   output_stage() : prev(constants::center) {}
+   void init() { prev = constants::center; }
+
+   bool operator()(int32_t pitch, int32_t* out);   // true + *out (gained) if it should send
+
+   int32_t value() const { return prev; }                 // last accepted pitch (un-scaled)
+   void reset(int32_t pitch) { prev = pitch; }            // force the deadband ref (muted park)
+
+   int32_t prev;
+};
+
+// settle_gate: the startup "is this a valid settled rest yet" detector. True once pos has
+// held within settle_lsb of itself, inside the rest band [valid_lo,valid_hi], for settle_ms
+// AND at least `holdoff` ms since boot. Any move / out-of-band restarts the wait (note 6).
+struct settle_gate
+{
+   static constexpr int32_t  valid_lo = 400, valid_hi = 640;   // plausible rest band
    static constexpr int32_t  settle_lsb = 6;    // "settled" = pos within this of itself ...
-   static constexpr uint32_t settle_ms  = 300;  // ... for this long (and past startup_holdoff)
-   static constexpr uint32_t diag_ms    = 100;  // NEXUS_DIAG free-running telemetry interval (note 8)
+   static constexpr uint32_t settle_ms  = 300;  // ... for this long (past the hold-off)
 
+   settle_gate() : ref(0), since(0) {}
+   void init(int32_t pos, uint32_t now) { ref = pos; since = now; }
+
+   bool operator()(int32_t pos, uint32_t now, uint32_t boot, uint32_t holdoff);   // ready?
+
+   int32_t  ref;
+   uint32_t since;
+};
+
+struct pitch_bend_controller
+{
    // Deflection of a smoothed ADC reading from nominal center, in 14-bit units.
-   static int32_t deflection(int32_t pos) { return (pos - nominal) * scale; }
+   static int32_t deflection(int32_t pos) { return (pos - constants::nominal) * constants::scale; }
 
    pitch_bend_controller();
 
@@ -351,10 +413,6 @@ struct pitch_bend_controller
    void operator()();
 
    bool    startup_gate(int32_t pos, uint32_t now);
-   int32_t slew_limit(int32_t raw, uint32_t now);   // reject glitch-fast input jumps at the source
-   void    update_memory(int32_t dev, int32_t adev, int32_t dt);
-   int32_t apply_detent(int32_t corrected, int32_t ac, int32_t band, uint32_t now);
-   void    update_center(int32_t defl, int32_t c0, int32_t dt, bool still);
    void    send_pitch(
               int32_t pitch, int32_t raw, int32_t pos, int32_t c0,
               int32_t hyst);
@@ -364,24 +422,19 @@ struct pitch_bend_controller
 #endif
 
    uint16_t pin;
-   int32_t  held_raw;            // last raw reading the slew gate accepted (glitch reject)
-   uint16_t prev;                // last emitted pitch (send-deadband reference)
-   int32_t  M_acc;               // deflection memory (M = M_acc >> mem_shift)
-   int32_t  peak;                // |captured peak deviation| (sets the 2/3 floor)
-   int32_t  c0_acc;              // DC center estimate (C0 = c0_acc >> c0_shift)
-   int32_t  c0_seed;             // startup-rest deflection: FIXED ref for M + the C0 clip (note 4)
-   int32_t  post_acc;            // post error-correction (post = post_acc >> post_shift)
-   int32_t  dwell_ref;           // displacement-dwell reference for the post-correction stillness
-   uint32_t dwell_since;         // millis() the bar's current displacement-still streak began
-   dynamic_smoother<sm_g0, sm_sense> smoother;   // adaptive input lowpass
+   slew_gate<constants::slew_rate, constants::slew_slack, constants::slew_dt_max> slew;  // glitch reject
+   output_stage out_stage;       // deadband + output gain
+   hysteresis_predictor predictor;  // k*M feed-forward
+   dc_servo<constants::c0_shift, constants::c0_gate, constants::c0_clip> servo;  // Pre-DC baseline servo
+   post_corrector postc;         // null the predictor's leftover at a settled rest
+   stillness<constants::still_band, constants::still_dwell> dwell;  // "is the bar settled"
+   dynamic_smoother<constants::sm_g0, constants::sm_sense> smoother;   // adaptive input lowpass
    moving_average_n<3> out_ma;   // 3-pt output average: softens the residual center toggle
    uint32_t last_ms;             // millis() at the previous loop (real-time dt)
    uint32_t last_diag_ms;        // millis() of the last telemetry frame (free-running diag clock)
-   uint32_t still_since;         // millis() the detent's still condition began (engage dwell)
-   bool     centered;            // Schmitt detent state (true = snapped to center)
+   center_detent detent;         // snap a still rest to exact center
    bool     muted;               // startup/validity gate: holding center until a valid rest
-   uint32_t valid_since;         // millis() the input started its current valid+stable streak
-   int32_t  valid_ref;           // pos the startup stability check compares against
+   settle_gate settle;           // valid-settled-rest detector
    uint32_t boot_ms;             // millis() at init -- startup hold-off (wait out the Vcc ramp)
    uint32_t startup_holdoff;     // min ms muted after boot (member so host tests can shorten it)
 };
@@ -449,24 +502,85 @@ struct pitch_bend_controller
 //    timing). The clocked frame uses last loop's C0/M (a few ms stale); raw/pos are current.
 ///////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////
+// Aux-block operator() bodies (compact declarations above, before the controller).
+///////////////////////////////////////////////////////////////////////////////
+
+inline int32_t
+hysteresis_predictor::operator()(int32_t dev, int32_t dt)
+{
+   int32_t M    = m_acc >> mem_shift;
+   int32_t adev = iabs(dev);
+   bool reversed = ((dev < 0) != (M < 0)) && M != 0;
+   if (reversed || adev > iabs(M))        // new excursion / extending -> capture peak
+   {
+      m_acc = dev * (int32_t(1) << mem_shift);
+      peak  = adev;
+   }
+   else                                   // decay toward sign(M)*floor*peak, then persist
+   {
+      int32_t target = (M < 0 ? -peak : peak) * floor_num / floor_den;
+      m_acc += (target - M) * dt;         // millis-based leaky (tau = 2^mem_shift ms)
+   }
+   return hyst();
+}
+
+inline int32_t
+post_corrector::operator()(int32_t corrected, bool still, int32_t dt)
+{
+   int32_t post = acc >> post_shift;
+   int32_t ac   = iabs(corrected);
+   acc += ((still && ac <= post_clip) ? (corrected - post) : (0 - post)) * dt;
+   acc = clamp(acc, -lim, lim);
+   return acc >> post_shift;
+}
+
+inline int32_t
+center_detent::operator()(int32_t corrected, int32_t band, uint32_t now)
+{
+   int32_t ac = iabs(corrected);
+   if (centered)
+   {
+      if (ac > release) centered = false;            // amplitude-only release
+   }
+   else if (ac <= snap && band <= band_thresh)
+   {
+      if (now - since >= dwell_ms) centered = true;  // sustained stillness -> snap
+   }
+   else
+   {
+      since = now;                                   // moving / off-center -> restart dwell
+   }
+   return centered ? 0 : corrected;
+}
+
+inline bool
+output_stage::operator()(int32_t pitch, int32_t* out)
+{
+   int32_t delta = iabs(pitch - prev);
+   if (delta == 0) return false;                       // unchanged
+   if (delta <= window && pitch != constants::center)  // deadband (but never a center snap)
+      return false;
+   prev = pitch;
+   *out = clamp(constants::center + ((pitch - constants::center) * out_num) / out_den,
+                0, constants::pb_max);
+   return true;
+}
+
+inline bool
+settle_gate::operator()(int32_t pos, uint32_t now, uint32_t boot, uint32_t holdoff)
+{
+   if (pos >= valid_lo && pos <= valid_hi && iabs(pos - ref) <= settle_lsb)
+      return now - since >= settle_ms && now - boot >= holdoff;
+   ref = pos; since = now;                             // moved / out of band -> restart
+   return false;
+}
+
 inline pitch_bend_controller::pitch_bend_controller()
  : pin(0)
- , held_raw(0)
- , prev(center)
- , M_acc(0)
- , peak(0)
- , c0_acc(0)
- , c0_seed(0)
- , post_acc(0)
- , dwell_ref(0)
- , dwell_since(0)
  , last_ms(0)
  , last_diag_ms(0)
- , still_since(0)
- , centered(true)
  , muted(true)
- , valid_since(0)
- , valid_ref(0)
  , boot_ms(0)
  , startup_holdoff(5000)        // ride out the Hall front-end's power-on settle
 {}
@@ -475,201 +589,100 @@ inline void pitch_bend_controller::init(uint16_t pin_)
 {
    pin = pin_;
    int32_t pos = raw_adc(pin);
-   held_raw = pos;                // seed the slew gate to the startup reading
+   slew.init(pos, millis());      // seed the slew gate to the startup reading
    smoother = pos;
-   out_ma.init(center);
+   out_ma.init(constants::center);
    int32_t defl = deflection(pos);
-   M_acc = 0;
-   peak = 0;
-   c0_acc = defl * c0_one;        // C0 := startup deflection -> output starts centered
-   c0_seed = defl;                // fixed neutral for M + the clip
-   post_acc = 0;
-   dwell_ref = defl;
-   dwell_since = millis();
-   prev = center;
+   predictor.init();
+   servo.init(defl);              // C0 := startup deflection -> output starts centered
+   postc.init();
+   dwell.init(defl, millis());
+   out_stage.init();
    last_ms = millis();
-   centered = true;
+   detent.init(millis());
    muted = true;                  // start MUTED: wait for a valid settled rest (note 6)
-   valid_ref = pos;
-   valid_since = millis();
+   settle.init(pos, millis());
    boot_ms = millis();            // hold-off reference: don't go live during the Vcc ramp
-   midi_out << midi::pitch_bend{0, uint16_t(center)};
+   midi_out << midi::pitch_bend{0, uint16_t(constants::center)};
 #ifdef NEXUS_DIAG
    send_diag_signature(0x7f, startup_holdoff / 100);   // boot signature (raw=16383)
 #endif
 }
 
-// Input slew gate: reject a raw jump faster than the arm can physically move (a programmer-
-// contact glitch shifts the ADC reference ~10x faster than a real bend) and hold the last good
-// reading. A glitched level is SUSTAINED, so every reading stays a too-fast jump from the held
-// value and is rejected for the whole event -- the input never leaves the true rest, the C0 servo
-// never freezes off-center, and the output can't latch. Prevents the stuck state at the source.
-inline int32_t pitch_bend_controller::slew_limit(int32_t raw, uint32_t now)
-{
-   int32_t dt = clamp(int32_t(now - last_ms), 0, slew_dt_max);
-   if (iabs(raw - held_raw) > slew_rate * dt + slew_slack)
-      return held_raw;                           // non-physical jump -> reject, hold last good
-   held_raw = raw;
-   return raw;
-}
-
 inline void pitch_bend_controller::operator()()
 {
    uint32_t now = millis();
-   int32_t  raw = slew_limit(raw_adc(pin), now); // reject glitch-fast jumps before anything sees them
+   int32_t  raw = slew(raw_adc(pin), now);       // reject glitch-fast jumps before anything sees them
    int32_t  pos = smoother(raw);                 // adaptive-smoothed 10-bit
 
 #ifdef NEXUS_DIAG
    // Free-running telemetry (note 8): emit on a clock, BEFORE the mute return and regardless of
    // the send-deadband, so the power-on settle climb and the quiet rest get sampled too -- not
    // just active sends. c0/M are last loop's (one loop ~ a few ms stale; raw/pos are current).
-   if (now - last_diag_ms >= diag_ms)
-      send_diag(raw, pos, c0_acc >> c0_shift, (int32_t(M_acc >> mem_shift) * k_num) / k_den);
+   if (now - last_diag_ms >= constants::diag_ms)
+      send_diag(raw, pos, servo.value(), predictor.hyst());
 #endif
 
    if (startup_gate(pos, now))                   // held at center until a valid rest
       return;
 
    int32_t defl = deflection(pos);               // raw deflection (14-bit)
-   int32_t c0   = c0_acc >> c0_shift;            // DC center estimate
+   int32_t c0   = servo.value();                 // DC center estimate (live)
    int32_t dev  = defl - c0;                     // deflection from the LIVE center -> output
-   int32_t dev_m = defl - c0_seed;               // deflection from the FIXED seed -> predictor only
+   int32_t dev_m = defl - servo.seed_value();    // deflection from the FIXED seed -> predictor only
                                                  //   (note 4: M off the seed, never C0 -> no loop)
 
    // Real-time step: creep and DC servo advance by elapsed ms, not per loop, so
    // they track physical time regardless of the device's loop rate.
-   int32_t dt = clamp(int32_t(now - last_ms), 0, dt_max);
+   int32_t dt = clamp(int32_t(now - last_ms), 0, constants::dt_max);
    last_ms = now;
 
-   update_memory(dev_m, iabs(dev_m), dt);        // advance M off the FIXED-seed deflection
-   int32_t M    = M_acc >> mem_shift;
-   int32_t hyst = (M * k_num) / k_den;           // k * M (the predicted hysteresis)
+   int32_t hyst = predictor(dev_m, dt);          // advance M off the FIXED-seed deflection -> k*M
 
    int32_t corrected = dev - hyst;               // bend with hysteresis removed
-   int32_t ac = iabs(corrected);
 
-   // Post error-correction (note 4). Stillness by displacement-over-time (the smoother band can't
-   // see a slow ramp). When settled AND already inside the post authority, integrate the leftover
-   // away; otherwise relax to 0 -- so a live bend is never chased and no standing offset survives.
-   if (iabs(defl - dwell_ref) > still_band) { dwell_ref = defl; dwell_since = now; }
-   bool still = (now - dwell_since >= still_dwell);
-   int32_t post = post_acc >> post_shift;
-   post_acc += ((still && ac <= post_clip) ? (corrected - post) : (0 - post)) * dt;
-   post_acc = clamp(post_acc, -(post_clip << post_shift), post_clip << post_shift);
-   post = post_acc >> post_shift;
-   corrected -= post;                            // remove the settled residual
-   ac = iabs(corrected);
+   // Post error-correction (note 4): stillness by displacement-over-time (the smoother band can't
+   // see a slow ramp), then null the predictor's settled leftover -- off the servo loop.
+   bool still = dwell(defl, now);
+   corrected -= postc(corrected, still, dt);     // remove the settled residual
 
-   int32_t pitch = apply_detent(corrected, ac, smoother.band(), now); // dwelled velocity detent
+   int32_t pitch = clamp(constants::center + detent(corrected, smoother.band(), now), 0, constants::pb_max);
    pitch = out_ma(pitch);                        // 3-pt average -> soften residual toggle
-   update_center(defl, c0, dt, still);           // C0 baseline servo (raw defl, gated, clipped)
+   servo(defl, still, dt);                       // advance the C0 baseline servo (raw defl, gated, clipped)
    send_pitch(pitch, raw, pos, c0, hyst);        // emit (deadband) + diagnostics
 }
 
 // Startup / validity gate: hold center (MUTED) until the input is a valid, SETTLED
 // rest, suppressing the power-on swing and the no-whammy case (note 6). Seeds C0 to
 // the rest on the first valid + stable reading (also handles a hot-plug after boot).
-// Returns true while still muted so the caller returns and holds center; once live
-// it stays live (a mid-session disconnect is left to the watchdog).
+// Returns true while still muted so the caller returns and holds center; once live it
+// stays live (a mid-session disconnect rails the input -- the slew gate rejects the jump
+// and the C0 clip bounds the center, so it can't strand off-center).
 inline bool pitch_bend_controller::startup_gate(int32_t pos, uint32_t now)
 {
    if (!muted)
       return false;
 
-   int32_t dp = iabs(pos - valid_ref);
-   if (pos >= valid_lo && pos <= valid_hi && dp <= settle_lsb)
+   if (settle(pos, now, boot_ms, startup_holdoff))   // a valid settled rest past the hold-off
    {
-      if (now - valid_since >= settle_ms && now - boot_ms >= startup_holdoff)
-      {
-         int32_t defl0 = deflection(pos);
-         c0_acc = defl0 * c0_one;             // seed the center to the settled rest
-         c0_seed = defl0;                     // fixed neutral for M + the clip
-         post_acc = 0;
-         dwell_ref = defl0;
-         dwell_since = now;
-         M_acc = 0;
-         peak = 0;
-         last_ms = now;
-         centered = true;
-         muted = false;
+      int32_t defl0 = deflection(pos);
+      servo.init(defl0);                      // seed the center to the settled rest
+      postc.init();
+      dwell.init(defl0, now);
+      predictor.init();
+      last_ms = now;
+      detent.init(now);
+      muted = false;
 #ifdef NEXUS_DIAG
-         send_diag_signature(0x7e, (now - boot_ms) / 10);   // go-live (raw=16382)
+      send_diag_signature(0x7e, (now - boot_ms) / 10);   // go-live (raw=16382)
 #endif
-      }
    }
-   else
+   if (out_stage.value() != constants::center)  // park the output at center while muted
    {
-      valid_ref = pos;                        // moved / out of range -> restart the wait
-      valid_since = now;
-   }
-   if (prev != center)                        // park the output at center while muted
-   {
-      prev = uint16_t(center);
-      midi_out << midi::pitch_bend{0, uint16_t(center)};
+      out_stage.reset(constants::center);
+      midi_out << midi::pitch_bend{0, uint16_t(constants::center)};
    }
    return true;
-}
-
-// Advance the creep memory M: a reversal-aware peak detector of dev (note 3).
-inline void
-pitch_bend_controller::update_memory(int32_t dev, int32_t adev, int32_t dt)
-{
-   int32_t M  = M_acc >> mem_shift;
-   int32_t aM = iabs(M);
-   bool reversed = ((dev < 0) != (M < 0)) && M != 0;
-   if (reversed || adev > aM)                 // new excursion / extending -> capture peak
-   {
-      M_acc = dev * mem_one;
-      peak  = adev;
-   }
-   else                                       // decay toward sign(M) * 2/3 * peak
-   {
-      int32_t target = (M < 0 ? -peak : peak) * floor_num / floor_den;
-      M_acc += (target - M) * dt;             // millis-based leaky (tau = 2^mem_shift ms)
-   }
-}
-
-// Schmitt center detent: snap a small rest band to exact center, with hysteresis
-// (release > snap) so a rest at the edge can't ping-pong (note 5). Returns pitch.
-inline int32_t
-pitch_bend_controller::apply_detent(int32_t corrected, int32_t ac, int32_t band, uint32_t now)
-{
-   // Velocity-gated Schmitt center detent with an engage-dwell. Release is purely on
-   // amplitude, so the rest wander never un-centers a still rest. Re-engagement is gated two
-   // ways: by the band (a fast vibrato crossing is moving -> won't snap) AND by a dwell (the
-   // still condition must hold engage_dwell_ms) -- the time discriminator the band can't give,
-   // so a brief mild/slow crossing slips through un-clipped while a real rest still snaps.
-   if (centered)
-   {
-      if (ac > detent_release)
-         centered = false;
-   }
-   else if (ac <= detent_snap && band <= band_thresh)
-   {
-      if (now - still_since >= engage_dwell_ms)   // sustained stillness -> snap to center
-         centered = true;
-   }
-   else
-   {
-      still_since = now;                          // moving / off-center -> restart the dwell
-   }
-   int32_t pitch = centered ? center : center + corrected;
-   return clamp(pitch, 0, pb_max);
-}
-
-// C0 baseline servo (note 4). Tracks the RAW deflection -- NOT defl-hyst -- so it has no path to
-// the predictor (M is computed off the fixed seed, note 4); that breaks the feedback loop that
-// made the center history-dependent. It steps only when the bar is STILL (displacement dwell) AND
-// near neutral (|defl-c0| within the gate), and is far slower than any gesture (tau ~65s), so it
-// follows only the thermal/bias baseline, never a per-bend hysteresis (the predictor owns that).
-// Finally it is hard-CLIPPED to +/- c0_clip of the seed = the max the rest can physically sit off
-// center, so even a detection slip cannot reach a real bend or strand a release. No watchdog --
-// the clip is the guarantee; the 15 s re-seed only ever centered a held bend and stranded it.
-inline void pitch_bend_controller::update_center(int32_t defl, int32_t c0, int32_t dt, bool still)
-{
-   if (still && iabs(defl - c0) <= c0_gate)
-      c0_acc += (defl - c0) * dt;             // very slow leaky integrator toward the raw rest
-   c0_acc = clamp(c0_acc, (c0_seed - c0_clip) * c0_one, (c0_seed + c0_clip) * c0_one);
 }
 
 // Emit on the send-deadband; a NEXUS_DIAG build pairs each send with raw / smoothed
@@ -677,16 +690,10 @@ inline void pitch_bend_controller::update_center(int32_t defl, int32_t c0, int32
 inline void pitch_bend_controller::send_pitch(
    int32_t pitch, int32_t raw, int32_t pos, int32_t c0, int32_t hyst)
 {
-   int32_t delta = iabs(pitch - prev);
-   if (delta == 0)
-      return;                                   // unchanged -- nothing to send
-   if (delta <= pb_window && pitch != center)
-      return;                                   // send-deadband, but never swallow a center snap
-   prev = uint16_t(pitch);
-   // Output gain at the VERY END (note 7): scale ONLY the value handed to MIDI, so the
-   // detent, the send deadband above, prev, and all predictor math stay un-scaled.
-   int32_t out = center + ((pitch - center) * out_num) / out_den;
-   midi_out << midi::pitch_bend{0, uint16_t(clamp(out, 0, pb_max))};
+   int32_t out;
+   if (!out_stage(pitch, &out))                  // send-deadband + output gain (note 7)
+      return;                                     // unchanged or within the deadband -- nothing to send
+   midi_out << midi::pitch_bend{0, uint16_t(out)};
 #ifdef NEXUS_DIAG
    send_diag(raw, pos, c0, hyst);                // pair a frame with the send (also resets the clock)
 #endif
@@ -700,7 +707,7 @@ inline void
 pitch_bend_controller::send_diag(int32_t raw, int32_t pos, int32_t c0, int32_t hyst)
 {
    last_diag_ms = millis();
-   int32_t off = (c0 + hyst) / scale + nominal;
+   int32_t off = (c0 + hyst) / constants::scale + constants::nominal;
    uint8_t buf[6] =
    {
       uint8_t((raw >> 7) & 0x7f), uint8_t(raw & 0x7f),

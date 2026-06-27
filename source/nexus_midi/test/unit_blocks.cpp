@@ -1,0 +1,217 @@
+/*=============================================================================
+   Unit tests for the processor blocks: the general ones (slew_gate, stillness,
+   dc_servo) live in util.hpp, the pitch-specific ones in nexus_controls.hpp.
+
+   Each block is exercised in ISOLATION, so a failure localizes to one block --
+   unlike the whole-loop replay (replay_captures.py), which is the integration
+   gate. Both run in CI: the unit tests pin each block's contract, the replay
+   pins their composition. Built host-side:
+
+     cmake -S test -B test/build && cmake --build test/build
+     ./test/build/unit_blocks
+=============================================================================*/
+#include "nexus_controls.hpp"   // the pitch-specific blocks live next to the controller now;
+                               // util.hpp (general blocks) comes in transitively
+#include <cstdio>
+
+using namespace cycfi;
+
+static int g_fail = 0;
+#define CHECK(cond, msg) \
+   do { if (!(cond)) { std::printf("  FAIL [%s]: %s\n", __func__, msg); ++g_fail; } } while (0)
+
+//----------------------------------------------------------------------------
+// slew_gate: a too-fast jump is held (and stays held while sustained); physical
+// motion within the rate passes untouched.
+static void test_slew_gate()
+{
+   slew_gate<6, 4, 6> g;                  // 6 LSB/ms + 4 slack, dt clamp 6 ms
+   g.init(500, 0);
+
+   CHECK(g(505, 1) == 505, "a 5-LSB step (<= 6*1+4) passes");
+   CHECK(g(600, 2) == 505, "a 95-LSB jump is rejected -> holds last good");
+   CHECK(g(600, 3) == 505, "a SUSTAINED glitch stays rejected (never creeps onto it)");
+   CHECK(g(508, 4) == 508, "input back near the held value passes again");
+
+   // dt clamp: a long gap can't license an arbitrarily large jump.
+   slew_gate<6, 4, 6> h;
+   h.init(500, 0);
+   CHECK(h(900, 1000) == 500, "dt is clamped to 6 ms, so 6*6+4=40 < 400 -> still rejected");
+}
+
+//----------------------------------------------------------------------------
+// stillness: a slow ramp reads as MOVING (the smoother's velocity band can't
+// see it); a settled rest reads STILL, but only after the dwell elapses.
+static void test_stillness()
+{
+   stillness<32, 400> s;                  // 32-unit band, 400 ms dwell
+
+   s.init(0, 0);
+   CHECK(!s(0, 100), "not still yet -- dwell (400 ms) not elapsed");
+   CHECK(!s(2, 399), "still within band but dwell still short");
+   CHECK(s(2, 400), "settled within band for >= 400 ms -> still");
+
+   // Slow ramp ~0.2 unit/ms (like rec07_take2's slow 1 ST). It crosses the
+   // 32-band every ~160 ms < 400 ms, so the dwell keeps restarting.
+   s.init(0, 1000);
+   bool any_still = false;
+   for (int t = 1; t <= 3000; ++t)
+      any_still |= s(int32_t(t / 5), 1000 + t);     // t/5 == 0.2*t, integer
+   CHECK(!any_still, "a slow ramp never reads still (displacement dwell catches it)");
+   CHECK(s(600, 1000 + 3000 + 500), "once the ramp stops, still returns after the dwell");
+}
+
+//----------------------------------------------------------------------------
+// hysteresis_predictor: fast-attack to each peak, leaky decay to a 2/3-of-peak
+// floor that PERSISTS (not 0), and re-capture on a reversal.
+static void test_hysteresis_predictor()
+{
+   hysteresis_predictor p;   // tau 2^14 ms, k=176/4096, floor 2/3 (in-class constexpr)
+   p.init();
+
+   CHECK(p(1000, 1) == (1000 * 176) / 4096, "fast-attack: M jumps to the peak, returns k*peak");
+   CHECK(p.M() == 1000, "M captured the peak");
+
+   for (int i = 0; i < 4000; ++i) p(0, 100);      // release, decay >> tau (400 s vs 16 s)
+   CHECK(p.M() == 666, "decays to and HOLDS the 2/3-of-peak floor (1000*2/3), never 0");
+
+   CHECK(p(-500, 1) == (-500 * 176) / 4096, "a reversal re-captures the new-direction peak");
+   CHECK(p.M() == -500, "M flips sign on reversal");
+}
+
+//----------------------------------------------------------------------------
+// dc_servo (Pre-DC servo): tracks the baseline only when still + near neutral,
+// freezes on motion or a real bend, and is hard-clipped to the seed +/- clip.
+static void test_dc_servo()
+{
+   dc_servo<16, 546, 736> s;              // tau 2^16 ms, gate 546, clip +/-736 of seed
+   s.init(1000);
+   CHECK(s.value() == 1000, "seeds C0 to the rest");
+   CHECK(s.seed_value() == 1000, "remembers the FIXED seed (predictor ref + clip center)");
+
+   for (int i = 0; i < 2000; ++i) s(1010, true, 1000);
+   CHECK(s.value() == 1010, "still + near neutral: tracks the slow baseline");
+
+   s.init(1000);
+   for (int i = 0; i < 2000; ++i) s(1010, false, 1000);
+   CHECK(s.value() == 1000, "not still: frozen (won't follow even a near-neutral target)");
+
+   s.init(1000);
+   for (int i = 0; i < 2000; ++i) s(2000, true, 1000);
+   CHECK(s.value() == 1000, "a bend past the gate (|defl-C0| > 546): frozen, never dragged onto it");
+
+   s.init(1000);
+   for (int i = 0; i < 1000; ++i) s(s.value() + 500, true, 1000);   // always within gate, walks up
+   CHECK(s.value() == 1000 + 736, "hard-clipped to seed + clip: can never reach a real bend");
+}
+
+//----------------------------------------------------------------------------
+// post_corrector: nulls a settled residual within authority, relaxes (never
+// chases) when moving or beyond authority, and clamps to +/-Clip.
+static void test_post_corrector()
+{
+   post_corrector p;   // tau 2^11 ms, authority +/-460 (in-class constexpr)
+   int32_t off = 0;
+
+   for (int i = 0; i < 400; ++i) off = p(100, true, 100);
+   CHECK(off == 100, "still + within authority: integrates the residual to null it");
+
+   p.init();
+   for (int i = 0; i < 400; ++i) off = p(100, false, 100);
+   CHECK(off == 0, "moving: relaxes to 0, never chases a live bend");
+
+   p.init();
+   for (int i = 0; i < 400; ++i) off = p(600, true, 100);
+   CHECK(off == 0, "residual > authority (600 > 460): left alone (a real bend is not nulled)");
+
+   p.init();
+   for (int i = 0; i < 4000; ++i) off = p(460, true, 100);
+   CHECK(off == 460, "offset clamped at the authority limit");
+}
+
+//----------------------------------------------------------------------------
+// center_detent: snaps a still in-band rest to exact center; amplitude-only
+// release with hysteresis (no ping-pong); re-engage needs the stillness dwell;
+// a moving (high-band) lobe is never clipped.
+static void test_center_detent()
+{
+   center_detent d;   // snap 32, release 80, band 256, dwell 50 ms (in-class constexpr)
+   d.init(0);
+
+   CHECK(d(10, 0, 100) == 0, "small still rest within snap: stays snapped to center (0)");
+   CHECK(d(200, 0, 200) == 200, "a bend past release: un-centers, passes the value through");
+
+   d(200, 0, 400);                          // still bent -> keeps the dwell origin fresh (since=400)
+   CHECK(d(10, 0, 410) == 10, "back in band but dwell not met (10 ms < 50): not yet snapped");
+   CHECK(d(10, 0, 460) == 0, "stillness held >= 50 ms: snaps to center");
+
+   d.init(0);
+   d(200, 0, 600);                          // un-center
+   CHECK(d(10, 300, 700) == 10, "near-zero but band > thresh (moving): lobe passes, not snapped");
+
+   d.init(0);
+   CHECK(d(50, 0, 800) == 0, "rest at 50 <= release while centered: stays centered");
+   CHECK(d(50, 0, 900) == 0, "...and holds (release 80 > snap 32 hysteresis -> no ping-pong)");
+}
+
+//----------------------------------------------------------------------------
+// output_stage: suppress unchanged / within-deadband pitches (but never a center
+// snap), apply the symmetric x1.2 gain to the emitted value, clamp to pb_max.
+static void test_output_stage()
+{
+   output_stage o;   // x1.2 gain, center 8192, deadband 16 (in-class constexpr)
+   int32_t out = -1;
+
+   CHECK(!o(8192, &out), "unchanged from the seeded center: suppressed");
+   CHECK(!o(8200, &out), "within the deadband (|8200-8192| = 8 <= 16): suppressed");
+   CHECK(o(9192, &out) && out == 8192 + (1000 * 307) / 256,
+         "beyond the deadband: sent, with the x1.2 symmetric gain applied");
+
+   o.reset(8196);
+   CHECK(o(8192, &out) && out == 8192, "a center snap is sent even within the deadband");
+
+   o.reset(0);
+   CHECK(o(16000, &out) && out == 16383, "the gained value clamps to pb_max (14-bit ceiling)");
+}
+
+//----------------------------------------------------------------------------
+// settle_gate: the startup valid-settled-rest detector. Climbing input never
+// fires; a steady in-band rest fires only after the dwell AND the hold-off; an
+// out-of-band reading never fires.
+static void test_settle_gate()
+{
+   settle_gate g;   // band [400,640], settle 6 LSB / 300 ms (in-class constexpr)
+   const uint32_t boot = 0, holdoff = 5000;
+
+   g.init(512, 0);
+   bool ready = false;
+   for (uint32_t t = 1; t <= 400; ++t) ready |= g(500 + t / 10, 6000 + t, boot, holdoff);
+   CHECK(!ready, "a climbing input never reads settled");
+
+   g.init(512, 0);
+   CHECK(!g(512, 400, boot, holdoff), "settled 300+ ms but before the 5 s hold-off: not ready");
+
+   g.init(512, 6000);
+   CHECK(!g(512, 6200, boot, holdoff), "in band but the settle dwell not yet met (200 < 300 ms)");
+   CHECK(g(512, 6400, boot, holdoff), "held in band 300+ ms past the hold-off -> ready");
+
+   g.init(800, 6000);
+   CHECK(!g(800, 9000, boot, holdoff), "out of the rest band (800 > 640): never ready");
+}
+
+int main()
+{
+   test_slew_gate();
+   test_stillness();
+   test_hysteresis_predictor();
+   test_dc_servo();
+   test_post_corrector();
+   test_center_detent();
+   test_output_stage();
+   test_settle_gate();
+   if (g_fail) { std::printf("unit_blocks: %d CHECK(s) FAILED\n", g_fail); return 1; }
+   std::printf("unit_blocks: PASSED (8 processor blocks: slew_gate, stillness, "
+               "hysteresis_predictor, dc_servo, post_corrector, center_detent, output_stage, "
+               "settle_gate)\n");
+   return 0;
+}

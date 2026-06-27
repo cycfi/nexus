@@ -151,15 +151,15 @@ int main(int argc, char** argv)
    {
       _sim_millis = k; loop(); drain(k, verbose);
       if (freeze_servo && !pitch_bend.muted) {
-         if (!c0_locked) { c0_lock = pitch_bend.c0_acc; c0_locked = true; }
-         else pitch_bend.c0_acc = c0_lock;
+         if (!c0_locked) { c0_lock = pitch_bend.servo.acc; c0_locked = true; }
+         else pitch_bend.servo.acc = c0_lock;
       }
       if (dump)
          printf("%u,%d,%d,%d,%d,%d\n", (unsigned)k, (int)sample(PITCH_PIN,k),
-                (int)pitch_bend.prev,
-                (int)(pitch_bend.M_acc >> pitch_bend_controller::mem_shift),
-                (int)(pitch_bend.c0_acc >> pitch_bend_controller::c0_shift),
-                (int)pitch_bend.k_num);
+                (int)pitch_bend.out_stage.value(),
+                (int)pitch_bend.predictor.M(),
+                (int)pitch_bend.servo.value(),
+                (int)pitch_bend.predictor.k_num);
    }
    if (dump) return 0;
 
@@ -232,14 +232,12 @@ int main(int argc, char** argv)
    snprintf(d,sizeof d,"hold=%+d (ideal -683)", dn1);
    check("-1 ST bend preserved (>=80%)", dn1 <= -546, d);
 
-   // 6. watchdog: a stuck off-center hold is PRESERVED before the timeout but the
-   //    watchdog RE-ACQUIRES (snaps the output to center) once it exceeds 15 s
-   int latch_held  = pb_at(T_LATCH_R + 14000) - 8192;   // +14 s into the latch (< 15 s)
-   int latch_recov = pb_at(T_LATCH_H - 100) - 8192;     // ~+17 s (after the 15 s re-acquire)
-   snprintf(d,sizeof d,"at +14s=%+d (still held)", latch_held);
-   check("latch held before 15 s timeout", abs(latch_held) > 800, d);
-   snprintf(d,sizeof d,"at +17s=%+d (re-acquired to center)", latch_recov);
-   check("watchdog re-acquires after 15 s", abs(latch_recov) <= 100, d);
+   // 6. held off-center is PRESERVED, not re-acquired (watchdog deleted -- the slow servo can't
+   //    chase a held bend, so there's no latch to recover; the captures replay-test the rest).
+   int latch_held = pb_at(T_LATCH_R + 14000) - 8192;    // +14 s into the hold
+   int latch_late = pb_at(T_LATCH_H - 100) - 8192;      // ~+17 s -- still held, not snapped to 0
+   snprintf(d,sizeof d,"+14s=%+d, +17s=%+d (preserved, no watchdog snap)", latch_held, latch_late);
+   check("held off-center preserved (no watchdog)", abs(latch_held) > 800 && abs(latch_late) > 600, d);
 
    // 7. input slew gate: an injected programmer-glitch reference shift (faster than the arm can
    //    move) must be rejected, so the output stays centered instead of latching off-center.

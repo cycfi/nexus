@@ -12,6 +12,21 @@
 namespace cycfi
 {
    ////////////////////////////////////////////////////////////////////////////
+   // Small signed-integer helpers (constexpr implies inline).
+   ////////////////////////////////////////////////////////////////////////////
+   constexpr int32_t iabs(int32_t x)
+   {
+      return x < 0 ? -x : x;
+   }
+
+   // Branch-free clamp. Assumes lo <= hi with small operands (no subtraction overflow), which
+   // holds at every call site. Adds the low correction when x < lo, the high one when x > hi.
+   constexpr int32_t clamp(int32_t x, int32_t lo, int32_t hi)
+   {
+      return x + ((lo - x) & -int32_t(x < lo)) + ((hi - x) & -int32_t(x > hi));
+   }
+
+   ////////////////////////////////////////////////////////////////////////////
    // debouncer: A switch debouncer
    ////////////////////////////////////////////////////////////////////////////
    template <int samples = 10>
@@ -226,33 +241,43 @@ namespace cycfi
    };
 
    //////////////////////////////////////////////////////////////////////////////
-   // offset_servo: Tracks and removes slow offset drift near the center.
+   // dc_servo: tracks the slow DC baseline of a signal, but only while the input
+   // is STILL (caller-supplied) and near the current estimate (|x - c| <= Gate),
+   // and hard-clamped to +/-Clip of a fixed seed. Very slow (tau = 2^Shift ms),
+   // so it follows only drift/bias, never a real excursion -- and the clamp means
+   // even a momentary mis-gate can't let the estimate walk onto one. operator()
+   // advances the estimate by the elapsed dt and returns it; seed_value() is the
+   // fixed reference the clamp is centred on.
    //////////////////////////////////////////////////////////////////////////////
-   template <int Shift, typename T = int32_t>
-   struct offset_servo
+   template <int Shift, int Gate, int Clip>
+   struct dc_servo
    {
-      offset_servo()
-      : _i(0)
-      {}
+      // int32_t(1): a bare 1<<Shift overflows the device's 16-bit int once Shift >= 16.
+      static_assert(((int32_t(1) << Shift) >> Shift) == 1, "dc_servo scale overflows int32_t");
 
-      void init(T s)
+      dc_servo() : acc(0), seed(0) {}
+
+      void init(int32_t s)                   // seed the estimate := s
       {
-         _i = s << Shift;
+         seed = s;
+         acc  = s * (int32_t(1) << Shift);
       }
 
-      void update(T s)
+      int32_t operator()(int32_t x, bool still, int32_t dt)
       {
-         _i += s - (_i >> Shift);
+         int32_t one = int32_t(1) << Shift;
+         int32_t c   = acc >> Shift;
+         if (still && iabs(x - c) <= Gate)
+            acc += (x - c) * dt;              // very slow leaky integrator toward the baseline
+         acc = clamp(acc, (seed - Clip) * one, (seed + Clip) * one);
+         return acc >> Shift;
       }
 
-      T operator()(T s) const
-      {
-         return s - (_i >> Shift);
-      }
+      int32_t value() const { return acc >> Shift; }   // current estimate
+      int32_t seed_value() const { return seed; }      // fixed reference the clamp is centred on
 
-      T offset() const { return _i >> Shift; }   // current integer offset
-
-      T _i;
+      int32_t acc;
+      int32_t seed;
    };
 
    ////////////////////////////////////////////////////////////////////////////
@@ -369,6 +394,57 @@ namespace cycfi
 
       T val;
       T window;
+   };
+
+   ////////////////////////////////////////////////////////////////////////////
+   // slew_gate: reject input steps faster than the source can physically move
+   // (e.g. a contact glitch that shifts an ADC reference far quicker than the
+   // real signal), holding the last good reading. A glitched level is SUSTAINED,
+   // so every reading stays a too-fast jump from the held value and is rejected
+   // for the whole event, while genuine motion (<= Rate units/ms) passes through.
+   ////////////////////////////////////////////////////////////////////////////
+   template <int Rate, int Slack, int DtMax>
+   struct slew_gate
+   {
+      slew_gate() : held(0), last(0) {}
+
+      void init(int32_t x, uint32_t now) { held = x; last = now; }
+
+      int32_t operator()(int32_t raw, uint32_t now)
+      {
+         int32_t dt = clamp(int32_t(now - last), 0, DtMax);
+         last = now;
+         if (iabs(raw - held) > Rate * dt + Slack)
+            return held;                           // non-physical jump -> hold last good
+         held = raw;
+         return raw;
+      }
+
+      int32_t  held;
+      uint32_t last;
+   };
+
+   ////////////////////////////////////////////////////////////////////////////
+   // stillness: "has the signal settled", by displacement-over-time. A velocity
+   // or band measure can't see a slow ramp (near-zero velocity yet very much
+   // moving), so watch instead whether the value has stayed within Band for
+   // DwellMs. Returns true once it has held still that long.
+   ////////////////////////////////////////////////////////////////////////////
+   template <int Band, int DwellMs>
+   struct stillness
+   {
+      stillness() : ref(0), since(0) {}
+
+      void init(int32_t x, uint32_t now) { ref = x; since = now; }
+
+      bool operator()(int32_t x, uint32_t now)
+      {
+         if (iabs(x - ref) > Band) { ref = x; since = now; }   // moved -> restart the dwell
+         return now - since >= uint32_t(DwellMs);
+      }
+
+      int32_t  ref;
+      uint32_t since;
    };
 }
 
