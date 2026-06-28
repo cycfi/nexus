@@ -159,6 +159,16 @@ namespace nexus_sim
          int v = pitch_adc_phys(ms);
          if (ms >= T_GLITCH && ms < T_GLITCH_END)  // injected programmer-contact reference shift:
             v -= GLITCH_LSB;                        //   an instant jump the slew gate must reject
+         // A REAL hold/rest is never dead-still: the hand + sensor wander by a few LSB, which keeps
+         // the OUTPUT alive past the freeze_watchdog's band. Model a slow wander so held bends are
+         // preserved -- EXCEPT the LATCH phase, kept bit-exact frozen on purpose to exercise the
+         // watchdog's stuck-output flush.
+         if (!(ms >= T_LATCH_R && ms < T_LATCH_H))
+         {
+            uint32_t w = ms % 240;                          // slow ~+/-3 LSB triangle (240 ms period)
+            v += (w < 120 ? int(w) : int(240 - w)) / 20 - 3;
+         }
+         if (v < 0) v = 0; else if (v > 1023) v = 1023;
          return uint16_t(v);
       }
       return 512;                       // CC channels: steady mid for now

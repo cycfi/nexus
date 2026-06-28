@@ -95,14 +95,17 @@ int main(int argc, char** argv)
    bool verbose = false, dump = false;
    const char* feedfile = nullptr;
    uint32_t holdoff = 300;          // startup-gate hold-off; small here so the suite/replays run
+   uint32_t loopms = 1;             // sim loop period (ms); hardware runs ~8 ms, not 1
    bool freeze_servo = false;       // lock c0 at the settled rest (isolate the feed-forward)
    for (int i = 1; i < argc; ++i) {
       if      (!strcmp(argv[i], "-v"))     verbose = true;
       else if (!strcmp(argv[i], "--dump")) dump = true;
       else if (!strcmp(argv[i], "--feed") && i+1 < argc) feedfile = argv[++i];
       else if (!strcmp(argv[i], "--holdoff") && i+1 < argc) holdoff = atoi(argv[++i]);
+      else if (!strcmp(argv[i], "--loopms") && i+1 < argc) loopms = atoi(argv[++i]);
       else if (!strcmp(argv[i], "--freeze-servo")) freeze_servo = true;
    }
+   if (loopms < 1) loopms = 1;
    using namespace nexus_sim;
    uint32_t ticks = T_LATCH_END + 1000;
 
@@ -146,8 +149,8 @@ int main(int argc, char** argv)
    bool c0_locked = false; int32_t c0_lock = 0;
    drain(0, verbose);
    if (verbose) printf("--- run ---\n");
-   if (dump) printf("t,adc,out,M,c0,k\n");            // per-tick trace for plotting
-   for (uint32_t k = 1; k <= ticks; ++k)
+   if (dump) printf("t,adc,out,c0\n");                // per-tick trace for plotting
+   for (uint32_t k = loopms; k <= ticks; k += loopms)
    {
       _sim_millis = k; loop(); drain(k, verbose);
       if (freeze_servo && !pitch_bend.muted) {
@@ -155,11 +158,9 @@ int main(int argc, char** argv)
          else pitch_bend.servo.acc = c0_lock;
       }
       if (dump)
-         printf("%u,%d,%d,%d,%d,%d\n", (unsigned)k, (int)sample(PITCH_PIN,k),
+         printf("%u,%d,%d,%d\n", (unsigned)k, (int)sample(PITCH_PIN,k),
                 (int)pitch_bend.out_stage.value(),
-                (int)pitch_bend.predictor.M(),
-                (int)pitch_bend.servo.value(),
-                (int)pitch_bend.predictor.k_num);
+                (int)pitch_bend.servo.value());
    }
    if (dump) return 0;
 
@@ -190,7 +191,7 @@ int main(int argc, char** argv)
    // ---- assertions: DC-servo nulls the hysteresis, preserves real bends ----
    printf("\n=== assertions ===\n");
    char d[96];
-   const int DET = 32;                 // center detent (+/-2 LSB)
+   const int DET = 32;                 // center tolerance (+/-2 LSB)
 
    // 1. startup publishes center
    pbwin s = pb_in(0, 1);
@@ -232,12 +233,13 @@ int main(int argc, char** argv)
    snprintf(d,sizeof d,"hold=%+d (ideal -683)", dn1);
    check("-1 ST bend preserved (>=80%)", dn1 <= -546, d);
 
-   // 6. held off-center is PRESERVED, not re-acquired (watchdog deleted -- the slow servo can't
-   //    chase a held bend, so there's no latch to recover; the captures replay-test the rest).
-   int latch_held = pb_at(T_LATCH_R + 14000) - 8192;    // +14 s into the hold
-   int latch_late = pb_at(T_LATCH_H - 100) - 8192;      // ~+17 s -- still held, not snapped to 0
-   snprintf(d,sizeof d,"+14s=%+d, +17s=%+d (preserved, no watchdog snap)", latch_held, latch_late);
-   check("held off-center preserved (no watchdog)", abs(latch_held) > 800 && abs(latch_late) > 600, d);
+   // 6. freeze_watchdog: a STUCK off-center output (the LATCH phase is bit-exact frozen, no dither --
+   //    a programmer-disconnect-style hang the corrector can't see) is flushed to center within
+   //    ~500 ms and stays there. (A real held bend jitters -> not flushed; see #5.)
+   int latch_held = pb_at(T_LATCH_R + 14000) - 8192;    // +14 s into the frozen hold
+   int latch_late = pb_at(T_LATCH_H - 100) - 8192;      // ~+17 s -- still frozen
+   snprintf(d,sizeof d,"+14s=%+d, +17s=%+d (frozen hang flushed to center)", latch_held, latch_late);
+   check("freeze_watchdog flushes stuck output", abs(latch_held) <= DET && abs(latch_late) <= DET, d);
 
    // 7. input slew gate: an injected programmer-glitch reference shift (faster than the arm can
    //    move) must be rejected, so the output stays centered instead of latching off-center.

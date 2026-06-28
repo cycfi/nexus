@@ -62,24 +62,6 @@ static void test_stillness()
 }
 
 //----------------------------------------------------------------------------
-// hysteresis_predictor: fast-attack to each peak, leaky decay to a 2/3-of-peak
-// floor that PERSISTS (not 0), and re-capture on a reversal.
-static void test_hysteresis_predictor()
-{
-   hysteresis_predictor p;   // tau 2^14 ms, k=176/4096, floor 2/3 (in-class constexpr)
-   p.init();
-
-   CHECK(p(1000, 1) == (1000 * 176) / 4096, "fast-attack: M jumps to the peak, returns k*peak");
-   CHECK(p.M() == 1000, "M captured the peak");
-
-   for (int i = 0; i < 4000; ++i) p(0, 100);      // release, decay >> tau (400 s vs 16 s)
-   CHECK(p.M() == 666, "decays to and HOLDS the 2/3-of-peak floor (1000*2/3), never 0");
-
-   CHECK(p(-500, 1) == (-500 * 176) / 4096, "a reversal re-captures the new-direction peak");
-   CHECK(p.M() == -500, "M flips sign on reversal");
-}
-
-//----------------------------------------------------------------------------
 // dc_servo (Pre-DC servo): tracks the baseline only when still + near neutral,
 // freezes on motion or a real bend, and is hard-clipped to the seed +/- clip.
 static void test_dc_servo()
@@ -87,7 +69,7 @@ static void test_dc_servo()
    dc_servo<16, 546, 736> s;              // tau 2^16 ms, gate 546, clip +/-736 of seed
    s.init(1000);
    CHECK(s.value() == 1000, "seeds C0 to the rest");
-   CHECK(s.seed_value() == 1000, "remembers the FIXED seed (predictor ref + clip center)");
+   CHECK(s.seed_value() == 1000, "remembers the FIXED seed (clip center)");
 
    for (int i = 0; i < 2000; ++i) s(1010, true, 1000);
    CHECK(s.value() == 1010, "still + near neutral: tracks the slow baseline");
@@ -103,56 +85,6 @@ static void test_dc_servo()
    s.init(1000);
    for (int i = 0; i < 1000; ++i) s(s.value() + 500, true, 1000);   // always within gate, walks up
    CHECK(s.value() == 1000 + 736, "hard-clipped to seed + clip: can never reach a real bend");
-}
-
-//----------------------------------------------------------------------------
-// post_corrector: nulls a settled residual within authority, relaxes (never
-// chases) when moving or beyond authority, and clamps to +/-Clip.
-static void test_post_corrector()
-{
-   post_corrector p;   // tau 2^11 ms, authority +/-460 (in-class constexpr)
-   int32_t off = 0;
-
-   for (int i = 0; i < 400; ++i) off = p(100, true, 100);
-   CHECK(off == 100, "still + within authority: integrates the residual to null it");
-
-   p.init();
-   for (int i = 0; i < 400; ++i) off = p(100, false, 100);
-   CHECK(off == 0, "moving: relaxes to 0, never chases a live bend");
-
-   p.init();
-   for (int i = 0; i < 400; ++i) off = p(600, true, 100);
-   CHECK(off == 0, "residual > authority (600 > 460): left alone (a real bend is not nulled)");
-
-   p.init();
-   for (int i = 0; i < 4000; ++i) off = p(460, true, 100);
-   CHECK(off == 460, "offset clamped at the authority limit");
-}
-
-//----------------------------------------------------------------------------
-// center_detent: snaps a still in-band rest to exact center; amplitude-only
-// release with hysteresis (no ping-pong); re-engage needs the stillness dwell;
-// a moving (high-band) lobe is never clipped.
-static void test_center_detent()
-{
-   center_detent d;   // snap 32, release 80, band 256, dwell 50 ms (in-class constexpr)
-   d.init(0);
-
-   CHECK(d(10, 0, 100) == 0, "small still rest within snap: stays snapped to center (0)");
-   CHECK(d(200, 0, 200) == 200, "a bend past release: un-centers, passes the value through");
-
-   d(200, 0, 400);                          // still bent -> keeps the dwell origin fresh (since=400)
-   CHECK(d(10, 0, 410) == 10, "back in band but dwell not met (10 ms < 50): not yet snapped");
-   CHECK(d(10, 0, 460) == 0, "stillness held >= 50 ms: snaps to center");
-
-   d.init(0);
-   d(200, 0, 600);                          // un-center
-   CHECK(d(10, center_detent::band_thresh + 100, 700) == 10,
-         "near-zero but band > thresh (moving): lobe passes, not snapped");
-
-   d.init(0);
-   CHECK(d(50, 0, 800) == 0, "rest at 50 <= release while centered: stays centered");
-   CHECK(d(50, 0, 900) == 0, "...and holds (release 80 > snap 32 hysteresis -> no ping-pong)");
 }
 
 //----------------------------------------------------------------------------
@@ -219,14 +151,11 @@ int main()
 {
    test_slew_gate();
    test_stillness();
-   test_hysteresis_predictor();
    test_dc_servo();
-   test_post_corrector();
-   test_center_detent();
    test_output_stage();
    test_settle_gate();
    test_adc_decimate();
    if (g_fail) { std::printf("unit_blocks: %d CHECK(s) FAILED\n", g_fail); return 1; }
-   std::printf("unit_blocks: PASSED (8 blocks + adc::decimate)\n");
+   std::printf("unit_blocks: PASSED (5 blocks + adc::decimate)\n");
    return 0;
 }
