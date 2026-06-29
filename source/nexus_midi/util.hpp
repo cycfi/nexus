@@ -1,8 +1,8 @@
-/*=============================================================================
+/*==============================================================================
    Copyright (c) 2016 Cycfi Research
 
    Distributed under the MIT License [ https://opensource.org/licenses/MIT ]
-=============================================================================*/
+==============================================================================*/
 #if !defined(CYCFI_UTIL_HPP_NOVEMBER_11_2016)
 #define CYCFI_UTIL_HPP_NOVEMBER_11_2016
 //
@@ -19,11 +19,13 @@ namespace cycfi
       return x < 0 ? -x : x;
    }
 
-   // Branch-free clamp. Assumes lo <= hi with small operands (no subtraction overflow), which
-   // holds at every call site. Adds the low correction when x < lo, the high one when x > hi.
+   // Branch-free clamp. Assumes lo <= hi with small operands (no
+   // subtraction overflow), which holds at every call site. Adds the low
+   // correction when x < lo, the high one when x > hi.
    constexpr int32_t clamp(int32_t x, int32_t lo, int32_t hi)
    {
-      return x + ((lo - x) & -int32_t(x < lo)) + ((hi - x) & -int32_t(x > hi));
+      return x + ((lo - x) & -int32_t(x < lo))
+               + ((hi - x) & -int32_t(x > hi));
    }
 
    ////////////////////////////////////////////////////////////////////////////
@@ -188,18 +190,18 @@ namespace cycfi
    };
 
    //////////////////////////////////////////////////////////////////////////////
-   // dynamic_smoother: an adaptive lowpass. Fixed-point (Q8) integer port of the
-   // Q DSP dynamic_smoother (Andrew Simper, "Dynamic Smoothing Using Self
-   // Modulating Filter", Cytomic, 2016). Two one-pole integrators (low1, low2)
-   // whose shared cutoff g is opened by the bandpass magnitude |low1 - low2|, so
-   // it tracks fast transients with little lag but smooths hard when stable.
-   // State is kept in Q8 (x256) for sub-LSB precision.
+   // dynamic_smoother: an adaptive lowpass. Fixed-point (Q8) integer port
+   // of the Q DSP dynamic_smoother (Andrew Simper, "Dynamic Smoothing Using
+   // Self Modulating Filter", Cytomic, 2016). Two one-pole integrators
+   // (low1, low2) whose shared cutoff g is opened by the bandpass magnitude
+   // |low1 - low2|, so it tracks fast transients with little lag but smooths
+   // hard when stable. State is kept in Q8 (x256) for sub-LSB precision.
    //
    //    G0:    base cutoff in Q8 [0..256] (g = G0/256 at rest). Lower = more
    //           smoothing / more lag at rest.
-   //    Sense: how strongly the bandpass opens the cutoff on a move; 0 = a plain
-   //           fixed two-pole lowpass at cutoff G0. A power of two compiles the
-   //           sense term to a shift.
+   //    Sense: how strongly the bandpass opens the cutoff on a move; 0 = a
+   //           plain fixed two-pole lowpass at cutoff G0. A power of two
+   //           compiles the sense term to a shift.
    //////////////////////////////////////////////////////////////////////////////
    template <int G0, int Sense, typename T = int32_t>
    struct dynamic_smoother
@@ -228,8 +230,9 @@ namespace cycfi
          return low2 >> 8;
       }
 
-      // |low1 - low2| (Q8): the bandpass magnitude -- ~0 at rest, large on a move. A
-      // ready-made velocity signal (e.g. to gate a center detent off during vibrato).
+      // |low1 - low2| (Q8): the bandpass magnitude -- ~0 at rest, large on
+      // a move. A ready-made velocity signal (e.g. to gate a center detent
+      // off during vibrato).
       T band() const
       {
          T b = low1 - low2;
@@ -241,19 +244,22 @@ namespace cycfi
    };
 
    //////////////////////////////////////////////////////////////////////////////
-   // dc_servo: tracks the slow DC baseline of a signal, but only while the input
-   // is STILL (caller-supplied) and near the current estimate (|x - c| <= Gate),
-   // and hard-clamped to +/-Clip of a fixed seed. Very slow (tau = 2^Shift ms),
-   // so it follows only drift/bias, never a real excursion -- and the clamp means
-   // even a momentary mis-gate can't let the estimate walk onto one. operator()
-   // advances the estimate by the elapsed dt and returns it; seed_value() is the
-   // fixed reference the clamp is centred on.
+   // dc_servo: tracks the slow DC baseline of a signal, but only while the
+   // input is STILL (caller-supplied) and near the current estimate
+   // (|x - c| <= Gate), and hard-clamped to +/-Clip of a fixed seed. Very
+   // slow (tau = 2^Shift ms), so it follows only drift/bias, never a real
+   // excursion -- and the clamp means even a momentary mis-gate can't let
+   // the estimate walk onto one. operator() advances the estimate by the
+   // elapsed dt and returns it; seed_value() is the fixed reference the
+   // clamp is centred on.
    //////////////////////////////////////////////////////////////////////////////
    template <int Shift, int Gate, int Clip>
    struct dc_servo
    {
-      // int32_t(1): a bare 1<<Shift overflows the device's 16-bit int once Shift >= 16.
-      static_assert(((int32_t(1) << Shift) >> Shift) == 1, "dc_servo scale overflows int32_t");
+      // int32_t(1): a bare 1<<Shift overflows the device's 16-bit int once
+      // Shift >= 16.
+      static_assert(((int32_t(1) << Shift) >> Shift) == 1,
+                    "dc_servo scale overflows int32_t");
 
       dc_servo() : acc(0), seed(0) {}
 
@@ -268,13 +274,13 @@ namespace cycfi
          int32_t one = int32_t(1) << Shift;
          int32_t c   = acc >> Shift;
          if (still && iabs(x - c) <= Gate)
-            acc += (x - c) * dt;              // very slow leaky integrator toward the baseline
+            acc += (x - c) * dt;          // slow leak toward baseline
          acc = clamp(acc, (seed - Clip) * one, (seed + Clip) * one);
          return acc >> Shift;
       }
 
       int32_t value() const { return acc >> Shift; }   // current estimate
-      int32_t seed_value() const { return seed; }      // fixed reference the clamp is centred on
+      int32_t seed_value() const { return seed; }   // clamp's fixed centre
 
       int32_t acc;
       int32_t seed;
@@ -284,8 +290,8 @@ namespace cycfi
    // moving_average: Simple boxcar FIR filter. Optimal for reducing white
    // (broadband) noise. N = 2^Shift samples. Noise is reduced by sqrt(N)
    // and latency is N/2 samples. Use a small T (e.g. int16_t) to save RAM
-   // when the signal range fits — 10-bit ADC (0–1023) fits in int16_t and
-   // the sum of up to 32 samples (32×1023=32736) also fits in int16_t.
+   // when the signal range fits -- 10-bit ADC (0-1023) fits in int16_t and
+   // the sum of up to 32 samples (32x1023=32736) also fits in int16_t.
    ////////////////////////////////////////////////////////////////////////////
    template <int Shift, typename T = int32_t>
    struct moving_average
@@ -321,9 +327,10 @@ namespace cycfi
    };
 
    ////////////////////////////////////////////////////////////////////////////
-   // moving_average_n: boxcar FIR over any N samples (not restricted to a power
-   // of two). Costs a divide by N per sample, so prefer moving_average<Shift>
-   // when N can be a power of two (it uses a shift). Latency is (N-1)/2 samples.
+   // moving_average_n: boxcar FIR over any N samples (not restricted to a
+   // power of two). Costs a divide by N per sample, so prefer
+   // moving_average<Shift> when N can be a power of two (it uses a shift).
+   // Latency is (N-1)/2 samples.
    ////////////////////////////////////////////////////////////////////////////
    template <int Taps, typename T = int32_t>
    struct moving_average_n
@@ -397,11 +404,12 @@ namespace cycfi
    };
 
    ////////////////////////////////////////////////////////////////////////////
-   // slew_gate: reject input steps faster than the source can physically move
-   // (e.g. a contact glitch that shifts an ADC reference far quicker than the
-   // real signal), holding the last good reading. A glitched level is SUSTAINED,
-   // so every reading stays a too-fast jump from the held value and is rejected
-   // for the whole event, while genuine motion (<= Rate units/ms) passes through.
+   // slew_gate: reject input steps faster than the source can physically
+   // move (e.g. a contact glitch that shifts an ADC reference far quicker
+   // than the real signal), holding the last good reading. A glitched level
+   // is SUSTAINED, so every reading stays a too-fast jump from the held
+   // value and is rejected for the whole event, while genuine motion
+   // (<= Rate units/ms) passes through.
    ////////////////////////////////////////////////////////////////////////////
    template <int Rate, int Slack, int DtMax>
    struct slew_gate
@@ -415,7 +423,7 @@ namespace cycfi
          int32_t dt = clamp(int32_t(now - last), 0, DtMax);
          last = now;
          if (iabs(raw - held) > Rate * dt + Slack)
-            return held;                           // non-physical jump -> hold last good
+            return held;                      // non-physical jump: hold
          held = raw;
          return raw;
       }
@@ -425,10 +433,10 @@ namespace cycfi
    };
 
    ////////////////////////////////////////////////////////////////////////////
-   // stillness: "has the signal settled", by displacement-over-time. A velocity
-   // or band measure can't see a slow ramp (near-zero velocity yet very much
-   // moving), so watch instead whether the value has stayed within Band for
-   // DwellMs. Returns true once it has held still that long.
+   // stillness: "has the signal settled", by displacement-over-time. A
+   // velocity or band measure can't see a slow ramp (near-zero velocity yet
+   // very much moving), so watch instead whether the value has stayed within
+   // Band for DwellMs. Returns true once it has held still that long.
    ////////////////////////////////////////////////////////////////////////////
    template <int Band, int DwellMs>
    struct stillness
@@ -439,7 +447,7 @@ namespace cycfi
 
       bool operator()(int32_t x, uint32_t now)
       {
-         if (iabs(x - ref) > Band) { ref = x; since = now; }   // moved -> restart the dwell
+         if (iabs(x - ref) > Band) { ref = x; since = now; } // restart dwell
          return now - since >= uint32_t(DwellMs);
       }
 

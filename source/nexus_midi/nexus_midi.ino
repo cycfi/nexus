@@ -1,19 +1,20 @@
-/*=======================================================================================
+/*==============================================================================
     Copyright (c) 2016 Cycfi Research
 
     Distributed under the MIT License [ https://opensource.org/licenses/MIT ]
-   =======================================================================================*/
+   ===========================================================================*/
 
 #include "nexus_controls.hpp"
 
 // Drive MIDI TX HIGH before global constructors. Device-only (pokes P1DIR).
 #ifndef NEXUS_HOST
-// Drive MIDI TX (P1.2) HIGH as early as possible — before global constructors
-// and before setup(). The internal pull-up (~50kΩ) is too weak to overcome
-// the MIDI output circuit (220Ω + LED), so we actively drive the pin HIGH as
-// an output. Serial.begin() in midi_out.start() will reconfigure P1.2 as
-// UART TX; while in UART reset (UCSWRST=1, the default at power-on), the
-// UART peripheral holds TX HIGH, so the transition is glitch-free.
+// Drive MIDI TX (P1.2) HIGH as early as possible — before global
+// constructors and before setup(). The internal pull-up (~50kΩ) is too
+// weak to overcome the MIDI output circuit (220Ω + LED), so we actively
+// drive the pin HIGH as an output. Serial.begin() in midi_out.start() will
+// reconfigure P1.2 as UART TX; while in UART reset (UCSWRST=1, the
+// default at power-on), the UART peripheral holds TX HIGH, so the
+// transition is glitch-free.
 void __attribute__((naked, section(".init3"), used)) _midi_tx_drive_high()
 {
    P1DIR |= BIT2;   // set P1.2 as output
@@ -26,7 +27,8 @@ using namespace cycfi;
 // The main MIDI out stream.
 midi::midi_stream midi_out;
 
-// We use SEGMENT_B and SEGMENT_C to store program change and bank select data.
+// We use SEGMENT_B and SEGMENT_C to store program change and bank select
+// data.
 flash flash_b(SEGMENT_B);
 flash flash_c(SEGMENT_C);
 
@@ -47,9 +49,9 @@ void reset_save_delay()
 // raise its gate threshold during CC activity, suppressing crosstalk.
 uint32_t last_cc_time = 0;
 
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // The controls
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 controller<midi::cc::channel_volume>   volume_control;
 controller<midi::cc::effect_1>         fx1_control;
 controller<midi::cc::effect_2>         fx2_control;
@@ -59,9 +61,9 @@ program_change_controller              program_change;
 sustain_controller                     sustain_control;
 bank_select_controller                 bank_select_control;
 
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // setup
-///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 void setup()
 {
    midi_out.start();
@@ -82,8 +84,9 @@ void setup()
    pinMode(aux5, INPUT_PULLUP);
    pinMode(aux6, INPUT_PULLUP);
 
-   // Start the background ADC oversampler before any analog read (it fills the
-   // per-channel values during the flash load / transmit below, no-op on host).
+   // Start the background ADC oversampler before any analog read (it fills
+   // the per-channel values during the flash load / transmit below, no-op on
+   // host).
    adc::start();
 
    // Load the program_change and bank_select_control states from flash
@@ -94,8 +97,8 @@ void setup()
    bank_select_control.transmit();
 
    // Prime controller filters from the live hardware state so the first loop
-   // iteration does not ramp from zero. Each init() also transmits the seeded
-   // startup state.
+   // iteration does not ramp from zero. Each init() also transmits the
+   // seeded startup state.
    sustain_control.init(digitalRead(ch9));
    volume_control.init(analog_read(ch10));
    fx1_control.init(analog_read(ch11));

@@ -26,7 +26,8 @@ enum { LOW = 0, HIGH = 1, INPUT = 0, OUTPUT = 1, INPUT_PULLUP = 2 };
 // Virtual millisecond clock — the harness drives _sim_millis.
 extern uint32_t _sim_millis;
 inline uint32_t millis() { return _sim_millis; }
-inline void delay(uint32_t) {}                 // no-op; clock is advanced by hand
+// no-op; the clock is advanced by hand
+inline void delay(uint32_t) {}
 
 // Digital input. Default HIGH (switches open / pull-ups); a test can install
 // _sim_digital to synthesize sustain / aux-button activity.
@@ -38,7 +39,8 @@ inline int digitalRead(uint8_t pin)
 }
 
 // Analog input — unused under NEXUS_SIM (raw_adc() routes to the synthetic
-// generator); provided so the seam's #else branch and any direct call compile.
+// generator); provided so the seam's #else branch and any direct call
+// compile.
 inline uint16_t analogRead(uint8_t) { return 512; }
 
 inline long map(long x, long in_min, long in_max, long out_min, long out_max)
