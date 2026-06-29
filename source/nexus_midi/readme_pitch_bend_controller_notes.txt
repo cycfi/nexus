@@ -81,14 +81,18 @@ while the bar moves, and lands ONLY a hang: a release that STOPS near zero. The
 mechanics:
   * STALL  -- a stop is detected by low-passed SLOPE (slope_k = 3): when the
     smoothed per-loop slope drops below stall_slope = 14, the bar has stopped.
-  * ARM    -- landing is armed only after the bar bends past +/-1 ST
-    (bend_th = 683); a sub-1 ST wobble never arms, so it is never "corrected".
+  * ARM    -- landing is armed only after the bar bends past +/-4 ST (bend_th =
+    2731): the depth where the hysteresis residual (k*peak) first turns audible.
+    A shallower bend never arms -- its tiny residual rides the gate/servo.
   * GATE   -- a hysteresis noise gate (open 68 ~0.10 ST, close 34 ~0.05 ST,
     90 ms dwell) mutes the rest; a vibrato's troughs ride through it (no chop),
     only a real settle re-closes it.
-  * LAND   -- a stalled, armed release within hang_band (546) is driven to 0 at
-    land_rate = 8 units/ms: a fast (~150 ms) clean snap to center. The DC is
-    handed off to the slow C0 servo.
+  * LAND   -- a stalled, armed release within hang_band (546) eases to center with
+    an EXPONENTIAL decay sized by the descent's PEAK velocity (tau = dist/vpk; both
+    the slope vpk and tau are clamped, against a glitch and against a drag). A
+    vigorous release lands snappy, a gentle one eases in -- the landing inherits how
+    fast you actually moved the bar. The offset is clamped so the land never pulls
+    PAST center. The DC is handed off to the slow C0 servo.
 
 This makes the off-center latch structurally impossible while preserving bends
 (held, never landed), vibrato (always moving, never stalls), and slow descents
@@ -123,10 +127,10 @@ idle.
 Landing trade: fast snap vs. slow-descent tracking
 --------------------------------------------------
 
-The slope-based landing above is the SHIPPED choice: a snappy ~150 ms snap to
-center. Its one cost is that a deliberately SLOW manual descent (slower than the
-sensor noise floor) reads as a stall and is force-landed early -- the output
-jumps to center while the bar is still gliding down.
+The slope-based landing above is the SHIPPED choice (now with the vigor-adaptive
+exponential shape). Its one cost is that a deliberately SLOW manual descent
+(slower than the sensor noise floor) reads as a stall and is force-landed early
+-- the output eases to center while the bar is still gliding down.
 
 A displacement-stall variant tracks those slow descents (lands only after the
 bar truly stops) but at a softer ~500 ms landing; a raw-stall "have both"

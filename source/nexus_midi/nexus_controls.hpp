@@ -319,24 +319,34 @@ struct constants
 //     clean velocity. A hang is a RELEASE that STALLS (clean slope ~0) near zero, landed to 0 --
 //     but ONLY after the bar bent past +/-1 ST (ARMED). A slow sub-1 ST bend never arms (never
 //     fought); a vibrato never stalls near zero (it crosses fast) or never arms.
+//   * LAND -- not a fixed-rate ramp: an EXPONENTIAL decay sized by the descent's PEAK velocity
+//     (vpk). tau = dist/vpk (clamped to [tau_min,tau_max] loops), so the first step matches how
+//     fast the bar was actually moving -- a vigorous release lands snappy, a gentle one eases in --
+//     then it relaxes into center. The gate mutes the sub-gate_lo tail.
 //   * GATE -- a hysteresis noise gate mutes the rest: once a swing crosses gate_hi it stays open
 //     until |x| sits below gate_lo for gate_dwell, so a vibrato's troughs pass (no chop) and only
 //     a real settle re-closes it. The offset hands the DC off to the slow C0 servo. No sqrt.
 //     The sole centering path.
 struct inertial_corrector
 {
-   static constexpr int32_t  bend_th     = 683;  // 1.0 ST: arm the hang-landing only after this
+   static constexpr int32_t  bend_th     = 2731; // 4.0 ST: arm the hang-landing only this deep -- below it
+                                                 //   the hysteresis residual (k*peak) is inaudible (gate/servo)
    static constexpr int32_t  hang_band   = 546;  // ~0.8 ST: land a stalled, armed release within this
    static constexpr int32_t  gate_hi     = 68;   // ~0.10 ST: noise-gate OPEN threshold (above jitter)
    static constexpr int32_t  gate_lo     = 34;   // ~0.05 ST: noise-gate CLOSE threshold (hysteresis)
    static constexpr int32_t  gate_dwell  = 90;   // ms below gate_lo before the gate closes (rides troughs)
    static constexpr int32_t  slope_k     = 3;    // slope low-pass shift (>>k): rolls the jitter off the slope
    static constexpr int32_t  stall_slope = 14;   // |low-passed slope| (per loop) below this = stalled
-   static constexpr int32_t  land_rate   = 8;    // units/ms: land/hold rate to 0
+   static constexpr int32_t  tau_min     = 4;    // land time-constant clamp (loops): caps the snappiest land
+   static constexpr int32_t  tau_max     = 24;   //   ...and the gentlest, so a soft release never drags
+   static constexpr int32_t  vpk_min     = 14;   // clamp the detected peak slope: floor (creep / mis-read)
+   static constexpr int32_t  vpk_max     = 256;  //   and ceiling (a glitch spike) -> a bad slope can't crack
+   static constexpr int32_t  land_rate   = 8;    // units/ms: gate-close mute-tracking rate
    static constexpr int32_t  leak_rate   = 3;    // units/ms: release the offset while moving / held
 
-   inertial_corrector() : off(0), prev(0), vlp(0), gd(0), armed(false), gopen(false) {}
-   void init() { off = 0; prev = 0; vlp = 0; gd = 0; armed = false; gopen = false; }
+   inertial_corrector()
+    : off(0), prev(0), vlp(0), vpk(0), tau(0), gd(0), armed(false), gopen(false), landing(false) {}
+   void init() { off=0; prev=0; vlp=0; vpk=0; tau=0; gd=0; armed=false; gopen=false; landing=false; }
 
    // Move v toward target by at most |step| units (step floored at 1).
    static int32_t toward(int32_t v, int32_t target, int32_t step)
@@ -351,9 +361,12 @@ struct inertial_corrector
    int32_t off;      // correction offset: output = x - off
    int32_t prev;     // last input, for the slope
    int32_t vlp;      // low-passed slope (clean velocity)
+   int32_t vpk;      // peak velocity of the current descent (sizes the land)
+   int32_t tau;      // captured land time constant (loops), latched at the land onset
    int32_t gd;       // ms |x| has stayed below gate_lo (noise-gate close dwell)
    bool    armed;    // bar has bent past +/-1 ST -> a release may be landed
    bool    gopen;    // noise gate open (passing) vs closed (muted to 0)
+   bool    landing;  // a hang-land is in progress (latches tau once at onset)
 };
 
 // output_stage: the send-deadband + the symmetric output gain (note 3). The gain hits ONLY
@@ -512,12 +525,15 @@ inline int32_t
 inertial_corrector::operator()(int32_t x, int32_t dt)
 {
    int32_t BT = bend_th, HB = hang_band, GH = gate_hi, GL = gate_lo, GD = gate_dwell,
-           SK = slope_k, ST = stall_slope, LR = land_rate, LK = leak_rate;
+           SK = slope_k, ST = stall_slope, LR = land_rate, LK = leak_rate,
+           TMIN = tau_min, TMAX = tau_max, VMIN = vpk_min, VMAX = vpk_max;
 #ifdef NEXUS_SIM
    { const char* e;
      if ((e = getenv("BT")))   BT = atoi(e); if ((e = getenv("HB")))   HB = atoi(e);
      if ((e = getenv("GH")))   GH = atoi(e); if ((e = getenv("GL")))   GL = atoi(e);
      if ((e = getenv("GD")))   GD = atoi(e); if ((e = getenv("ST")))   ST = atoi(e);
+     if ((e = getenv("TMIN"))) TMIN = atoi(e); if ((e = getenv("TMAX"))) TMAX = atoi(e);
+     if ((e = getenv("VMIN"))) VMIN = atoi(e); if ((e = getenv("VMAX"))) VMAX = atoi(e);
      if ((e = getenv("LAND"))) LR = atoi(e); if ((e = getenv("LEAK"))) LK = atoi(e); }
 #endif
    if (dt <= 0) dt = 1;
@@ -525,7 +541,13 @@ inertial_corrector::operator()(int32_t x, int32_t dt)
 
    // Clean slope: low-pass the forward difference so the ADC jitter doesn't swamp the velocity.
    vlp += ((x - prev) - vlp) >> SK; prev = x;
-   bool moving = iabs(vlp) > ST;                        // clean velocity above the stall floor
+   int32_t av = iabs(vlp);
+   bool moving = av > ST;                               // clean velocity above the stall floor
+
+   // Track the PEAK velocity of the descent toward center (a vigorous release peaks high, a gentle
+   // one low). Reset it the moment the bar moves AWAY (a fresh bend) so each release lands on its
+   // own energy; hold it through the stall so the land can read it.
+   if (moving) vpk = ((x ^ vlp) < 0) ? (av > vpk ? av : vpk) : 0;
 
    // Hysteresis noise gate on |x|: mute the rest, but once a swing opens it, stay open until |x|
    // sits below gate_lo for gate_dwell ms -> a vibrato's troughs pass, only a real settle closes.
@@ -538,15 +560,28 @@ inertial_corrector::operator()(int32_t x, int32_t dt)
    if (!gopen)                                          // gate closed: rest near center -> mute to 0
    {
       off = toward(off, x, LR * dt);                    // track off to the rest so a re-open is clean
-      armed = false;
+      armed = false; landing = false; vpk = 0;
       return 0;
    }
 
    if (armed && !moving && ax < HB)                     // BAR stalled near zero (after >1 ST): a hang
-      off = toward(off, x, LR * dt);                    // null AND hold (follows the C0 servo down)
+   {
+      if (!landing)                                     // ONSET: size the exponential to the descent
+      {
+         int32_t v0 = clamp(vpk, VMIN, VMAX);           // CLAMP the slope (glitch / mis-read guard)
+         tau = clamp(iabs(x - off) / v0, TMIN, TMAX);   // tau ~ dist/vpk: vigorous -> snappy, gentle -> eased
+         landing = true;
+      }
+      int32_t d = x - off, step = d / tau;              // EXPONENTIAL decay to center (was a linear ramp)
+      off += step ? step : (d > 0) - (d < 0);           // 1-unit floor so it always reaches center
+      if (((x - off) ^ x) < 0) off = x;                 // landed: never pull PAST center -> ride the settle down
+   }
    else if (moving)                                     // a real move -> release the offset, track
+   {
       off = toward(off, 0, LK * dt);
-   // else: still but not landing (a held bend) -> hold the offset
+      landing = false;
+   }
+   else landing = false;                                // still but not a hang (held bend) -> hold off
    return x - off;
 }
 
