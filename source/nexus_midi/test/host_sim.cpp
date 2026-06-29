@@ -100,6 +100,52 @@ static void check(const char* name, bool ok, const char* detail)
    if (!ok) ++fails;
 }
 
+// -----------------------------------------------------------------------------
+// Scenario: eWhammy NOT connected. R27 pulls the pitch ADC to ~0 -- below
+// settle_gate's rest band [1600,2560] -- so the firmware must never go live:
+// it stays MUTED at center, silent, with no off-center bend. (Attaching the
+// pedal is a re-boot, not a hot-plug; see startup_gate.) Driven through the
+// real setup()/loop() with g_feed pinned at 0 for the whole run.
+// -----------------------------------------------------------------------------
+static void run_no_input(bool verbose, uint32_t holdoff, uint32_t loopms)
+{
+   printf("\n=== scenario: eWhammy not connected (ADC pinned at 0) ===\n");
+
+   const uint32_t dur = 12000;        // past holdoff + settle + 10 s freeze
+   std::vector<int16_t> zeros(dur + 1, 0);
+   nexus_sim::g_feed = zeros.data();
+   nexus_sim::g_feed_len = dur + 1;
+
+   events.clear(); _sim_midi.clear(); _sim_millis = 0;
+   setup();                           // fresh boot, pitch pin pinned at 0
+   pitch_bend.startup_holdoff = holdoff;
+   drain(0, verbose);
+
+   bool went_live = false;
+   for (uint32_t k = loopms; k <= dur; k += loopms)
+   {
+      _sim_millis = k; loop(); drain(k, verbose);
+      if (!pitch_bend.muted) went_live = true;
+   }
+   nexus_sim::g_feed = nullptr;        // detach the feed
+
+   char d[96];
+   pbwin w = pb_in(0, dur);
+   snprintf(d, sizeof d, "muted=%d went_live=%d",
+            pitch_bend.muted, went_live);
+   check("not-connected stays muted", pitch_bend.muted && !went_live, d);
+
+   bool centered = (w.count == 0) || (w.lo == 8192 && w.hi == 8192);
+   snprintf(d, sizeof d, "#PB=%d range=%d..%d", w.count, w.lo, w.hi);
+   check("not-connected never off-center", centered, d);
+
+   snprintf(d, sizeof d, "#PB=%d (just the boot center)", w.count);
+   check("not-connected silent after boot", w.count <= 2, d);
+
+   snprintf(d, sizeof d, "final=%d", pb_at(dur));
+   check("not-connected ends centered", pb_at(dur) == 8192, d);
+}
+
 int main(int argc, char** argv)
 {
    bool verbose = false, dump = false;
@@ -287,6 +333,11 @@ int main(int argc, char** argv)
             "mid-glitch out=%+d (held center; un-gated this latches off"
             "-center)", glitch_out);
    check("slew gate rejects programmer glitch", abs(glitch_out) <= 100, d);
+
+   // Separate scenario: the pedal not connected at all (skipped for a
+   // specific --feed replay, which drives its own input).
+   if (!feedfile)
+      run_no_input(verbose, holdoff, loopms);
 
    printf("\n%s (%d failure%s)\n",
           fails?"FAILED":"PASSED", fails, fails==1?"":"s");
